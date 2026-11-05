@@ -80,6 +80,67 @@ describe("UrPass 7-Day Growth & Monetization: Free Forever + Standard SaaS Tiers
       expect(result.planSlug).toBe("free");
       expect(result.state).toBe("free_forever_active");
     });
+
+    it("automatically moves expired paid subscriptions to Free Forever instead of locking user in billing", async () => {
+      const pastPeriodEnd = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      let updatedSubData: any = null;
+      const mockSupabase = {
+        from: vi.fn((table: string) => {
+          if (table === "subscriptions") {
+            return {
+              select: vi.fn().mockReturnThis(),
+              eq: vi.fn().mockReturnThis(),
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: {
+                  status: "expired",
+                  provider: "razorpay",
+                  billing_cycle: "monthly",
+                  current_period_end: pastPeriodEnd,
+                  plan: { slug: "starter" },
+                },
+              }),
+              update: vi.fn((payload: any) => {
+                updatedSubData = payload;
+                return { eq: vi.fn().mockResolvedValue({ error: null }) };
+              }),
+            };
+          }
+          if (table === "plans") {
+            return {
+              select: vi.fn().mockReturnThis(),
+              eq: vi.fn().mockReturnThis(),
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: { id: "plan-free-uuid", slug: "free" },
+              }),
+            };
+          }
+          if (table === "events") {
+            return {
+              select: vi.fn().mockReturnThis(),
+              eq: vi.fn().mockResolvedValue({ count: 2 }),
+            };
+          }
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            maybeSingle: vi.fn().mockResolvedValue({ data: null }),
+            insert: vi.fn().mockResolvedValue({ error: null }),
+          };
+        }),
+      };
+
+      const result = await resolveUserSubscriptionAccess({
+        supabase: mockSupabase as any,
+        user: { id: "expired-starter-user", created_at: "2026-08-01T00:00:00.000Z" },
+      });
+
+      // Must NOT be locked out or redirected to billing
+      expect(result.hasOrganizerAccess).toBe(true);
+      expect(result.shouldRedirectToBilling).toBe(false);
+      expect(result.shouldRedirectToSubscriptionOnboarding).toBe(false);
+      expect(result.planSlug).toBe("free");
+      expect(result.state).toBe("free_forever_active");
+    });
   });
 
   describe("Tier Limits & Entitlements Specification", () => {

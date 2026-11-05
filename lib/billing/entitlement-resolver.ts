@@ -1,3 +1,6 @@
+import { createClient as createAdminClient } from "@supabase/supabase-js";
+import { getSupabaseUrl } from "@/lib/supabase/config";
+
 export type SubscriptionAccessState =
   | "onboarding_required"
   | "autopay_trial_active"
@@ -53,6 +56,120 @@ export interface SubscriptionAccessResolution {
   isTrial?: boolean;
   freeEventTrialConsumed?: boolean;
   reason: string;
+}
+
+function getAdminClientSafe() {
+  if (typeof process === "undefined" || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return null;
+  }
+  try {
+    const url = getSupabaseUrl();
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!url || !key) return null;
+    return createAdminClient(url, key, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Idempotently downgrades an expired subscription or concluding trial to Free Forever
+ * and ensures DB records and user metadata reflect Free tier access.
+ */
+export async function downgradeExpiredSubscriptionToFree(
+  userId: string,
+  sub?: SubscriptionRow | null,
+  clientOverride?: any
+): Promise<boolean> {
+  const admin = clientOverride || getAdminClientSafe();
+  if (!admin || !userId) return false;
+
+  try {
+    let freePlanId: string | null = null;
+    try {
+      const { data: freePlan } = await admin
+        .from("plans")
+        .select("id, slug")
+        .eq("slug", "free")
+        .maybeSingle();
+      if (freePlan?.id) {
+        freePlanId = freePlan.id;
+      }
+    } catch {
+      // Non-blocking
+    }
+
+    const nowIso = new Date().toISOString();
+    const updatePayload: Record<string, any> = {
+      status: "active",
+      provider: "free",
+      billing_cycle: null,
+      cancel_at_period_end: false,
+      is_trial: false,
+      cancellation_state: "expired_downgraded_to_free",
+      pending_plan_slug: null,
+      pending_plan_id: null,
+      pending_plan_effective_at: null,
+      updated_at: nowIso,
+    };
+    if (freePlanId) {
+      updatePayload.plan_id = freePlanId;
+    }
+
+    const builder = admin.from("subscriptions");
+    if (sub && typeof builder.update === "function") {
+      await builder
+        .update(updatePayload)
+        .eq("user_id", userId);
+    } else if (!sub && typeof builder.upsert === "function") {
+      await builder
+        .upsert(
+          {
+            user_id: userId,
+            ...updatePayload,
+            current_period_start: nowIso,
+            current_period_end: new Date("2125-01-01T00:00:00.000Z").toISOString(),
+          },
+          { onConflict: "user_id" }
+        );
+    }
+
+    if (admin.auth?.admin?.updateUserById) {
+      try {
+        await admin.auth.admin.updateUserById(userId, {
+          user_metadata: {
+            plan_selected: true,
+            plan_slug: "free",
+          },
+        });
+      } catch {
+        // Non-blocking
+      }
+    }
+
+    try {
+      await admin.from("billing_audit_logs").insert({
+        user_id: userId,
+        event_type: "subscription_expired_downgraded_to_free",
+        action: "auto_downgrade_to_free",
+        entity_type: "subscription",
+        provider: "free",
+        details: {
+          previous_period_end: sub?.current_period_end,
+          downgraded_at: nowIso,
+        },
+      });
+    } catch {
+      // Non-blocking
+    }
+
+    return true;
+  } catch (err) {
+    console.error("[billing] Error in downgradeExpiredSubscriptionToFree:", err);
+    return false;
+  }
 }
 
 const DEFAULT_PAID_ONBOARDING_EFFECTIVE_AT = "2026-10-13T00:00:00.000Z";
@@ -445,43 +562,36 @@ export async function resolveUserSubscriptionAccess(params: {
       };
     }
 
-    const legacyCutoff = addDays(createdAt, 30);
-    if (isFuture(legacyCutoff.toISOString(), now)) {
-      return {
-        state: "legacy_free_active",
-        hasOrganizerAccess: true,
-        shouldRedirectToSubscriptionOnboarding: false,
-        shouldRedirectToBilling: false,
-        planSlug: "free",
-        expiresAt: legacyCutoff.toISOString(),
-        isNewUser: false,
-        introOfferEligible: false,
-        reason: "Legacy Free tier remains active for 30 days from registration date.",
-      };
-    }
-
+    // Existing organizer on Free tier -> Free Forever active
     return {
-      state: "subscription_expired",
-      hasOrganizerAccess: false,
+      state: "free_forever_active",
+      hasOrganizerAccess: true,
       shouldRedirectToSubscriptionOnboarding: false,
-      shouldRedirectToBilling: true,
+      shouldRedirectToBilling: false,
       planSlug: "free",
-      expiresAt: legacyCutoff.toISOString(),
+      expiresAt: null,
       isNewUser: false,
       introOfferEligible: false,
-      reason: "Legacy Free tier expired 30 days after registration.",
+      reason: "Free Forever plan is active (1 active event, 50 registrations/month).",
     };
   }
 
+  // Previous paid plan, trial, or subscription period ended:
+  // Automatically move organizer to Free Forever plan (1 active event, 50 registrations/month)
+  // and sync database in background so user is never locked out or trapped in billing.
+  downgradeExpiredSubscriptionToFree(user.id, sub, supabase).catch((err) => {
+    console.warn("[billing] Background auto-downgrade to Free warning:", err);
+  });
+
   return {
-    state: "subscription_expired",
-    hasOrganizerAccess: false,
+    state: "free_forever_active",
+    hasOrganizerAccess: true,
     shouldRedirectToSubscriptionOnboarding: false,
-    shouldRedirectToBilling: true,
-    planSlug,
-    expiresAt: sub?.current_period_end || trialEndsAt || null,
-    isNewUser,
+    shouldRedirectToBilling: false,
+    planSlug: "free",
+    expiresAt: null,
+    isNewUser: false,
     introOfferEligible: false,
-    reason: "No valid paid, legacy trial, or legacy Free entitlement is active.",
+    reason: "Previous subscription period ended. Account automatically moved to Free Forever plan (1 active event, 50 registrations/month).",
   };
 }

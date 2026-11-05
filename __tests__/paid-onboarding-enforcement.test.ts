@@ -233,8 +233,8 @@ describe("URPASS — Paid Onboarding & Entitlement Enforcement (15 Scenarios)", 
     expect(access.shouldRedirectToBilling).toBe(false);
   });
 
-  // ── Scenario 7: Existing trial expiration → regular pricing, not intro offer ─
-  it("Scenario 7: Expired trial -> subscription_expired & ineligible for intro offer", async () => {
+  // ── Scenario 7: Existing trial expiration → automatic move to Free Forever ─
+  it("Scenario 7: Expired trial -> automatically moved to Free Forever & ineligible for intro offer", async () => {
     const expiredTrialUser = {
       id: "usr-expired-trial-7",
       created_at: new Date("2026-09-01T00:00:00.000Z").toISOString(),
@@ -254,15 +254,15 @@ describe("URPASS — Paid Onboarding & Entitlement Enforcement (15 Scenarios)", 
       now: NOW,
     });
 
-    expect(access.state).toBe("subscription_expired");
-    expect(access.hasOrganizerAccess).toBe(false);
-    expect(access.shouldRedirectToBilling).toBe(true);
+    expect(access.state).toBe("free_forever_active");
+    expect(access.hasOrganizerAccess).toBe(true);
+    expect(access.shouldRedirectToBilling).toBe(false);
+    expect(access.planSlug).toBe("free");
     expect(access.introOfferEligible).toBe(false);
   });
 
-  // ── Scenario 8: Existing legacy Free user → access until individual 30-day cutoff
-  it("Scenario 8: Legacy Free user -> access until exactly 30 days after signup date", async () => {
-    // Signup 20 days ago (day 20 of 30)
+  // ── Scenario 8: Existing Free user → retains Free Forever access ─────────────
+  it("Scenario 8: Existing Free user -> retains Free Forever access", async () => {
     const validLegacyUser = {
       id: "usr-legacy-free-8a",
       created_at: new Date("2026-09-25T00:00:00.000Z").toISOString(),
@@ -279,24 +279,26 @@ describe("URPASS — Paid Onboarding & Entitlement Enforcement (15 Scenarios)", 
       now: NOW,
     });
 
-    expect(accessValid.state).toBe("legacy_free_active");
+    expect(accessValid.state).toBe("free_forever_active");
     expect(accessValid.hasOrganizerAccess).toBe(true);
     expect(accessValid.shouldRedirectToSubscriptionOnboarding).toBe(false);
+    expect(accessValid.shouldRedirectToBilling).toBe(false);
+    expect(accessValid.planSlug).toBe("free");
 
-    // Signup 40 days ago (past the 30-day cutoff)
-    const expiredLegacyUser = {
+    // Signup earlier
+    const olderUser = {
       id: "usr-legacy-free-8b",
       created_at: new Date("2026-09-01T00:00:00.000Z").toISOString(),
     };
-    const accessExpired = await resolveUserSubscriptionAccess({
+    const accessOlder = await resolveUserSubscriptionAccess({
       supabase: mockSupabaseValid as any,
-      user: expiredLegacyUser,
+      user: olderUser,
       now: NOW,
     });
 
-    expect(accessExpired.state).toBe("subscription_expired");
-    expect(accessExpired.hasOrganizerAccess).toBe(false);
-    expect(accessExpired.shouldRedirectToBilling).toBe(true);
+    expect(accessOlder.state).toBe("free_forever_active");
+    expect(accessOlder.hasOrganizerAccess).toBe(true);
+    expect(accessOlder.shouldRedirectToBilling).toBe(false);
   });
 
   it("Pricing: active legacy Free rows resolve at standard subscription pricing (intro offer retired)", async () => {
@@ -404,8 +406,8 @@ describe("URPASS — Paid Onboarding & Entitlement Enforcement (15 Scenarios)", 
     expect(access.shouldRedirectToSubscriptionOnboarding).toBe(false);
   });
 
-  // ── Scenario 11: Expired subscription → appropriate restrictions ───────────
-  it("Scenario 11: Expired subscription -> access revoked, redirected to billing", async () => {
+  // ── Scenario 11: Expired subscription → automatically moved to Free Forever ─
+  it("Scenario 11: Expired subscription -> automatically moved to Free Forever plan", async () => {
     const expiredUser = {
       id: "usr-expired-11",
       created_at: new Date("2026-01-01T00:00:00.000Z").toISOString(),
@@ -422,10 +424,11 @@ describe("URPASS — Paid Onboarding & Entitlement Enforcement (15 Scenarios)", 
       now: NOW,
     });
 
-    expect(access.state).toBe("subscription_expired");
-    expect(access.hasOrganizerAccess).toBe(false);
-    expect(access.shouldRedirectToBilling).toBe(true);
+    expect(access.state).toBe("free_forever_active");
+    expect(access.hasOrganizerAccess).toBe(true);
+    expect(access.shouldRedirectToBilling).toBe(false);
     expect(access.shouldRedirectToSubscriptionOnboarding).toBe(false);
+    expect(access.planSlug).toBe("free");
   });
 
   // ── Scenario 12: Active event with QR scanner → no interruption ────────────

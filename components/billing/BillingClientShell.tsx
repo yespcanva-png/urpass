@@ -20,6 +20,7 @@ import {
   Check,
   ExternalLink,
   ShieldAlert,
+  Info,
 } from "lucide-react";
 import CancelButton from "./CancelButton";
 import PlanGrid from "./PlanGrid";
@@ -323,6 +324,33 @@ export default function BillingClientShell({
       </div>
 
       {/* ── AutoPay Trial Notice Banners ──────────────────────────── */}
+      {!isNiveditha && (effectiveReason === "subscription_expired" || effectiveReason === "expired_downgraded_to_free" || sub?.cancellation_state === "expired_downgraded_to_free") && (
+        <div className="rounded-2xl border border-blue-200 bg-blue-50/90 p-4 sm:p-5 text-blue-950 shadow-xs">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3.5">
+              <div className="w-9 h-9 rounded-xl bg-blue-100 flex items-center justify-center shrink-0 text-blue-700 mt-0.5">
+                <Info className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-blue-900">
+                  Your Paid Subscription Expired — Moved to Free Forever Plan
+                </h3>
+                <p className="text-xs text-blue-800/90 mt-1 leading-relaxed">
+                  Your account has automatically moved to the Free Forever plan (1 active event, 50 registrations/month). All your existing events and attendee passes remain completely safe. You can continue managing events or upgrade anytime below.
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shrink-0 transition-colors shadow-xs"
+            >
+              <span>Go to Dashboard</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        </div>
+      )}
+
       {!isNiveditha && effectiveReason === "autopay_trial_completed" && (
         <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4 sm:p-5 text-amber-950 shadow-xs">
           <div className="flex items-start gap-3.5">
