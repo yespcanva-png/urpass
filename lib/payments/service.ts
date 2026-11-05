@@ -317,7 +317,7 @@ export async function getEventPaymentConfigService(
   }
 
   // 4. Default clean configuration
-  return normalizeEventPaymentConfig(
+  const resolvedConfig = normalizeEventPaymentConfig(
     {
       id: `epc_default_${eventId.replace(/-/g, "").slice(0, 12)}`,
       eventId,
@@ -332,6 +332,25 @@ export async function getEventPaymentConfigService(
     },
     eventId
   );
+
+  // If the event has an attached event pass, 0% platform ticket fee applies
+  try {
+    const isUuid = isValidUUID(eventId);
+    const { data: ev } = await (isUuid
+      ? supabase.from("events").select("event_pass_id").eq("id", eventId)
+      : supabase.from("events").select("event_pass_id").eq("apply_slug", eventId)
+    ).maybeSingle();
+    if (ev?.event_pass_id) {
+      resolvedConfig.platformFeePercent = 0;
+      resolvedConfig.platform_fee_percent = 0;
+      resolvedConfig.platformFeeFixedINR = 0;
+      resolvedConfig.platform_fee_fixed_inr = 0;
+    }
+  } catch {
+    // continue
+  }
+
+  return resolvedConfig;
 }
 
 /**
@@ -362,11 +381,11 @@ export async function initiateOrderCheckoutService(params: {
   const { data: event, error: eventErr } = await (isUuid
     ? supabase
         .from("events")
-        .select("id, name, organizer_id, organization_id, is_paid_event, attendee_limit, currency")
+        .select("id, name, organizer_id, organization_id, is_paid_event, attendee_limit, currency, event_pass_id")
         .eq("id", eventId)
     : supabase
         .from("events")
-        .select("id, name, organizer_id, organization_id, is_paid_event, attendee_limit, currency")
+        .select("id, name, organizer_id, organization_id, is_paid_event, attendee_limit, currency, event_pass_id")
         .eq("apply_slug", eventId)
   ).maybeSingle();
 
@@ -400,12 +419,20 @@ export async function initiateOrderCheckoutService(params: {
   const feeBearer: FeeBearer = config.fee_bearer || config.feeBearer || "ATTENDEE";
   const provider: PaymentProvider = config.provider || "RAZORPAY";
 
-  // 4. Calculate Authoritative Fees
+  // 4. Calculate Authoritative Fees (0% platform ticket fee for Single Event Pass)
+  const hasEventPass = Boolean((event as { event_pass_id?: string | null }).event_pass_id);
+  const effectivePlatformFeePct = hasEventPass
+    ? 0
+    : Number(config.platform_fee_percent ?? config.platformFeePercent ?? 2.0);
+  const effectivePlatformFeeFix = hasEventPass
+    ? 0
+    : Number(config.platform_fee_fixed_inr ?? config.platformFeeFixedINR ?? 0);
+
   const fees: FeeCalculationResult = calculateTicketFees({
     basePrice: baseTicketPrice * quantity,
     feeBearer,
-    platformFeePercent: Number(config.platform_fee_percent ?? config.platformFeePercent ?? 2.0),
-    platformFeeFixedINR: Number(config.platform_fee_fixed_inr ?? config.platformFeeFixedINR ?? 0),
+    platformFeePercent: effectivePlatformFeePct,
+    platformFeeFixedINR: effectivePlatformFeeFix,
     gatewayFeePercent: Number(config.gateway_fee_percent ?? config.gatewayFeePercent ?? 2.0),
     gatewayFeeFixedINR: Number(config.gateway_fee_fixed_inr ?? config.gatewayFeeFixedINR ?? 0),
   });

@@ -38,7 +38,7 @@ export default async function StudioEventPage({
   const [{ data: event }, userPlan] = await Promise.all([
     supabase
       .from("events")
-      .select("id, name, event_date, start_time, end_time, venue, organizer_id, organization_id, custom_pass_design")
+      .select("id, name, event_date, start_time, end_time, venue, organizer_id, organization_id, custom_pass_design, event_pass_id")
       .eq("id", eventId)
       .single(),
     getUserPlan(supabase, user.id),
@@ -91,7 +91,8 @@ export default async function StudioEventPage({
   }).toUpperCase();
 
   const isPro = true;
-  const effectivePlanSlug = organizerPlan ? organizerPlan.slug : userPlan.slug;
+  const hasEventPass = Boolean(event.event_pass_id);
+  const effectivePlanSlug = hasEventPass ? "pro" : (organizerPlan ? organizerPlan.slug : userPlan.slug);
 
   let initialConfig = event.custom_pass_design || profile?.custom_pass_design;
   if (templateId) {

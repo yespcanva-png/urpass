@@ -150,7 +150,7 @@ export async function getHardenedPublicPass(
       .single(),
     admin
       .from("events")
-      .select("id, name, description, event_date, start_time, end_time, venue, event_type, meeting_url, meeting_platform, organizer_id, custom_pass_design, status")
+      .select("id, name, description, event_date, start_time, end_time, venue, event_type, meeting_url, meeting_platform, organizer_id, custom_pass_design, status, event_pass_id")
       .eq("id", pass.event_id)
       .single(),
   ]);
@@ -174,8 +174,9 @@ export async function getHardenedPublicPass(
       : Promise.resolve({ data: null }),
   ]);
 
-  const showBranding = !(plan?.canRemoveBranding && orgProfile?.hide_urpass_branding);
-  const isPro = plan ? plan.canUse("custom_pass_design") : false;
+  const hasEventPass = Boolean((event as { event_pass_id?: string | null }).event_pass_id);
+  const showBranding = hasEventPass ? false : !(plan?.canRemoveBranding && orgProfile?.hide_urpass_branding);
+  const isPro = hasEventPass || (plan ? plan.canUse("custom_pass_design") : false);
   const rawCustomDesign = event.custom_pass_design || orgProfile?.custom_pass_design;
 
   // Protect online meeting URL: only disclose if approved and pass is generated/active

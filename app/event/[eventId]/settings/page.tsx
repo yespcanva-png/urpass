@@ -215,6 +215,7 @@ export default function EventSettingsPage() {
   const [allowMultipleScans, setAllowMultipleScans] = useState(false);
   const [initialAllowMultipleScans, setInitialAllowMultipleScans] = useState(false);
   const [canRemoveBranding, setCanRemoveBranding] = useState(false);
+  const [hasEventPass, setHasEventPass]         = useState(false);
   const [isPro, setIsPro]                       = useState(false);
   const [isTrialActive, setIsTrialActive]       = useState(false);
   const [uploadingLogo, setUploadingLogo]       = useState(false);
@@ -402,13 +403,15 @@ export default function EventSettingsPage() {
       const supabase = createClient();
       const [{ data }, { data: { user } }] = await Promise.all([
         supabase.from("events")
-          .select("id,name,description,event_date,start_time,end_time,venue,attendee_limit,status,application_enabled,auto_approve,auto_promote_waitlist,is_paid_event,ticket_price,event_type,meeting_url,meeting_platform,sms_enabled,whatsapp_enabled,email_enabled,sms_fallback_enabled,sms_sender_id,sms_dlt_entity_id,sms_dlt_template_id,sms_provider,custom_fields,custom_pass_design,apply_slug,is_onboarding_draft,registration_opens_at,registration_closes_at")
+          .select("id,name,description,event_date,start_time,end_time,venue,attendee_limit,status,application_enabled,auto_approve,auto_promote_waitlist,is_paid_event,ticket_price,event_type,meeting_url,meeting_platform,sms_enabled,whatsapp_enabled,email_enabled,sms_fallback_enabled,sms_sender_id,sms_dlt_entity_id,sms_dlt_template_id,sms_provider,custom_fields,custom_pass_design,apply_slug,is_onboarding_draft,registration_opens_at,registration_closes_at,event_pass_id")
           .eq("id", eventId).single(),
         supabase.auth.getUser(),
       ]);
       if (data) {
         setEvent(data as unknown as EventRow);
         setSlugValue(data.apply_slug || "");
+        const hasPass = Boolean(data.event_pass_id);
+        setHasEventPass(hasPass);
         const design = (data.custom_pass_design as Record<string, unknown> | null) ?? {};
         if (design.event_images && Array.isArray(design.event_images)) {
           setEventImages(design.event_images as string[]);
@@ -453,9 +456,10 @@ export default function EventSettingsPage() {
         const isTrial = Boolean(sub?.is_trial || sub?.status === "trialing");
         const effectiveSlug = (rawSlug || (isTrial ? (sub?.trial_plan as string) : undefined) || "free").toLowerCase();
 
-        const isProTier = ["pro", "business", "campus", "founder", "lifetime", "enterprise"].includes(effectiveSlug);
+        const hasPass = Boolean(data?.event_pass_id);
+        const isProTier = ["pro", "business", "campus", "founder", "lifetime", "enterprise"].includes(effectiveSlug) || hasPass;
         setIsPro(isProTier);
-        const canHide = effectiveSlug !== "free";
+        const canHide = effectiveSlug !== "free" || hasPass;
         setCanRemoveBranding(canHide);
         setIsTrialActive(isTrial);
 
@@ -866,7 +870,11 @@ export default function EventSettingsPage() {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-semibold text-neutral-900">White-Label Passes (Remove URPASS Watermark)</p>
-                  {canRemoveBranding ? (
+                  {hasEventPass ? (
+                    <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      Single Event Pass Active
+                    </span>
+                  ) : canRemoveBranding ? (
                     <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
                       Pro Unlocked
                     </span>

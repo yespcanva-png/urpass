@@ -37,7 +37,7 @@ export async function GET(
 
   const [{ data: attendee }, { data: event }] = await Promise.all([
     supabase.from("attendees").select("name, email, phone").eq("id", pass.attendee_id).single(),
-    supabase.from("events").select("name, event_date, start_time, venue, custom_pass_design").eq("id", pass.event_id).single(),
+    supabase.from("events").select("name, event_date, start_time, venue, custom_pass_design, event_pass_id").eq("id", pass.event_id).single(),
   ]);
 
   if (!attendee || !event) return new Response("Not found", { status: 404 });
@@ -70,7 +70,8 @@ export async function GET(
 
     const isTrialExpired = sub?.is_trial && sub?.trial_ends_at && new Date(sub.trial_ends_at) < new Date();
     const planSlug = isTrialExpired ? "free" : ((sub?.plan as unknown as { slug: string } | null)?.slug ?? "free");
-    showBranding = !(planSlug !== "free" && orgProfile?.hide_urpass_branding);
+    const hasEventPass = Boolean((event as { event_pass_id?: string | null }).event_pass_id);
+    showBranding = hasEventPass ? false : !(planSlug !== "free" && orgProfile?.hide_urpass_branding);
     orgProfileData = orgProfile;
   }
 

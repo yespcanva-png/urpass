@@ -468,6 +468,26 @@ export function isFeatureEnabled(
     return true;
   }
 
+  // 1b. Event Pass Pro Feature Override (strictly restricted to this single event)
+  const hasEventPass = Boolean(
+    event?.event_pass_id ||
+    (event as { _isEventPass?: boolean } | null | undefined)?._isEventPass
+  );
+  if (hasEventPass) {
+    const EVENT_PASS_UNLOCKED_FLAGS: string[] = [
+      "white_label_portal",
+      "custom_pass_design",
+      "csv_management",
+      "advanced_entry_tracking",
+      "offline_scanning",
+      "group_entry",
+      "advanced_analytics",
+    ];
+    if (EVENT_PASS_UNLOCKED_FLAGS.includes(featureKey)) {
+      return true;
+    }
+  }
+
   const def = FEATURE_FLAG_DEFINITIONS[featureKey as FeatureFlagKey];
   if (!def) {
     return false;

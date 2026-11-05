@@ -6,7 +6,7 @@ import { eventSchema, type EventInput } from "@/lib/validations/event";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { generateApplySlug, slugify, isReservedSlug } from "@/lib/utils";
-import { getUserPlan } from "@/lib/plan";
+import { getUserPlan, getEventEffectivePlan } from "@/lib/plan";
 import { recordApiUsage } from "@/lib/api-usage";
 import { getSupabaseUrl } from "@/lib/supabase/config";
 import { recordLiveOpsEvent } from "@/lib/ops/events";
@@ -881,9 +881,9 @@ export async function updateEventCustomFields(
     return { error: "You are not authorized to update this event." };
   }
 
-  // Check plan limits
-  const plan = await getUserPlan(supabase, user.id);
-  const maxCustomFields = plan.getLimit("custom_fields");
+  // Check plan limits (evaluating event-scoped entitlements if a Single Event Pass is attached)
+  const eventPlan = await getEventEffectivePlan(supabase, eventId, user.id);
+  const maxCustomFields = eventPlan.getLimit("custom_fields");
   if (customFields.length > maxCustomFields) {
     return {
       error: `Your current plan allows up to ${maxCustomFields} custom field${maxCustomFields === 1 ? "" : "s"}. Upgrade to add more.`,

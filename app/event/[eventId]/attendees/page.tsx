@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import AttendeeTable from "@/components/event/AttendeeTable";
-import { getUserPlan } from "@/lib/plan";
+import { getUserPlan, getEventEffectivePlan } from "@/lib/plan";
 import { reconcileEventTicketOrders } from "@/lib/payments/reconcile-event-orders";
 
 interface Props {
@@ -19,7 +19,7 @@ export default async function AttendeesPage({ params }: Props) {
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(eventId);
   const eventQuery = supabase
     .from("events")
-    .select("id, name, attendee_limit, application_enabled, apply_slug, organizer_id, organization_id, custom_fields");
+    .select("id, name, attendee_limit, application_enabled, apply_slug, organizer_id, organization_id, custom_fields, event_pass_id");
   const { data: event } = isUuid
     ? await eventQuery.eq("id", eventId).maybeSingle()
     : await eventQuery.eq("apply_slug", eventId).maybeSingle();
@@ -51,7 +51,7 @@ export default async function AttendeesPage({ params }: Props) {
       .select("id, name, email, phone, pass_type, application_status, pass_status, custom_responses, ticket_type_id, created_at, last_gate_scanned_at, venue_presence_state")
       .eq("event_id", canonicalEventId)
       .order("created_at", { ascending: false }),
-    getUserPlan(supabase, user.id),
+    getEventEffectivePlan(supabase, event, user.id),
   ]);
 
   let attendees = attendeesResult.data?.map((a: any) => ({

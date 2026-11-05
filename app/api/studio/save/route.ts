@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
       // Verify event ownership or org role
       const { data: event, error: eventErr } = await supabase
         .from("events")
-        .select("id, organizer_id, organization_id")
+        .select("id, organizer_id, organization_id, event_pass_id")
         .eq("id", eventId)
         .single();
 
@@ -47,7 +47,10 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Event not found or access denied." }, { status: 404 });
       }
 
-      if (event.organizer_id && event.organizer_id !== user.id) {
+      if (event.event_pass_id) {
+        // Single Event Pass elevates pass designer capabilities to Pro for this event
+        effectivePlanSlug = "pro";
+      } else if (event.organizer_id && event.organizer_id !== user.id) {
         const orgPlan = await getUserPlan(supabase, event.organizer_id);
         if (orgPlan.canUse("custom_pass_design")) {
           effectivePlanSlug = orgPlan.slug;

@@ -204,6 +204,40 @@ ALTER TABLE public.events ADD COLUMN IF NOT EXISTS locale text NOT NULL DEFAULT 
 ALTER TABLE public.events ADD COLUMN IF NOT EXISTS custom_fields jsonb DEFAULT '[]'::jsonb;
 ALTER TABLE public.events ADD COLUMN IF NOT EXISTS organization_id uuid REFERENCES public.organizations(id) ON DELETE SET NULL;
 
+-- ── 5. Single Event Passes & Capacity Entitlements ──────────────────────────
+CREATE TABLE IF NOT EXISTS public.event_passes (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  pass_type text NOT NULL CHECK (pass_type IN ('event', 'event_plus', 'event_pro')),
+  registration_limit integer NOT NULL,
+  price_rupees numeric NOT NULL DEFAULT 0,
+  price_minor bigint NOT NULL DEFAULT 0,
+  currency text NOT NULL DEFAULT 'GBP',
+  status text NOT NULL DEFAULT 'available'
+    CHECK (status IN ('available', 'attached', 'expired')),
+  event_id uuid REFERENCES public.events(id) ON DELETE SET NULL,
+  payment_id text,
+  purchased_at timestamptz NOT NULL DEFAULT now(),
+  attached_at timestamptz
+);
+
+ALTER TABLE public.event_passes ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "event_passes_own_select" ON public.event_passes;
+CREATE POLICY "event_passes_own_select"
+  ON public.event_passes FOR SELECT
+  USING (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "event_passes_own_insert" ON public.event_passes;
+CREATE POLICY "event_passes_own_insert"
+  ON public.event_passes FOR INSERT
+  WITH CHECK (user_id = auth.uid());
+
+ALTER TABLE public.events ADD COLUMN IF NOT EXISTS event_pass_id uuid REFERENCES public.event_passes(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_events_pass ON public.events(event_pass_id);
+CREATE INDEX IF NOT EXISTS idx_event_passes_user ON public.event_passes(user_id);
+CREATE INDEX IF NOT EXISTS idx_event_passes_event ON public.event_passes(event_id);
+
 CREATE INDEX IF NOT EXISTS idx_events_organizer ON public.events(organizer_id);
 CREATE INDEX IF NOT EXISTS idx_events_org ON public.events(organization_id);
 CREATE INDEX IF NOT EXISTS idx_events_apply_slug ON public.events(apply_slug);

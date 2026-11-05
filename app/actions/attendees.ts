@@ -16,7 +16,7 @@ import {
 } from "@/lib/email";
 import Razorpay from "razorpay";
 import { createCreditNoteForPayment } from "@/lib/invoices";
-import { getUserPlan } from "@/lib/plan";
+import { getUserPlan, getEventEffectivePlan } from "@/lib/plan";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { generateGuestEmail } from "@/lib/attendee-import";
 import { sendWebhooks } from "@/lib/webhooks";
@@ -601,12 +601,12 @@ export async function bulkAddAttendees(
   } = await supabase.auth.getUser();
   if (!user) return { added: 0, skipped: 0, error: "Not authenticated." };
 
-  const plan = await getUserPlan(supabase, user.id);
-  if (!plan.canCSV) {
+  const eventPlan = await getEventEffectivePlan(supabase, eventId, user.id);
+  if (!eventPlan.canCSV) {
     return {
       added: 0,
       skipped: 0,
-      error: "CSV upload is available on Starter and Pro plans. Upgrade to use this feature.",
+      error: "CSV upload is available on Starter, Pro, and Single Event Pass events. Upgrade to use this feature.",
     };
   }
 
@@ -1815,9 +1815,9 @@ export async function exportAttendeesCSV(
   } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated." };
 
-  const plan = await getUserPlan(supabase, user.id);
-  if (!plan.canExport) {
-    return { error: "Data export is available on the Pro plan. Upgrade to use this feature." };
+  const eventPlan = await getEventEffectivePlan(supabase, eventId, user.id);
+  if (!eventPlan.canExport) {
+    return { error: "Data export is available on the Pro plan or with a Single Event Pass. Upgrade to use this feature." };
   }
 
   const event = await getEventForOrganizer(supabase, eventId, user.id);

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getUserPlan } from "@/lib/plan";
+import { getUserPlan, getEventEffectivePlan } from "@/lib/plan";
 
 export const dynamic = "force-dynamic";
 
@@ -54,11 +54,11 @@ export async function GET(
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
-  // Check plan export capability
-  const plan = await getUserPlan(supabase, event.organizer_id || user.id);
-  if (!plan.canExport) {
+  // Check plan export capability (evaluating event pass pro override)
+  const eventPlan = await getEventEffectivePlan(supabase, eventId, event.organizer_id || user.id);
+  if (!eventPlan.canExport) {
     return NextResponse.json(
-      { error: "Data export is available on the Pro plan. Upgrade to use this feature." },
+      { error: "Data export is available on the Pro plan or with a Single Event Pass. Upgrade to use this feature." },
       { status: 403 }
     );
   }

@@ -1,6 +1,7 @@
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { getSupabaseUrl } from "@/lib/supabase/config";
 import { SELF_SERVICE_PLAN_LIMITS, UNLIMITED_PLAN_LIMIT } from "@/lib/billing/plan-limits";
+import { isEventPassProFeature, EVENT_PASSES } from "@/lib/billing/event-passes";
 
 export type PlanSlug = "free" | "starter" | "pro" | "business" | "campus" | "enterprise" | "founder" | "lifetime" | "managed_enterprise";
 
@@ -136,10 +137,33 @@ export type EntitlementFeature =
   | "whatsappSelfService";
 
 export function canUseFeature(
-  tierOrPlan: string | PlanLimits | { slug?: string; tier?: string } | null | undefined,
+  tierOrPlan: string | PlanLimits | { slug?: string; tier?: string; canUse?: (f: EntitlementKey) => boolean } | null | undefined,
   feature: EntitlementFeature
 ): boolean {
   if (!tierOrPlan) return false;
+
+  // Handle PlanLimits or EventEffectivePlan instances with custom canUse evaluation
+  if (typeof tierOrPlan === "object" && "canUse" in tierOrPlan && typeof tierOrPlan.canUse === "function") {
+    const featureMap: Record<EntitlementFeature, EntitlementKey> = {
+      csvImport: "csv_import",
+      csvExport: "csv_export",
+      customPassDesign: "custom_pass_design",
+      removeBranding: "remove_branding",
+      advancedAnalytics: "advanced_analytics",
+      prioritySupport: "priority_support",
+      customDomain: "custom_domain",
+      apiAccess: "api_access",
+      webhooks: "webhooks",
+      advancedPermissions: "team_permissions_advanced",
+      crossEventAnalytics: "cross_event_analytics",
+      whatsappSelfService: "whatsapp_self_service",
+    };
+    const mappedKey = featureMap[feature];
+    if (mappedKey) {
+      return tierOrPlan.canUse(mappedKey);
+    }
+  }
+
   let tierKey = "FREE";
 
   if (typeof tierOrPlan === "string") {
@@ -588,5 +612,156 @@ export async function getUserPlan(supabase: any, userId: string): Promise<PlanLi
   }
 
   return fromSlug(slug);
+}
+
+export interface EventEffectivePlan extends PlanLimits {
+  isEventPass: boolean;
+  passType?: "event" | "event_plus" | "event_pro" | string;
+  passRegistrationLimit?: number;
+  basePlanSlug: PlanSlug;
+  platformFeePercent: number;
+}
+
+/**
+ * Resolves the effective plan limits and capabilities for a specific event context.
+ *
+ * When an event has an attached Single Event Pass (Event, Event Plus, Event Pro):
+ * - The event receives PRO PLAN features FOR THAT ONE EVENT ONLY:
+ *   - 100% White-label (no watermark / remove_branding)
+ *   - 0% platform ticket fee
+ *   - Sub-second QR gate scanners & check-in capabilities
+ *   - Custom pass design / Pass Studio
+ *   - CSV export & import for event attendees
+ *   - Unlimited custom fields / registration form questions
+ *   - Registration capacity up to the pass limit (250, 1,000, or 2,500)
+ *
+ * RESTRICTIONS:
+ * - The user's account-level plan is NOT upgraded. Base plan remains Free.
+ * - Global account limits (e.g. maxEvents / events_per_month = 1) remain strictly enforced.
+ * - Account-level features (custom_domain, cross_event_analytics, api_access) remain disabled.
+ * - Other events created by the organizer do NOT receive Pro features.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function getEventEffectivePlan(
+  supabase: any,
+  eventOrId: string | { id?: string; organizer_id?: string; event_pass_id?: string | null; [key: string]: unknown },
+  fallbackUserId?: string
+): Promise<EventEffectivePlan> {
+  const admin = getAdminClientSafe() || supabase;
+  let eventId: string | undefined = undefined;
+  let organizerId: string | undefined = fallbackUserId;
+  let eventPassId: string | null | undefined = undefined;
+
+  if (typeof eventOrId === "string") {
+    eventId = eventOrId;
+    if (admin && typeof admin.from === "function") {
+      try {
+        const { data: eventRow } = await admin
+          .from("events")
+          .select("id, organizer_id, event_pass_id")
+          .eq("id", eventId)
+          .maybeSingle();
+        if (eventRow) {
+          organizerId = eventRow.organizer_id || organizerId;
+          eventPassId = eventRow.event_pass_id;
+        }
+      } catch {
+        // fallback to provided user
+      }
+    }
+  } else if (eventOrId && typeof eventOrId === "object") {
+    eventId = eventOrId.id;
+    organizerId = (eventOrId.organizer_id as string) || fallbackUserId;
+    eventPassId = eventOrId.event_pass_id as string | null | undefined;
+  }
+
+  const basePlan = await getUserPlan(admin || supabase, organizerId || "");
+
+  // Check if an event pass is linked via event_pass_id or attached in event_passes
+  let attachedPass: { id: string; pass_type: string; registration_limit: number; status: string } | null = null;
+
+  if (eventPassId && admin && typeof admin.from === "function") {
+    try {
+      const { data: p } = await admin
+        .from("event_passes")
+        .select("id, pass_type, registration_limit, status")
+        .eq("id", eventPassId)
+        .maybeSingle();
+      if (p) attachedPass = p;
+    } catch {
+      // ignore
+    }
+  }
+
+  if (!attachedPass && eventId && admin && typeof admin.from === "function") {
+    try {
+      const { data: p } = await admin
+        .from("event_passes")
+        .select("id, pass_type, registration_limit, status")
+        .eq("event_id", eventId)
+        .eq("status", "attached")
+        .maybeSingle();
+      if (p) attachedPass = p;
+    } catch {
+      // ignore
+    }
+  }
+
+  // If no event pass is attached, return the organizer's base plan
+  if (!attachedPass && !eventPassId) {
+    return {
+      ...basePlan,
+      isEventPass: false,
+      basePlanSlug: basePlan.slug,
+      platformFeePercent: basePlan.slug === "free" ? 2.0 : 0,
+    };
+  }
+
+  // An event pass is attached to this specific event!
+  const passType = attachedPass?.pass_type || "event";
+  const defaultCapacity = passType === "event_pro" ? 2500 : passType === "event_plus" ? 1000 : 250;
+  const passLimit = attachedPass?.registration_limit || defaultCapacity;
+
+  return {
+    slug: "pro", // Effective event-scoped tier is Pro
+    basePlanSlug: basePlan.slug,
+    isEventPass: true,
+    passType,
+    passRegistrationLimit: passLimit,
+    platformFeePercent: 0, // 0% platform ticket fee
+
+    // Feature check: event-scoped features unlock to Pro; account-scoped remain on base plan!
+    canUse: (feature: EntitlementKey) => {
+      if (isEventPassProFeature(feature)) {
+        return true;
+      }
+      return basePlan.canUse(feature);
+    },
+
+    // Quotas: registrations and custom fields unlock for this event;
+    // Account-level limits (max concurrent events, team seats) remain strictly restricted!
+    getLimit: (key: LimitKey) => {
+      if (key === "registrations_per_month") {
+        return passLimit;
+      }
+      if (key === "custom_fields") {
+        return Infinity; // Unlimited custom fields for this event
+      }
+      // STRICT RESTRICTION: account events limit and seats stay on the base plan
+      return basePlan.getLimit(key);
+    },
+
+    // Legacy compat properties:
+    maxEvents: basePlan.maxEvents, // RESTRICTED to base plan (e.g., 1 for free)!
+    maxAttendees: passLimit,
+    unlimited: false,
+    canCSV: true, // CSV upload for this event
+    canExport: true, // CSV export for this event
+    canRemoveBranding: true, // 100% white-label (no watermark)
+    canUseAPI: basePlan.canUseAPI, // RESTRICTED to base plan!
+    canCreatePaidEvents: true,
+    canCreateOrganizations: basePlan.canCreateOrganizations, // RESTRICTED to base plan!
+    canWhatsAppSelfService: basePlan.canWhatsAppSelfService, // RESTRICTED to base plan!
+  };
 }
 

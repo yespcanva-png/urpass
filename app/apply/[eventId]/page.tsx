@@ -171,7 +171,7 @@ export default async function ApplyPage({
 
   const query = supabase
     .from("events")
-    .select("id, name, description, event_date, start_time, end_time, venue, auto_approve, is_paid_event, ticket_price, attendee_limit, organizer_id, organization_id, event_type, apply_slug, custom_fields, custom_pass_design, registration_opens_at, registration_closes_at, currency, timezone, country_code, locale")
+    .select("id, name, description, event_date, start_time, end_time, venue, auto_approve, is_paid_event, ticket_price, attendee_limit, organizer_id, organization_id, event_type, apply_slug, custom_fields, custom_pass_design, registration_opens_at, registration_closes_at, currency, timezone, country_code, locale, event_pass_id")
     .eq("status", "active")
     .eq("application_enabled", true);
 
@@ -295,13 +295,15 @@ export default async function ApplyPage({
 
   const isTrialExpired = sub?.is_trial && sub?.trial_ends_at && new Date(sub.trial_ends_at) < new Date();
   const planSlug = isTrialExpired ? "free" : ((sub?.plan as unknown as { slug: string } | null)?.slug ?? "free");
-  console.log("[apply] organizer_id:", event.organizer_id, "planSlug:", planSlug);
-  const isPro = ["pro", "business", "campus", "enterprise"].includes(planSlug);
-  const canRemoveBranding = planSlug !== "free";
+  const hasEventPass = Boolean((event as { event_pass_id?: string | null }).event_pass_id);
+  console.log("[apply] organizer_id:", event.organizer_id, "planSlug:", planSlug, "hasEventPass:", hasEventPass);
+  const isPro = ["pro", "business", "campus", "enterprise"].includes(planSlug) || hasEventPass;
+  const canRemoveBranding = planSlug !== "free" || hasEventPass;
   const orgProfile = canRemoveBranding ? orgProfileRaw : null;
 
   const branding: Branding = {
-    showUrpassBranding: !(canRemoveBranding && orgProfile?.hide_urpass_branding),
+    // Single Event Pass is 100% white-label: UrPass watermark is completely removed
+    showUrpassBranding: hasEventPass ? false : !(canRemoveBranding && orgProfile?.hide_urpass_branding),
     orgName: (isPro && orgProfile?.org_name) ? orgProfile.org_name : null,
     brandColor: (isPro && orgProfile?.brand_color) ? orgProfile.brand_color : "#6D28D9",
     orgLogoUrl: (isPro && orgProfile?.org_logo_url) ? orgProfile.org_logo_url : null,
