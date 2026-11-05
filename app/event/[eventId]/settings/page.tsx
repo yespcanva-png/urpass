@@ -19,7 +19,6 @@ import { slugify } from "@/lib/utils";
 import CustomFieldsBuilder from "@/components/event/CustomFieldsBuilder";
 import EventImageUploader from "@/components/events/EventImageUploader";
 import EventImageCarousel from "@/components/events/EventImageCarousel";
-import TrialConfirmationModal from "@/components/billing/TrialConfirmationModal";
 import AdvancedFeaturesSettings from "@/components/event/AdvancedFeaturesSettings";
 import type { CustomFieldDefinition } from "@/types";
 
@@ -220,7 +219,6 @@ export default function EventSettingsPage() {
   const [isTrialActive, setIsTrialActive]       = useState(false);
   const [uploadingLogo, setUploadingLogo]       = useState(false);
   const [logoUploadError, setLogoUploadError]   = useState("");
-  const [trialModalOpen, setTrialModalOpen]     = useState(false);
   const [userEmail, setUserEmail]               = useState("");
   const [userName, setUserName]                 = useState("");
 
@@ -906,19 +904,18 @@ export default function EventSettingsPage() {
                     <Sparkles className="w-4 h-4 text-purple-200" />
                   </div>
                   <div>
-                    <h3 className="text-xs font-bold text-white">Start 30-Day Pro Free Trial (£0 / ₹0)</h3>
+                    <h3 className="text-xs font-bold text-white">Review Pro plan</h3>
                     <p className="text-[11px] text-purple-200/80 mt-0.5">
                       Unlock custom brand colors, logo upload, watermark removal, and full Ticket Studio.
                     </p>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setTrialModalOpen(true)}
+                <Link
+                  href="/billing?plan=pro"
                   className="px-4 py-2 rounded-lg bg-white text-neutral-900 hover:bg-neutral-100 text-xs font-bold transition-all shrink-0 cursor-pointer shadow-xs"
                 >
-                  Start Pro Trial
-                </button>
+                  Review checkout
+                </Link>
               </div>
             )}
 
@@ -1612,15 +1609,6 @@ export default function EventSettingsPage() {
         </div>
       )}
 
-      {/* 30-Day Free Trial Modal */}
-      <TrialConfirmationModal
-        isOpen={trialModalOpen}
-        onClose={() => setTrialModalOpen(false)}
-        planSlug="pro"
-        planName="Pro"
-        userEmail={userEmail}
-        userName={userName}
-      />
     </div>
   );
 }

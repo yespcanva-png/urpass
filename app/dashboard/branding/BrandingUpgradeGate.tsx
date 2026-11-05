@@ -1,18 +1,14 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { Lock, Sparkles, Check, ArrowRight, ShieldCheck, Palette, Ticket, EyeOff } from "lucide-react";
-import TrialConfirmationModal from "@/components/billing/TrialConfirmationModal";
 
 interface Props {
   userEmail?: string;
   userName?: string;
 }
 
-export default function BrandingUpgradeGate({ userEmail, userName }: Props) {
-  const [trialModalOpen, setTrialModalOpen] = useState(false);
-
+export default function BrandingUpgradeGate(_props: Props) {
   return (
     <div className="min-h-[80vh] flex flex-col items-center justify-center p-4 sm:p-6">
       <div className="max-w-xl w-full bg-white rounded-3xl border border-neutral-100 p-6 sm:p-8 shadow-sm">
@@ -23,7 +19,7 @@ export default function BrandingUpgradeGate({ userEmail, userName }: Props) {
             Pro Plan Entitlement
           </span>
           <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
-            30-Day Free Trial Available
+            Pro Plan
           </span>
         </div>
 
@@ -35,7 +31,7 @@ export default function BrandingUpgradeGate({ userEmail, userName }: Props) {
           Custom Branding & White-Label Passes
         </h1>
         <p className="text-sm text-neutral-500 leading-relaxed mb-6">
-          Opt into the <strong>Pro Plan 30-Day Free Trial</strong> to fully customize the appearance of your event passes, upload your organization logo, set custom brand palettes, and remove all &ldquo;Powered by URPASS&rdquo; watermarks.
+          Choose Pro to customize the appearance of your event passes, upload your organization logo, set custom brand palettes, and remove all &ldquo;Powered by URPASS&rdquo; watermarks.
         </p>
 
         {/* Feature Highlights Grid */}
@@ -83,15 +79,14 @@ export default function BrandingUpgradeGate({ userEmail, userName }: Props) {
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-          <button
-            type="button"
-            onClick={() => setTrialModalOpen(true)}
+          <Link
+            href="/billing?plan=pro"
             className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white shadow-sm hover:opacity-90 transition-all cursor-pointer"
             style={{ background: "linear-gradient(135deg, #6D28D9, #4c1d95)" }}
           >
             <Sparkles className="w-4 h-4 text-purple-200" />
-            <span>Start 30-Day Pro Free Trial (£0 / ₹0)</span>
-          </button>
+            <span>Review Pro checkout</span>
+          </Link>
 
           <Link
             href="/billing"
@@ -102,7 +97,7 @@ export default function BrandingUpgradeGate({ userEmail, userName }: Props) {
         </div>
 
         <p className="text-center text-[11px] text-neutral-400 mt-4">
-          Instant activation · ₹0 / £0 charged today · Full Pro feature access · Cancel anytime
+          See your full charge and access period before payment. This checkout does not set up AutoPay.
         </p>
 
         <div className="mt-6 pt-4 border-t border-neutral-100 flex items-center justify-between text-xs text-neutral-400">
@@ -115,15 +110,6 @@ export default function BrandingUpgradeGate({ userEmail, userName }: Props) {
         </div>
       </div>
 
-      {/* 30-Day Free Trial Modal */}
-      <TrialConfirmationModal
-        isOpen={trialModalOpen}
-        onClose={() => setTrialModalOpen(false)}
-        planSlug="pro"
-        planName="Pro"
-        userEmail={userEmail}
-        userName={userName}
-      />
     </div>
   );
 }

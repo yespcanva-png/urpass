@@ -32,6 +32,9 @@ import {
   BillingCycle,
 } from "@/lib/billing/catalog";
 import { calculateGst, formatInr } from "@/lib/billing/tax";
+import { SELF_SERVICE_PLAN_LIMITS, formatPlanLimit } from "@/lib/billing/plan-limits";
+import { EVENT_PASSES } from "@/lib/billing/event-passes";
+import { SOFTWARE_PRICES } from "@/lib/billing/software-prices";
 import { persistCountryPreference, detectCountryClient } from "@/lib/country-config";
 import LeadCaptureModal from "@/components/marketing/LeadCaptureModal";
 import Navbar from "@/components/landing/Navbar";
@@ -51,9 +54,9 @@ const GBP_PRICES: Record<
   { monthly: number; annual: number }
 > = {
   free: { monthly: 0, annual: 0 },
-  starter: { monthly: 15, annual: 120 },
-  pro: { monthly: 35, annual: 300 },
-  business: { monthly: 79, annual: 699 },
+  starter: { monthly: SOFTWARE_PRICES.starter.gbpMonthly / 100, annual: SOFTWARE_PRICES.starter.gbpAnnual / 100 },
+  pro: { monthly: SOFTWARE_PRICES.pro.gbpMonthly / 100, annual: SOFTWARE_PRICES.pro.gbpAnnual / 100 },
+  business: { monthly: SOFTWARE_PRICES.business.gbpMonthly / 100, annual: SOFTWARE_PRICES.business.gbpAnnual / 100 },
 };
 
 const GBP_MANAGED_PRICES: Record<string, number> = {
@@ -177,7 +180,7 @@ export default function PricingContent({
                     )}
                   </div>
                   <p className="text-[11px] text-neutral-500 leading-tight">
-                    Independent SaaS platform
+                    Software access, paid for one period at checkout
                   </p>
                 </div>
               </button>
@@ -312,11 +315,17 @@ export default function PricingContent({
                     Single Event Pass — {country === "GB" ? "£5" : "₹299"}
                   </h3>
                   <p className="text-xs text-neutral-600 mt-1 leading-relaxed">
-                    Hosting just one event? Don&apos;t get locked into a monthly subscription. Unlock 500 attendees, remove all &ldquo;Powered by UrPass&rdquo; watermarks, and get sub-second QR entry at gates.
+                    Pay once for one event with up to {EVENT_PASSES.event.registrations} registrations. No recurring subscription or AutoPay mandate.
                   </p>
+                  <p className="mt-2 text-[11px] text-neutral-600">
+                    {country === "GB"
+                      ? `Need more capacity? Event Plus: £10 for ${EVENT_PASSES.event_plus.registrations.toLocaleString("en-GB")} registrations. Event Pro: £19 for ${EVENT_PASSES.event_pro.registrations.toLocaleString("en-GB")}. Prices exclude VAT.`
+                      : `Need more capacity? Event Plus: ₹${EVENT_PASSES.event_plus.pricePaise / 100} for ${EVENT_PASSES.event_plus.registrations.toLocaleString("en-IN")} registrations. Event Pro: ₹${EVENT_PASSES.event_pro.pricePaise / 100} for ${EVENT_PASSES.event_pro.registrations.toLocaleString("en-IN")}. Prices exclude GST.`}
+                  </p>
+                  <Link href="/billing?pass=1" className="mt-2 inline-block text-xs font-semibold text-amber-800 underline underline-offset-2">Compare all event passes</Link>
                   <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 mt-3.5 text-[11px] text-neutral-700 font-medium">
                     <span className="flex items-center gap-1.5">
-                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> Up to 500 attendees
+                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> Up to {EVENT_PASSES.event.registrations} registrations
                     </span>
                     <span className="flex items-center gap-1.5">
                       <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> 100% White-label (no watermark)
@@ -342,7 +351,7 @@ export default function PricingContent({
                     type="button"
                     onClick={() => {
                       if (!isAuthenticated) {
-                        window.location.href = "/signup?ref=single-event-pass";
+                        window.location.href = "/signup?next=%2Fbilling%3Fpass%3D1";
                       } else {
                         setPassCheckoutOpen(true);
                       }
@@ -362,7 +371,7 @@ export default function PricingContent({
                       <Sparkles className="w-3 h-3 text-purple-700" /> Done-For-You Service
                     </span>
                     <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md border border-emerald-200">
-                      FREE for 1st Event
+                      Free if you have no existing events
                     </span>
                   </div>
                   <h3 className="text-lg font-bold text-neutral-900">
@@ -370,6 +379,9 @@ export default function PricingContent({
                   </h3>
                   <p className="text-xs text-neutral-600 mt-1 leading-relaxed">
                     Don&apos;t want to learn software? Send us your poster and ticket tiers. Our engineers build your registration page, brand your ticket passes, and configure your QR gates in under 24 hours.
+                  </p>
+                  <p className="text-[11px] text-neutral-600 mt-2 leading-relaxed">
+                    Free setup applies when your account has no existing events; no paid software plan is required. Remote configuration and scanner guidance are included. Your team runs the event on site.
                   </p>
                   <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 mt-3.5 text-[11px] text-neutral-700 font-medium">
                     <span className="flex items-center gap-1.5">
@@ -578,6 +590,11 @@ export default function PricingContent({
 
                     {/* CTA Button */}
                     <div className="pt-2">
+                      {plan.slug !== "free" && (
+                        <p className={cn("mb-2 text-[11px] text-center", plan.popular ? "text-neutral-300" : "text-neutral-600")}>
+                          Pay once for {isMonthly ? "one month" : "one year"}. No trial or automatic renewal in this checkout.
+                        </p>
+                      )}
                       <Link
                         href={
                           isAuthenticated
@@ -585,7 +602,7 @@ export default function PricingContent({
                               ? "/dashboard"
                               : `/billing?plan=${plan.slug}`
                             : plan.slug === "free"
-                            ? "/login?intent=signup&plan=free"
+                            ? "/signup?next=/dashboard"
                             : `/billing?plan=${plan.slug}`
                         }
                         className={cn(
@@ -812,18 +829,18 @@ export default function PricingContent({
                   <td className="py-3 px-4 text-center bg-violet-50/30 font-bold text-neutral-950">
                     10 events
                   </td>
-                  <td className="py-3 px-4 text-center">30 events</td>
+                  <td className="py-3 px-4 text-center">Unlimited (fair use)</td>
                 </tr>
                 <tr className="hover:bg-neutral-50/50 transition-colors">
                   <td className="py-3 px-6 text-neutral-900 font-medium">
-                    Max Registrations / Event
+                    Registrations / Month
                   </td>
-                  <td className="py-3 px-4 text-center">100 attendees</td>
-                  <td className="py-3 px-4 text-center">1,000 attendees</td>
+                  <td className="py-3 px-4 text-center">{formatPlanLimit(SELF_SERVICE_PLAN_LIMITS.free.registrationsPerMonth)}</td>
+                  <td className="py-3 px-4 text-center">{formatPlanLimit(SELF_SERVICE_PLAN_LIMITS.starter.registrationsPerMonth)}</td>
                   <td className="py-3 px-4 text-center bg-violet-50/30 font-bold text-neutral-950">
-                    5,000 attendees
+                    {formatPlanLimit(SELF_SERVICE_PLAN_LIMITS.pro.registrationsPerMonth)}
                   </td>
-                  <td className="py-3 px-4 text-center">15,000 attendees</td>
+                  <td className="py-3 px-4 text-center">{formatPlanLimit(SELF_SERVICE_PLAN_LIMITS.business.registrationsPerMonth)}</td>
                 </tr>
                 <tr className="hover:bg-neutral-50/50 transition-colors">
                   <td className="py-3 px-6 text-neutral-900 font-medium">Team Member Seats</td>
@@ -1078,6 +1095,15 @@ export default function PricingContent({
           </div>
         </section>
 
+        <section className="mb-16 rounded-3xl border border-neutral-200 bg-white p-7 sm:p-9 flex flex-col sm:flex-row gap-5 sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider text-violet-700">Separate lifetime offer</p>
+            <h2 className="mt-2 text-xl font-bold text-neutral-950">Founder Lifetime Access — {country === "GB" ? "£249" : "₹19,999"} one time</h2>
+            <p className="mt-2 text-sm text-neutral-600">A promotional license with no renewal charge. Review eligibility and terms before purchase.</p>
+          </div>
+          <Link href={country === "GB" ? "/founder-lifetime-deal?country=GB" : "/founder-lifetime-deal"} className="shrink-0 rounded-xl bg-neutral-950 px-5 py-3 text-center text-sm font-semibold text-white hover:bg-neutral-800">View lifetime offer</Link>
+        </section>
+
         {/* ── SECTION F: GST & COMPLIANCE BENTO ── */}
         <section className="mb-24 grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white p-7 rounded-3xl border border-neutral-200/90 shadow-sm hover:shadow-md transition-all">
@@ -1086,7 +1112,7 @@ export default function PricingContent({
             </div>
             <h4 className="font-bold text-neutral-950 text-lg mb-2">Zero Ticket Commission</h4>
             <p className="text-xs text-neutral-600 leading-relaxed">
-              We never take 5%, 8%, or 10% of your ticket sales. Keep 100% of your ticket sales revenue. Flat monthly or per-event billing only.
+              UrPass charges 0% platform commission on paid ticket sales. Your payment gateway may charge processing fees, so the amount settled can be less than the ticket price.
             </p>
           </div>
 
@@ -1126,11 +1152,11 @@ export default function PricingContent({
             {[
               {
                 q: "What is the difference between Self-Service and Remote Managed Service?",
-                a: "Self-Service gives you full access to our cloud software to create, customize, and manage your events yourself on a monthly subscription. Remote Managed Services assigns our engineering coordinators to configure everything remotely for you (forms, tiers, QR passes, coordinator training) for a single flat fee per event.",
+                a: "Self-Service lets you configure events in our software. The current checkout takes a one-time payment for a month or year of access, without automatic renewal. Remote Managed Services assigns our coordinators to configure forms, tiers, QR passes and training for a separate one-time event fee.",
               },
               {
                 q: "Does UrPass charge commission on paid ticket sales?",
-                a: "No! Unlike traditional ticketing portals that deduct 5% to 8% plus booking fees, UrPass charges 0% platform commission on all paid plans (Starter, Pro, Business). Ticket revenues settle directly into your connected Razorpay payment gateway.",
+                a: "UrPass charges 0% platform commission on paid plans. Your payment gateway may charge processing fees, which are separate from UrPass pricing. Ticket revenues settle into your connected gateway account after those fees.",
               },
               {
                 q: "Do I have to buy a monthly subscription if I choose Remote Managed Service?",
@@ -1146,7 +1172,7 @@ export default function PricingContent({
               },
               {
                 q: "Can I sell paid tickets on the Free plan?",
-                a: "No. The Free plan is limited to free RSVP events up to 100 attendees. To sell paid tickets with 0% platform commission, choose Starter (₹499), Pro (₹999), or Business (₹2,499).",
+                a: "No. The Free plan is limited to free RSVP events and 50 registrations per month. To sell paid tickets with 0% UrPass platform commission, choose Starter (₹499), Pro (₹999), or Business (₹2,499). Payment gateway fees still apply.",
               },
               {
                 q: "Does UrPass provide barcode scanners or phones at the gates?",
@@ -1202,7 +1228,7 @@ export default function PricingContent({
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-xl mx-auto">
           <Link
-            href="/login?intent=signup&plan=free"
+            href="/signup?next=/dashboard"
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-neutral-950 px-7 py-3.5 rounded-xl text-sm font-semibold hover:bg-neutral-100 transition-colors shadow-sm"
           >
             <span>Start Free Today</span>
@@ -1251,8 +1277,8 @@ export default function PricingContent({
         onClose={() => setPassCheckoutOpen(false)}
         passType="event"
         passName="Single Event Pass"
-        priceRupees={299}
-        registrationLimit={500}
+        priceRupees={EVENT_PASSES.event.pricePaise / 100}
+        registrationLimit={EVENT_PASSES.event.registrations}
         userEmail={userEmail}
         userName="Organizer"
         currency={country === "GB" ? "GBP" : "INR"}

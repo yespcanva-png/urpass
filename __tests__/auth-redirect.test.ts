@@ -58,6 +58,13 @@ describe("resolvePostAuthRedirect", () => {
     expect(resolvePostAuthRedirect(params)).toBe("/billing?tab=invoices");
   });
 
+  it("keeps a selected paid plan through login, signup, and email confirmation callbacks", () => {
+    const target = "/billing?plan=pro";
+    expect(resolvePostAuthRedirect(makeParams({ next: target }))).toBe(target);
+    expect(resolvePostAuthRedirect(makeParams({ next: target, from: "pricing" }))).toBe(target);
+    expect(resolvePostAuthRedirect(makeParams({ next: "/billing", plan: "pro" }))).toBe(target);
+  });
+
   it("preserves other safe relative routes when not from pricing or founder deal", () => {
     const params = makeParams({ next: "/org/acme/join?token=123" });
     expect(resolvePostAuthRedirect(params)).toBe("/org/acme/join?token=123");

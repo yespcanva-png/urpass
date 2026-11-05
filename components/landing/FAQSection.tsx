@@ -35,7 +35,7 @@ export default function FAQSection({ initialCountry = "IN" }: Props) {
       q: "What is included in the Managed Event Setup packages?",
       a: isUk
         ? "We offer four managed tiers: Essential (£25) for simple event configuration and forms; Professional (£99) for branded pass designs and scanner team training; Business (£299) for multi-gate operations and live event-day standby; and Enterprise (£799+) for custom multi-event management with dedicated account management."
-        : "We offer four managed tiers: Essential (₹1,000) for simple event setup and forms; Professional (₹5,000) for custom branded passes, payment links, and team training; Business (₹15,000) for multi-gate operations, bulk imports, and live event-day standby; and Enterprise (₹49,000+) for multi-event custom operational roadmaps with on-ground technical assistance.",
+        : "Remote managed setup starts at ₹999 plus GST; it is free when the organizer has no existing events. Larger remote managed packages and their scope are listed on the pricing page. On-site staff and equipment are not included.",
     },
     {
       q: "Are managed-service fees separate from software subscriptions?",
@@ -57,11 +57,11 @@ export default function FAQSection({ initialCountry = "IN" }: Props) {
       q: "How does UrPass pricing work for organizers?",
       a: isUk
         ? "Organizers can choose self-service monthly subscriptions: Starter (£15/mo), Pro (£35/mo), or Business (£79/mo) with direct activation and cancel-anytime renewal. Alternatively, one-off event passes (£5 / £10 / £19) are available if you only host occasional events."
-        : "Organizers can choose self-service plans (Starter ₹499/mo, Pro ₹999/mo, Business ₹2,499/mo) with transparent cancel-anytime renewal. Alternatively, single event passes (₹299 / ₹599 / ₹999) are available for one-off events.",
+        : "Organizers can pay once for one month of access: Starter ₹499, Pro ₹999, or Business ₹2,499, plus GST. This checkout has no automatic renewal. Single-event passes cost ₹299 for 250 registrations, ₹599 for 1,000, or ₹999 for 2,500, plus GST.",
     },
     {
       q: "Does UrPass take a cut of my ticket sales?",
-      a: "No. UrPass charges 0% platform commission on ticket sales. Standard payment gateway processing fees apply (e.g. ~2% for Razorpay / UPI in India or Stripe in the UK), and you receive 100% of your ticket revenue directly into your bank account.",
+      a: "UrPass charges 0% platform commission on paid plans. Payment gateway processing fees still apply and are set by the gateway and payment method. Ticket revenue settles to your connected gateway account after those fees.",
     },
   ];
 

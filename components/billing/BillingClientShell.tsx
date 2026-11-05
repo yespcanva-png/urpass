@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
+import { SOFTWARE_PRICES } from "@/lib/billing/software-prices";
 import {
   CreditCard,
   Sparkles,
@@ -26,9 +27,9 @@ import { detectCountryClient } from "@/lib/country-config";
 
 const UK_PLAN_PRICES: Record<string, { monthly: number; annual: number }> = {
   free: { monthly: 0, annual: 0 },
-  starter: { monthly: 15, annual: 120 },
-  pro: { monthly: 35, annual: 300 },
-  business: { monthly: 79, annual: 699 },
+  starter: { monthly: SOFTWARE_PRICES.starter.gbpMonthly / 100, annual: SOFTWARE_PRICES.starter.gbpAnnual / 100 },
+  pro: { monthly: SOFTWARE_PRICES.pro.gbpMonthly / 100, annual: SOFTWARE_PRICES.pro.gbpAnnual / 100 },
+  business: { monthly: SOFTWARE_PRICES.business.gbpMonthly / 100, annual: SOFTWARE_PRICES.business.gbpAnnual / 100 },
   founder: { monthly: 249, annual: 249 },
 };
 

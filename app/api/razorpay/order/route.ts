@@ -7,6 +7,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { notifyOwnerPaymentAttempt } from "@/lib/email";
 import { validateGstin } from "@/lib/validations/gstin";
+import { SOFTWARE_PRICES } from "@/lib/billing/software-prices";
 
 export const dynamic = "force-dynamic";
 
@@ -18,12 +19,11 @@ interface BillingDetailsInput {
   stateCode?: string | null;
 }
 
-// V1 plan prices in paise (INR) and pence (GBP) — source of truth for what Razorpay charges.
-// Must stay in sync with PLANS in app/billing/page.tsx and PLAN_PRICES in CheckoutButton.tsx.
+// The order amount is resolved by the pricing engine; this map validates paid slugs.
 const V1_PRICES_PAISE: Record<string, number> = {
-  starter:          49900,
-  pro:              99900,
-  business:        249900,
+  starter:          SOFTWARE_PRICES.starter.inrMonthly,
+  pro:              SOFTWARE_PRICES.pro.inrMonthly,
+  business:         SOFTWARE_PRICES.business.inrMonthly,
   founder:        1999900,
   lifetime:       1999900,
   founder_lifetime: 1999900,
@@ -31,9 +31,9 @@ const V1_PRICES_PAISE: Record<string, number> = {
 };
 
 const UK_PRICES_PENCE: Record<string, { monthly: number; annual: number }> = {
-  starter:          { monthly: 1500,  annual: 12000 },
-  pro:              { monthly: 3500,  annual: 30000 },
-  business:         { monthly: 7900,  annual: 69900 },
+  starter:          { monthly: SOFTWARE_PRICES.starter.gbpMonthly, annual: SOFTWARE_PRICES.starter.gbpAnnual },
+  pro:              { monthly: SOFTWARE_PRICES.pro.gbpMonthly, annual: SOFTWARE_PRICES.pro.gbpAnnual },
+  business:         { monthly: SOFTWARE_PRICES.business.gbpMonthly, annual: SOFTWARE_PRICES.business.gbpAnnual },
   founder:          { monthly: 24900, annual: 24900 },
   lifetime:         { monthly: 24900, annual: 24900 },
   founder_lifetime: { monthly: 24900, annual: 24900 },

@@ -58,6 +58,11 @@ export function resolvePostAuthRedirect(
 
   // 1. If explicit candidate is already a /billing route, preserve it
   if (safeCandidate && safeCandidate.startsWith("/billing")) {
+    if (plan && ["starter", "pro", "business", "founder"].includes(plan)) {
+      const url = new URL(safeCandidate, "https://urpass.space");
+      if (!url.searchParams.has("plan")) url.searchParams.set("plan", plan);
+      return `${url.pathname}${url.search}${url.hash}`;
+    }
     return safeCandidate;
   }
 

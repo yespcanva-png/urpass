@@ -7,6 +7,8 @@ import { detectCountryFromHeaders } from "@/lib/country-config";
 import { getUserPlan } from "@/lib/plan";
 import UpgradeCelebration from "@/components/billing/UpgradeCelebration";
 import BillingClientShell, { type InvoiceItem } from "@/components/billing/BillingClientShell";
+import { SELF_SERVICE_PLAN_LIMITS, formatPlanLimit } from "@/lib/billing/plan-limits";
+import { SOFTWARE_PRICES } from "@/lib/billing/software-prices";
 
 export const metadata: Metadata = {
   title: "Billing & Subscriptions | URPASS",
@@ -24,7 +26,7 @@ const PLANS = [
     annualTotal: 0,
     features: [
       "1 event at a time",
-      "50 registrations/month",
+      `${formatPlanLimit(SELF_SERVICE_PLAN_LIMITS.free.registrationsPerMonth)} registrations/month`,
       "1 organizer seat",
       "QR passes & check-in",
       "Attendee approval",
@@ -35,11 +37,11 @@ const PLANS = [
     slug: "starter",
     name: "Starter",
     desc: "For independent organizers.",
-    priceMonthly: 499,
-    annualTotal: 4990,
+    priceMonthly: SOFTWARE_PRICES.starter.inrMonthly / 100,
+    annualTotal: SOFTWARE_PRICES.starter.inrAnnual / 100,
     features: [
-      "10 events/month",
-      "500 registrations/month",
+      "3 active events",
+      `${formatPlanLimit(SELF_SERVICE_PLAN_LIMITS.starter.registrationsPerMonth)} registrations/month`,
       "2 organizer seats",
       "CSV import & export",
       "10 custom fields",
@@ -50,11 +52,11 @@ const PLANS = [
     slug: "pro",
     name: "Pro",
     desc: "For growing event teams.",
-    priceMonthly: 999,
-    annualTotal: 9990,
+    priceMonthly: SOFTWARE_PRICES.pro.inrMonthly / 100,
+    annualTotal: SOFTWARE_PRICES.pro.inrAnnual / 100,
     features: [
-      "Unlimited events",
-      "2,500 registrations/month",
+      "10 active events",
+      `${formatPlanLimit(SELF_SERVICE_PLAN_LIMITS.pro.registrationsPerMonth)} registrations/month`,
       "5 organizer seats",
       "Custom pass design & branding",
       "Advanced analytics",
@@ -65,11 +67,11 @@ const PLANS = [
     slug: "business",
     name: "Business",
     desc: "For organizations at scale.",
-    priceMonthly: 2499,
-    annualTotal: 24990,
+    priceMonthly: SOFTWARE_PRICES.business.inrMonthly / 100,
+    annualTotal: SOFTWARE_PRICES.business.inrAnnual / 100,
     features: [
       "Unlimited events",
-      "10,000 registrations/month",
+      `${formatPlanLimit(SELF_SERVICE_PLAN_LIMITS.business.registrationsPerMonth)} registrations/month`,
       "15 organizer seats",
       "Custom domain, API & webhooks",
       "Advanced permissions",
@@ -170,14 +172,20 @@ function BillingShellSkeleton() {
 }
 
 export default async function BillingPage(props: {
-  searchParams?: Promise<{ country?: string; trial?: string; tab?: string; reason?: string; plan?: string }>;
+  searchParams?: Promise<{ country?: string; trial?: string; tab?: string; reason?: string; plan?: string; pass?: string }>;
 }) {
   const searchParams = props.searchParams ? await props.searchParams : {};
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (!user) {
+    const selectedPlan = searchParams?.plan;
+    const next = selectedPlan && ["starter", "pro", "business", "founder"].includes(selectedPlan)
+      ? `/billing?plan=${encodeURIComponent(selectedPlan)}`
+      : searchParams?.pass === "1" ? "/billing?pass=1" : "/billing";
+    redirect(`/login?next=${encodeURIComponent(next)}`);
+  }
 
   const [{ data: subData }, { data: profile }, { data: invoiceData }, plan] =
     await Promise.all([

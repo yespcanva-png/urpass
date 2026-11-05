@@ -1,5 +1,6 @@
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { getSupabaseUrl } from "@/lib/supabase/config";
+import { SOFTWARE_PRICES } from "@/lib/billing/software-prices";
 import type {
   BillingPlan,
   BillingPlanPrice,
@@ -23,26 +24,17 @@ export const STATIC_V2_PLANS: Record<PlanSlug, { name: string; desc: string; inr
   starter: {
     name: "Starter",
     desc: "For individual organizers and small event teams.",
-    inrMonthly: 49900,
-    inrAnnual: 499000,
-    gbpMonthly: 1500,
-    gbpAnnual: 12000,
+    ...SOFTWARE_PRICES.starter,
   },
   pro: {
     name: "Pro",
     desc: "For growing event teams, colleges and professional organizers.",
-    inrMonthly: 99900,
-    inrAnnual: 999000,
-    gbpMonthly: 3500,
-    gbpAnnual: 30000,
+    ...SOFTWARE_PRICES.pro,
   },
   business: {
     name: "Business",
     desc: "For organizations managing events at scale.",
-    inrMonthly: 249900,
-    inrAnnual: 2499000,
-    gbpMonthly: 7900,
-    gbpAnnual: 69900,
+    ...SOFTWARE_PRICES.business,
   },
   campus: {
     name: "Campus",
@@ -62,11 +54,8 @@ export const STATIC_V2_PLANS: Record<PlanSlug, { name: string; desc: string; inr
   },
   free: {
     name: "Free Forever",
-    desc: "Genuine free plan for 1 active event up to 100 registrations/month with QR passes and mobile scanning.",
-    inrMonthly: 0,
-    inrAnnual: 0,
-    gbpMonthly: 0,
-    gbpAnnual: 0,
+    desc: "Free plan for 1 active event and 50 registrations/month with QR passes and mobile scanning.",
+    ...SOFTWARE_PRICES.free,
   },
   managed_enterprise: {
     name: "Managed Service",

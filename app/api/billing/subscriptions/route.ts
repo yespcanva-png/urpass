@@ -139,13 +139,6 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  if (existingSub?.is_trial || existingSub?.trial_used || isFuture(existingSub?.trial_ends_at)) {
-    return NextResponse.json(
-      { error: "This account has already used a trial or legacy promotional entitlement and is not eligible for the introductory subscription offer." },
-      { status: 409 }
-    );
-  }
-
   const { data: plan } = await admin
     .from("plans")
     .select("id, name, slug")
@@ -180,6 +173,12 @@ export async function POST(req: NextRequest) {
 
   const configuredOfferId = getIntroOfferId(planSlug);
   const isValidOffer = Boolean(configuredOfferId && configuredOfferId.startsWith("offer_"));
+  if (isValidOffer && (existingSub?.is_trial || existingSub?.trial_used || isFuture(existingSub?.trial_ends_at))) {
+    return NextResponse.json(
+      { error: "This account has already used a trial and is not eligible for the introductory subscription offer." },
+      { status: 409 }
+    );
+  }
   if (body?.requireStandardPricing === true && isValidOffer) {
     return NextResponse.json({ error: "A configured promotion needs a verified checkout quote before this onboarding checkout can continue." }, { status: 503 });
   }

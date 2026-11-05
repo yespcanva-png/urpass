@@ -3,6 +3,7 @@ import { headers, cookies } from "next/headers";
 import PricingContent from "./PricingContent";
 import { createClient } from "@/lib/supabase/server";
 import { detectCountryFromHeaders } from "@/lib/country-config";
+import { SELF_SERVICE_PLAN_LIMITS } from "@/lib/billing/plan-limits";
 
 export const metadata: Metadata = {
   title: "UrPass Pricing | Event Ticketing & Remote Managed Services",
@@ -74,14 +75,14 @@ function getPricingJsonLd(isUk: boolean) {
             price: "0",
             priceCurrency: "INR",
             billingIncrement: "P1M",
-            description: "1 active event, 50 registrations/event, basic QR check-in with UrPass watermark.",
+            description: `1 active event, ${SELF_SERVICE_PLAN_LIMITS.free.registrationsPerMonth} registrations/month, basic QR check-in with UrPass watermark.`,
           },
           {
             "@type": "Offer",
             name: "Single Event License",
             price: "299",
             priceCurrency: "INR",
-            description: "₹299 one-time. 500 attendees, 0% platform commission, no watermark, custom branding, and sub-second QR entry.",
+            description: "₹299 one-time. 250 registrations for one event, 0% UrPass platform commission; gateway fees apply.",
           },
           {
             "@type": "Offer",
@@ -96,7 +97,7 @@ function getPricingJsonLd(isUk: boolean) {
             price: "499",
             priceCurrency: "INR",
             billingIncrement: "P1M",
-            description: "₹499/month + GST. 3 active events, 1,000 attendees/event, paid ticketing (0% commission), 2 team seats.",
+            description: `₹499/month + GST. 3 active events, ${SELF_SERVICE_PLAN_LIMITS.starter.registrationsPerMonth} registrations/month, paid ticketing (0% UrPass commission), 2 team seats.`,
           },
           {
             "@type": "Offer",
@@ -104,7 +105,7 @@ function getPricingJsonLd(isUk: boolean) {
             price: "999",
             priceCurrency: "INR",
             billingIncrement: "P1M",
-            description: "₹999/month + GST. 10 active events, 5,000 attendees/event, group QR, multi-gate check-in, 5 team seats.",
+            description: `₹999/month + GST. 10 active events, ${SELF_SERVICE_PLAN_LIMITS.pro.registrationsPerMonth} registrations/month, group QR, multi-gate check-in, 5 team seats.`,
           },
           {
             "@type": "Offer",
@@ -112,7 +113,7 @@ function getPricingJsonLd(isUk: boolean) {
             price: "2499",
             priceCurrency: "INR",
             billingIncrement: "P1M",
-            description: "₹2,499/month + GST. 30 active events, 15,000 attendees/event, API & webhooks, 15 team seats.",
+            description: `₹2,499/month + GST. ${SELF_SERVICE_PLAN_LIMITS.business.registrationsPerMonth} registrations/month, API & webhooks, 15 team seats.`,
           },
         ],
       },
@@ -159,7 +160,7 @@ function getPricingJsonLd(isUk: boolean) {
             name: "What is the difference between Self-Service and Remote Managed Service?",
             acceptedAnswer: {
               "@type": "Answer",
-              text: "With Self-Service, you subscribe monthly and configure your events yourself using our software. With Remote Managed Services, our technical team remotely handles your complete event setup, ticketing, QR passes, coordinator training, and event-day hotline for a one-time flat fee.",
+              text: "With Self-Service, you pay for a month or year of software access and configure events yourself. The current checkout takes a one-time payment without automatic renewal. Remote Managed Services cover remote event setup for a separate one-time fee.",
             },
           },
           {
@@ -167,7 +168,7 @@ function getPricingJsonLd(isUk: boolean) {
             name: "Does UrPass charge commission on paid ticket sales?",
             acceptedAnswer: {
               "@type": "Answer",
-              text: "No. UrPass charges 0% per-ticket platform commission on all paid plans (Starter, Pro, Business). Ticket revenues settle directly into your connected Razorpay payment gateway.",
+              text: "UrPass charges 0% per-ticket platform commission on paid plans. Payment gateway processing fees still apply, and ticket revenues settle to your connected gateway account after those fees.",
             },
           },
           {
@@ -183,7 +184,7 @@ function getPricingJsonLd(isUk: boolean) {
             name: "Can I cancel my Self-Service subscription anytime?",
             acceptedAnswer: {
               "@type": "Answer",
-              text: "Yes. You can cancel future renewals anytime directly in your customer billing portal. You retain full paid access until the end of your current paid billing period with zero cancellation fees.",
+              text: "The current self-service checkout is a one-time payment for one month or year of access, so it has no automatic renewal to cancel. Accounts with an existing AutoPay mandate can cancel future renewals in billing.",
             },
           },
         ],

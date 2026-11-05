@@ -5,6 +5,10 @@ import Link from "next/link";
 import { Check, ShieldCheck, ArrowRight, Zap, Building2, Sparkles, CreditCard, Clock } from "lucide-react";
 import AnimateIn from "@/components/ui/AnimateIn";
 import { detectCountryClient, persistCountryPreference } from "@/lib/country-config";
+import { SELF_SERVICE_PLAN_LIMITS, formatPlanLimit } from "@/lib/billing/plan-limits";
+import { SELF_SERVICE_PLANS } from "@/lib/billing/catalog";
+import { calculateGst, formatInr } from "@/lib/billing/tax";
+import { SOFTWARE_PRICES } from "@/lib/billing/software-prices";
 
 interface Props {
   initialCountry?: "IN" | "GB";
@@ -42,10 +46,10 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
           renewalNotice: "Free forever · No credit card required",
           recommended: false,
           cta: "Start Free",
-          href: "/signup?from=home-pricing&plan=free",
+          href: "/signup?next=/dashboard",
           features: [
             "1 active event",
-            "100 registrations per month",
+            `${formatPlanLimit(SELF_SERVICE_PLAN_LIMITS.free.registrationsPerMonth)} registrations per month`,
             "1 organizer team seat",
             "Basic QR pass & camera scanner",
             "Standard registration forms",
@@ -56,15 +60,15 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
           id: "starter",
           name: "Starter",
           target: "For small workshops, meetups & single sessions",
-          price: "£15",
+          price: `£${SOFTWARE_PRICES.starter.gbpMonthly / 100}`,
           period: "/month +VAT",
           renewalNotice: "UK direct activation · Cancel anytime",
           recommended: false,
           cta: "Choose Starter",
-          href: "/signup?from=home-pricing&plan=starter&country=GB&next=/billing",
+          href: "/billing?plan=starter&country=GB",
           features: [
             "3 active events",
-            "500 registrations per month",
+            `${formatPlanLimit(SELF_SERVICE_PLAN_LIMITS.starter.registrationsPerMonth)} registrations per month`,
             "2 organizer team seats",
             "Custom registration form fields",
             "Instant digital QR passes",
@@ -76,15 +80,15 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
           id: "pro",
           name: "Pro",
           target: "For college fests, hackathons & conferences",
-          price: "£35",
+          price: `£${SOFTWARE_PRICES.pro.gbpMonthly / 100}`,
           period: "/month +VAT",
           renewalNotice: "UK direct activation · Cancel anytime",
           recommended: true,
           cta: "Choose Pro",
-          href: "/signup?from=home-pricing&plan=pro&country=GB&next=/billing",
+          href: "/billing?plan=pro&country=GB",
           features: [
             "10 active events",
-            "2,500 registrations per month",
+            `${formatPlanLimit(SELF_SERVICE_PLAN_LIMITS.pro.registrationsPerMonth)} registrations per month`,
             "5 organizer team seats",
             "Session attendance tracking",
             "Custom branded pass design & logo",
@@ -97,15 +101,15 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
           id: "business",
           name: "Business",
           target: "For multi-track summits, agencies & universities",
-          price: "£79",
+          price: `£${SOFTWARE_PRICES.business.gbpMonthly / 100}`,
           period: "/month +VAT",
           renewalNotice: "UK direct activation · Cancel anytime",
           recommended: false,
           cta: "Choose Business",
-          href: "/signup?from=home-pricing&plan=business&country=GB&next=/billing",
+          href: "/billing?plan=business&country=GB",
           features: [
             "Unlimited active events*",
-            "10,000 registrations per month",
+            `${formatPlanLimit(SELF_SERVICE_PLAN_LIMITS.business.registrationsPerMonth)} registrations per month`,
             "15 organizer team seats",
             "Developer API & webhooks",
             "Session attendance tracking",
@@ -124,10 +128,10 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
           renewalNotice: "Free forever · No credit card required",
           recommended: false,
           cta: "Start Free",
-          href: "/signup?from=home-pricing&plan=free",
+          href: "/signup?next=/dashboard",
           features: [
             "1 active event",
-            "100 registrations per month",
+            `${formatPlanLimit(SELF_SERVICE_PLAN_LIMITS.free.registrationsPerMonth)} registrations per month`,
             "1 organizer team seat",
             "Basic QR pass & camera scanner",
             "Standard registration forms",
@@ -138,15 +142,15 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
           id: "starter",
           name: "Starter",
           target: "For small workshops, meetups & single sessions",
-          price: "₹499",
+          price: formatInr(SOFTWARE_PRICES.starter.inrMonthly / 100),
           period: "/month",
-          renewalNotice: "Flat SaaS pricing +18% GST · Cancel anytime",
+          renewalNotice: "One month of access · No automatic renewal",
           recommended: false,
           cta: "Choose Starter",
-          href: "/signup?from=home-pricing&plan=starter&next=/billing",
+          href: "/billing?plan=starter",
           features: [
             "3 active events",
-            "500 registrations per month",
+            `${formatPlanLimit(SELF_SERVICE_PLAN_LIMITS.starter.registrationsPerMonth)} registrations per month`,
             "2 organizer team seats",
             "Custom registration form fields",
             "Instant digital QR passes",
@@ -158,15 +162,15 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
           id: "pro",
           name: "Pro",
           target: "For college fests, hackathons & conferences",
-          price: "₹999",
+          price: formatInr(SOFTWARE_PRICES.pro.inrMonthly / 100),
           period: "/month",
-          renewalNotice: "Flat SaaS pricing +18% GST · Cancel anytime",
+          renewalNotice: "One month of access · No automatic renewal",
           recommended: true,
           cta: "Choose Pro",
-          href: "/signup?from=home-pricing&plan=pro&next=/billing",
+          href: "/billing?plan=pro",
           features: [
             "10 active events",
-            "2,500 registrations per month",
+            `${formatPlanLimit(SELF_SERVICE_PLAN_LIMITS.pro.registrationsPerMonth)} registrations per month`,
             "5 organizer team seats",
             "Session attendance tracking",
             "Custom branded pass design & logo",
@@ -179,15 +183,15 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
           id: "business",
           name: "Business",
           target: "For multi-track summits, agencies & universities",
-          price: "₹2,499",
+          price: formatInr(SOFTWARE_PRICES.business.inrMonthly / 100),
           period: "/month",
-          renewalNotice: "Flat SaaS pricing +18% GST · Cancel anytime",
+          renewalNotice: "One month of access · No automatic renewal",
           recommended: false,
           cta: "Choose Business",
-          href: "/signup?from=home-pricing&plan=business&next=/billing",
+          href: "/billing?plan=business",
           features: [
             "Unlimited active events*",
-            "10,000 registrations per month",
+            `${formatPlanLimit(SELF_SERVICE_PLAN_LIMITS.business.registrationsPerMonth)} registrations per month`,
             "15 organizer team seats",
             "Developer API & webhooks",
             "Session attendance tracking",
@@ -245,8 +249,8 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
             </h2>
             <p className="mt-3.5 text-neutral-600 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
               {isUk
-                ? "Start free with 1 event and 100 registrations, or choose flat-rate monthly subscriptions with 0% platform fee on ticket sales."
-                : "Start free with 1 active event and 100 registrations. Upgrade to Starter, Pro, or Business as your events and team scale."}
+                ? "Start free with 1 active event and 50 registrations per month, or choose a paid plan with 0% UrPass commission on ticket sales. Payment gateway fees still apply."
+                : "Start free with 1 active event and 50 registrations per month. Upgrade to Starter, Pro, or Business as your events and team scale."}
             </p>
 
             {/* Corporate Value Strip */}
@@ -344,6 +348,11 @@ export default function HomePricingSection({ initialCountry = "IN" }: Props) {
                       {plan.period}
                     </span>
                   </div>
+                  {!isUk && plan.id !== "free" && (
+                    <p className="text-xs mb-3 opacity-80">
+                      Including 18% GST: {formatInr(calculateGst(SELF_SERVICE_PLANS.find((item) => item.slug === plan.id)!.priceMonthlyPaise).totalAmountPaise / 100)} for one month
+                    </p>
+                  )}
 
                   <div
                     className={`rounded-lg px-2.5 py-1.5 text-[11px] mb-6 font-medium ${

@@ -1,3 +1,5 @@
+import { SOFTWARE_PRICES } from "@/lib/billing/software-prices";
+
 export type BillingTier = "STARTER" | "PRO" | "BUSINESS";
 export type BillingInterval = "MONTHLY" | "YEARLY";
 
@@ -15,8 +17,8 @@ export const BILLING_PLANS: Record<string, BillingPlanDefinition> = {
   STARTER_MONTHLY: {
     tier: "STARTER",
     interval: "MONTHLY",
-    price: 499,
-    pricePaise: 49900,
+    price: SOFTWARE_PRICES.starter.inrMonthly / 100,
+    pricePaise: SOFTWARE_PRICES.starter.inrMonthly,
     razorpayPlanId:
       process.env.RAZORPAY_STARTER_MONTHLY_PLAN_ID || "plan_TgkC27ktwiBn8b",
     planSlug: "starter",
@@ -26,8 +28,8 @@ export const BILLING_PLANS: Record<string, BillingPlanDefinition> = {
   STARTER_YEARLY: {
     tier: "STARTER",
     interval: "YEARLY",
-    price: 4999,
-    pricePaise: 499900,
+    price: SOFTWARE_PRICES.starter.inrAnnual / 100,
+    pricePaise: SOFTWARE_PRICES.starter.inrAnnual,
     razorpayPlanId:
       process.env.RAZORPAY_STARTER_YEARLY_PLAN_ID || "plan_TgkCnLPoiw44QA",
     planSlug: "starter",
@@ -37,8 +39,8 @@ export const BILLING_PLANS: Record<string, BillingPlanDefinition> = {
   PRO_MONTHLY: {
     tier: "PRO",
     interval: "MONTHLY",
-    price: 999,
-    pricePaise: 99900,
+    price: SOFTWARE_PRICES.pro.inrMonthly / 100,
+    pricePaise: SOFTWARE_PRICES.pro.inrMonthly,
     razorpayPlanId:
       process.env.RAZORPAY_PRO_MONTHLY_PLAN_ID || "plan_TgkEXl5vWzIhTS",
     planSlug: "pro",
@@ -48,8 +50,8 @@ export const BILLING_PLANS: Record<string, BillingPlanDefinition> = {
   PRO_YEARLY: {
     tier: "PRO",
     interval: "YEARLY",
-    price: 9999,
-    pricePaise: 999900,
+    price: SOFTWARE_PRICES.pro.inrAnnual / 100,
+    pricePaise: SOFTWARE_PRICES.pro.inrAnnual,
     razorpayPlanId:
       process.env.RAZORPAY_PRO_YEARLY_PLAN_ID || "plan_TgkGA4nSLn91s2",
     planSlug: "pro",
@@ -59,8 +61,8 @@ export const BILLING_PLANS: Record<string, BillingPlanDefinition> = {
   BUSINESS_MONTHLY: {
     tier: "BUSINESS",
     interval: "MONTHLY",
-    price: 2499,
-    pricePaise: 249900,
+    price: SOFTWARE_PRICES.business.inrMonthly / 100,
+    pricePaise: SOFTWARE_PRICES.business.inrMonthly,
     razorpayPlanId:
       process.env.RAZORPAY_BUSINESS_MONTHLY_PLAN_ID || "plan_TgkEzt9SACX9bc",
     planSlug: "business",
@@ -70,8 +72,8 @@ export const BILLING_PLANS: Record<string, BillingPlanDefinition> = {
   BUSINESS_YEARLY: {
     tier: "BUSINESS",
     interval: "YEARLY",
-    price: 24999,
-    pricePaise: 2499900,
+    price: SOFTWARE_PRICES.business.inrAnnual / 100,
+    pricePaise: SOFTWARE_PRICES.business.inrAnnual,
     razorpayPlanId:
       process.env.RAZORPAY_BUSINESS_YEARLY_PLAN_ID || "plan_TgkIV32JgsrRgg",
     planSlug: "business",

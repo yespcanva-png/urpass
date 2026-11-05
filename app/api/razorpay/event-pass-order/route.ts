@@ -6,32 +6,14 @@ import {
 } from "@/lib/razorpay";
 import { createClient } from "@/lib/supabase/server";
 import { notifyOwnerPaymentAttempt } from "@/lib/email";
+import { EVENT_PASSES, isEventPassSlug } from "@/lib/billing/event-passes";
 
 export const dynamic = "force-dynamic";
-
-// Prices in paise (INR). Must match EVENT_PASSES in PlanGrid.tsx.
-const PASS_PRICES_PAISE: Record<string, number> = {
-  event:       29900,
-  event_plus:  59900,
-  event_pro:   99900,
-};
 
 const UK_PASS_PRICES_PENCE: Record<string, number> = {
   event:       500,
   event_plus:  1000,
   event_pro:   1900,
-};
-
-const PASS_NAMES: Record<string, string> = {
-  event:       "Event Pass",
-  event_plus:  "Event Plus Pass",
-  event_pro:   "Event Pro Pass",
-};
-
-const PASS_REG_LIMITS: Record<string, number> = {
-  event:       250,
-  event_plus:  1000,
-  event_pro:   2500,
 };
 
 export async function POST(req: NextRequest) {
@@ -50,7 +32,11 @@ export async function POST(req: NextRequest) {
   const taxRate = isUk ? 0.20 : 0.18;
   const taxName = isUk ? "VAT" : "GST";
 
-  const baseAmount = isUk ? UK_PASS_PRICES_PENCE[passType] : PASS_PRICES_PAISE[passType];
+  if (typeof passType !== "string" || !isEventPassSlug(passType)) {
+    return NextResponse.json({ error: "Invalid pass type." }, { status: 400 });
+  }
+  const pass = EVENT_PASSES[passType];
+  const baseAmount = isUk ? UK_PASS_PRICES_PENCE[passType] : pass.pricePaise;
   if (!baseAmount) {
     return NextResponse.json({ error: "Invalid pass type." }, { status: 400 });
   }
@@ -83,7 +69,7 @@ export async function POST(req: NextRequest) {
       notes: {
         user_id:            String(user.id),
         pass_type:          String(passType),
-        registration_limit: String(PASS_REG_LIMITS[passType] ?? ""),
+        registration_limit: String(pass.registrations),
         currency:           currencyCode,
         base_amount:        String(baseAmount),
         tax_amount:         String(taxAmount),
@@ -103,7 +89,7 @@ export async function POST(req: NextRequest) {
       kind: "event_pass",
       buyerName: user.user_metadata?.full_name,
       buyerEmail: user.email,
-      itemName: `${PASS_NAMES[passType]} [${currencyCode}]`,
+      itemName: `${pass.name} [${currencyCode}]`,
       amountPaise: totalAmount,
       orderId: order.id,
     });
@@ -116,7 +102,7 @@ export async function POST(req: NextRequest) {
     amount:   order.amount,
     currency: order.currency,
     keyId,
-    passName: PASS_NAMES[passType],
+    passName: pass.name,
     passType,
   });
 }

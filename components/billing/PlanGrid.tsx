@@ -24,11 +24,14 @@ import CheckoutModal from "./CheckoutModal";
 import EventPassCheckoutModal from "./EventPassCheckoutModal";
 import FounderCheckoutCta from "./FounderCheckoutCta";
 import ConciergeSetupModal from "@/components/concierge/ConciergeSetupModal";
+import { SELF_SERVICE_PLAN_LIMITS, formatPlanLimit } from "@/lib/billing/plan-limits";
+import { EVENT_PASSES as EVENT_PASS_CATALOG } from "@/lib/billing/event-passes";
+import { SOFTWARE_PRICES } from "@/lib/billing/software-prices";
 
 const UK_PLAN_PRICES: Record<string, { monthly: number; annual: number }> = {
-  starter: { monthly: 15, annual: 120 },
-  pro: { monthly: 35, annual: 300 },
-  business: { monthly: 79, annual: 699 },
+  starter: { monthly: SOFTWARE_PRICES.starter.gbpMonthly / 100, annual: SOFTWARE_PRICES.starter.gbpAnnual / 100 },
+  pro: { monthly: SOFTWARE_PRICES.pro.gbpMonthly / 100, annual: SOFTWARE_PRICES.pro.gbpAnnual / 100 },
+  business: { monthly: SOFTWARE_PRICES.business.gbpMonthly / 100, annual: SOFTWARE_PRICES.business.gbpAnnual / 100 },
 };
 
 const UK_EVENT_PASS_PRICES: Record<string, number> = {
@@ -42,11 +45,11 @@ const PLANS = [
   {
     slug: "starter",
     name: "Starter",
-    priceMonthly: 499,
-    annualTotal: 4990,
+    priceMonthly: SOFTWARE_PRICES.starter.inrMonthly / 100,
+    annualTotal: SOFTWARE_PRICES.starter.inrAnnual / 100,
     features: [
       "3 active events",
-      "500 registrations/month",
+      `${formatPlanLimit(SELF_SERVICE_PLAN_LIMITS.starter.registrationsPerMonth)} registrations/month`,
       "2 organizer seats",
       "Custom registration forms",
       "CSV import & export",
@@ -56,11 +59,11 @@ const PLANS = [
   {
     slug: "pro",
     name: "Pro",
-    priceMonthly: 999,
-    annualTotal: 9990,
+    priceMonthly: SOFTWARE_PRICES.pro.inrMonthly / 100,
+    annualTotal: SOFTWARE_PRICES.pro.inrAnnual / 100,
     features: [
       "10 active events",
-      "2,500 registrations/month",
+      `${formatPlanLimit(SELF_SERVICE_PLAN_LIMITS.pro.registrationsPerMonth)} registrations/month`,
       "5 organizer seats",
       "Session attendance tracking",
       "Custom pass design & branding",
@@ -71,11 +74,11 @@ const PLANS = [
   {
     slug: "business",
     name: "Business",
-    priceMonthly: 2499,
-    annualTotal: 24990,
+    priceMonthly: SOFTWARE_PRICES.business.inrMonthly / 100,
+    annualTotal: SOFTWARE_PRICES.business.inrAnnual / 100,
     features: [
       "Unlimited active events*",
-      "10,000 registrations/month",
+      `${formatPlanLimit(SELF_SERVICE_PLAN_LIMITS.business.registrationsPerMonth)} registrations/month`,
       "15 organizer seats",
       "Developer API & webhooks",
       "Session attendance tracking",
@@ -97,12 +100,12 @@ const EVENT_PASSES = [
   {
     slug: "event",
     name: "Single Event License",
-    price: 299,
-    registrationLimit: 500,
+    price: EVENT_PASS_CATALOG.event.pricePaise / 100,
+    registrationLimit: EVENT_PASS_CATALOG.event.registrations,
     bestFor: "Best impulse buy · No subscription needed",
     Icon: CalendarCheck,
     features: [
-      "Up to 500 registrations",
+      `Up to ${EVENT_PASS_CATALOG.event.registrations} registrations`,
       "Remove 'Powered by UrPass' watermark",
       "Fast sub-second QR entry at gates",
       "Custom branded tickets & forms",
@@ -113,8 +116,8 @@ const EVENT_PASSES = [
   {
     slug: "event_plus",
     name: "Event Plus License",
-    price: 599,
-    registrationLimit: 1000,
+    price: EVENT_PASS_CATALOG.event_plus.pricePaise / 100,
+    registrationLimit: EVENT_PASS_CATALOG.event_plus.registrations,
     bestFor: "College fests & mid-size workshops",
     Icon: ZapIcon,
     features: [
@@ -129,8 +132,8 @@ const EVENT_PASSES = [
   {
     slug: "event_pro",
     name: "Event Pro License",
-    price: 999,
-    registrationLimit: 2500,
+    price: EVENT_PASS_CATALOG.event_pro.pricePaise / 100,
+    registrationLimit: EVENT_PASS_CATALOG.event_pro.registrations,
     bestFor: "Large conferences",
     Icon: Star,
     features: [
@@ -172,7 +175,9 @@ export default function PlanGrid({
   invoices = [],
 }: Props) {
   const searchParams = useSearchParams();
-  const [tab, setTab] = useState<"subscription" | "one-event" | "lifetime" | "all">("subscription");
+  const [tab, setTab] = useState<"subscription" | "one-event" | "lifetime" | "all">(
+    searchParams?.get("pass") === "1" ? "one-event" : "subscription"
+  );
   const [cycle, setCycle] = useState<"monthly" | "annual">("monthly");
   const [passModal, setPassModal] = useState<{
     passType: string;
@@ -213,7 +218,7 @@ export default function PlanGrid({
               Business Plan + WhatsApp Integration
             </h2>
             <p className="text-xs text-neutral-500 mt-0.5">
-              Unlimited events, 10,000 attendee registrations/month, 15 team organizer seats, developer API &amp; webhooks, plus dedicated WhatsApp ticket delivery &amp; attendee notifications.
+              Unlimited events, 15,000 attendee registrations/month, 15 team organizer seats, developer API &amp; webhooks, plus dedicated WhatsApp ticket delivery &amp; attendee notifications.
             </p>
           </div>
 
@@ -429,7 +434,7 @@ export default function PlanGrid({
         <div>
           <p className="text-[10px] font-bold tracking-wider uppercase text-neutral-400">
             {tab === "subscription"
-              ? "Recurring Memberships · Starter, Pro, Business"
+              ? "Plan Access · Starter, Pro, Business"
               : tab === "one-event"
               ? "Pay As You Go · Single Event Passes"
               : tab === "lifetime"
@@ -451,7 +456,7 @@ export default function PlanGrid({
                 : "text-neutral-500 hover:text-neutral-900"
             }`}
           >
-            Subscriptions
+            Plans
           </button>
           <button
             type="button"
@@ -511,10 +516,10 @@ export default function PlanGrid({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
             <div>
               <p className="text-[10px] font-bold tracking-wider uppercase text-neutral-400">
-                Recurring Membership
+                Plan Access
               </p>
               <h3 className="text-base font-bold tracking-tight text-neutral-900">
-                Monthly &amp; Annual Subscriptions
+                Monthly &amp; Annual Access
               </h3>
             </div>
             <div className="inline-flex items-center gap-1 bg-neutral-100/90 border border-neutral-200/80 rounded-xl p-1 self-start sm:self-auto shadow-xs">
@@ -674,8 +679,8 @@ export default function PlanGrid({
                           {country === "GB"
                             ? "UK Direct Activation · Cancel renewal anytime"
                             : cycle === "annual"
-                            ? "Billed annually · Cancel renewal anytime"
-                            : "Monthly subscription · Cancel renewal anytime"}
+                            ? "Pay once for one year · No automatic renewal"
+                            : "Pay once for one month · No AutoPay or automatic renewal"}
                         </p>
                       </div>
                     )}

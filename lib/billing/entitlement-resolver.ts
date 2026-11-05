@@ -427,7 +427,7 @@ export async function resolveUserSubscriptionAccess(params: {
         expiresAt: null,
         isNewUser: false,
         introOfferEligible: false,
-        reason: "Free Forever plan is active (1 active event, 100 registrations/month).",
+        reason: "Free Forever plan is active (1 active event, 50 registrations/month).",
       };
     }
 

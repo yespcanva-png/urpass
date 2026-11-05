@@ -1,5 +1,6 @@
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { getSupabaseUrl } from "@/lib/supabase/config";
+import { SELF_SERVICE_PLAN_LIMITS } from "@/lib/billing/plan-limits";
 import type {
   EntitlementKey,
   QuotaResourceKey,
@@ -25,9 +26,9 @@ export const V2_PLAN_LIMITS: Record<
   }
 > = {
   starter: {
-    eventsPerMonth: 3,
-    registrationsPerMonth: 1000,
-    organizerSeats: 2,
+    eventsPerMonth: SELF_SERVICE_PLAN_LIMITS.starter.eventsPerMonth,
+    registrationsPerMonth: SELF_SERVICE_PLAN_LIMITS.starter.registrationsPerMonth,
+    organizerSeats: SELF_SERVICE_PLAN_LIMITS.starter.organizerSeats,
     features: new Set<EntitlementKey>([
       "csv_import",
       "csv_export",
@@ -37,9 +38,9 @@ export const V2_PLAN_LIMITS: Record<
     ]),
   },
   pro: {
-    eventsPerMonth: 10,
-    registrationsPerMonth: 5000,
-    organizerSeats: 5,
+    eventsPerMonth: SELF_SERVICE_PLAN_LIMITS.pro.eventsPerMonth,
+    registrationsPerMonth: SELF_SERVICE_PLAN_LIMITS.pro.registrationsPerMonth,
+    organizerSeats: SELF_SERVICE_PLAN_LIMITS.pro.organizerSeats,
     features: new Set<EntitlementKey>([
       "csv_import",
       "csv_export",
@@ -56,9 +57,9 @@ export const V2_PLAN_LIMITS: Record<
     ]),
   },
   business: {
-    eventsPerMonth: 999999, // Unlimited
-    registrationsPerMonth: 15000,
-    organizerSeats: 15,
+    eventsPerMonth: SELF_SERVICE_PLAN_LIMITS.business.eventsPerMonth,
+    registrationsPerMonth: SELF_SERVICE_PLAN_LIMITS.business.registrationsPerMonth,
+    organizerSeats: SELF_SERVICE_PLAN_LIMITS.business.organizerSeats,
     features: new Set<EntitlementKey>([
       "csv_import",
       "csv_export",
@@ -121,9 +122,9 @@ export const V2_PLAN_LIMITS: Record<
     ]),
   },
   free: {
-    eventsPerMonth: 1,
-    registrationsPerMonth: 50,
-    organizerSeats: 1,
+    eventsPerMonth: SELF_SERVICE_PLAN_LIMITS.free.eventsPerMonth,
+    registrationsPerMonth: SELF_SERVICE_PLAN_LIMITS.free.registrationsPerMonth,
+    organizerSeats: SELF_SERVICE_PLAN_LIMITS.free.organizerSeats,
     features: new Set<EntitlementKey>([]),
   },
   managed_enterprise: {

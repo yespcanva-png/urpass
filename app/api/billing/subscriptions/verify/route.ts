@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
     if (paymentStatus !== "captured" && paymentStatus !== "authorized") {
       return NextResponse.json(
         {
-          error: `First payment confirmation failed (payment status: ${paymentStatus}). Your subscription can only be activated after successful payment confirmation of ₹34.22.`,
+          error: `First payment confirmation failed (payment status: ${paymentStatus}). Your subscription can only be activated after the payment amount shown at authorization is confirmed.`,
         },
         { status: 400 }
       );

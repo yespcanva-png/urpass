@@ -2,21 +2,22 @@
 
 import { useState } from "react";
 import CheckoutModal from "./CheckoutModal";
+import { SOFTWARE_PRICES } from "@/lib/billing/software-prices";
 
 // Must match PLANS in app/billing/page.tsx
 const PLAN_PRICES_INR: Record<string, { priceMonthly: number; annualTotal: number }> = {
-  starter:  { priceMonthly: 499,   annualTotal: 4990 },
-  pro:      { priceMonthly: 999,   annualTotal: 9990 },
-  business: { priceMonthly: 2499,  annualTotal: 24990 },
+  starter:  { priceMonthly: SOFTWARE_PRICES.starter.inrMonthly / 100, annualTotal: SOFTWARE_PRICES.starter.inrAnnual / 100 },
+  pro:      { priceMonthly: SOFTWARE_PRICES.pro.inrMonthly / 100, annualTotal: SOFTWARE_PRICES.pro.inrAnnual / 100 },
+  business: { priceMonthly: SOFTWARE_PRICES.business.inrMonthly / 100, annualTotal: SOFTWARE_PRICES.business.inrAnnual / 100 },
   founder:  { priceMonthly: 19999, annualTotal: 19999 },
   lifetime: { priceMonthly: 19999, annualTotal: 19999 },
   managed_enterprise: { priceMonthly: 6000, annualTotal: 6000 },
 };
 
 const PLAN_PRICES_GBP: Record<string, { priceMonthly: number; annualTotal: number }> = {
-  starter:  { priceMonthly: 15,  annualTotal: 120 },
-  pro:      { priceMonthly: 35,  annualTotal: 300 },
-  business: { priceMonthly: 79,  annualTotal: 699 },
+  starter:  { priceMonthly: SOFTWARE_PRICES.starter.gbpMonthly / 100, annualTotal: SOFTWARE_PRICES.starter.gbpAnnual / 100 },
+  pro:      { priceMonthly: SOFTWARE_PRICES.pro.gbpMonthly / 100, annualTotal: SOFTWARE_PRICES.pro.gbpAnnual / 100 },
+  business: { priceMonthly: SOFTWARE_PRICES.business.gbpMonthly / 100, annualTotal: SOFTWARE_PRICES.business.gbpAnnual / 100 },
   founder:  { priceMonthly: 249, annualTotal: 249 },
   lifetime: { priceMonthly: 249, annualTotal: 249 },
   managed_enterprise: { priceMonthly: 60, annualTotal: 60 },
