@@ -160,6 +160,11 @@ export async function updateSession(request: NextRequest) {
     const access = await resolveUserSubscriptionAccess({ supabase, user });
 
     if (isAuthPage) {
+      // Allow previewing the signup landing page when testing referral links (?ref=)
+      if (pathname === "/signup" && url.searchParams.has("ref")) {
+        return supabaseResponse;
+      }
+
       logAuth("middleware", "Authenticated user accessed login/signup", {
         userId: user.id,
         email: user.email,

@@ -36,7 +36,7 @@ export async function GET(
   }
 
   // Construct target URL to /signup with ref query param
-  const signupUrl = new URL("/signup", req.url);
+  const signupUrl = new URL("/signup", req.nextUrl);
   signupUrl.searchParams.set("ref", rawCode);
 
   for (const [key, value] of searchParams.entries()) {

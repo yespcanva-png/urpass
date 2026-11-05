@@ -89,6 +89,16 @@ function SignupContent() {
   const [ssoLoading, setSsoLoading] = useState(false);
   const [ssoSuccessMsg, setSsoSuccessMsg] = useState("");
   const [hasStartedForm, setHasStartedForm] = useState(false);
+  const [currentLoggedInEmail, setCurrentLoggedInEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      if (data?.user?.email) {
+        setCurrentLoggedInEmail(data.user.email);
+      }
+    });
+  }, []);
 
   const segment = (searchParams.get("segment") || "general") as VisitorSegment;
   const fromPage = searchParams.get("from") || "/signup";
@@ -379,6 +389,25 @@ function SignupContent() {
                 <p className="font-semibold text-emerald-950">Referral benefit unlocked: ₹100 off</p>
                 <p className="text-[11px] text-emerald-700 mt-0.5">You will get ₹100 off your first eligible event management plan purchase!</p>
               </div>
+            </div>
+          )}
+          {currentLoggedInEmail && searchParams.get("ref") && (
+            <div className="mb-4 p-3 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-between text-xs text-amber-900">
+              <div className="min-w-0 pr-2">
+                <p className="font-semibold text-amber-950">Currently signed in</p>
+                <p className="text-[11px] text-amber-700 mt-0.5">Signed in as {currentLoggedInEmail}. To register a referee account, sign out or open in private window.</p>
+              </div>
+              <button
+                type="button"
+                onClick={async () => {
+                  const supabase = createClient();
+                  await supabase.auth.signOut();
+                  window.location.reload();
+                }}
+                className="shrink-0 px-2.5 py-1 rounded-lg bg-amber-200/80 hover:bg-amber-300 text-amber-950 font-bold text-[11px] transition-colors"
+              >
+                Sign Out
+              </button>
             </div>
           )}
           <h1 className="text-2xl font-semibold tracking-tight">
