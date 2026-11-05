@@ -213,6 +213,23 @@ describe("URPASS Ticket Studio (Professional 2-Panel Ticket Customization Interf
     expect(screen.getByText("GATE STUB")).toBeInTheDocument();
   });
 
+  it("fits the ticket artboard to the available preview space", async () => {
+    render(<TicketStudio isPro={true} eventId="evt-1" />);
+    const viewport = screen.getByTestId("ticket-preview-viewport");
+    const card = screen.getByTestId("ticket-preview-card");
+    Object.defineProperties(viewport, {
+      clientWidth: { configurable: true, value: 500 },
+      clientHeight: { configurable: true, value: 800 },
+    });
+    Object.defineProperties(card, {
+      offsetWidth: { configurable: true, value: 360 },
+      offsetHeight: { configurable: true, value: 680 },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Fit" }));
+    expect(screen.getByTitle("Reset zoom")).toHaveTextContent("90%");
+  });
+
   it("updates the printable ticket when a field is hidden", async () => {
     render(<TicketStudio isPro={true} eventId="evt-1" eventName="URPASS Summit 2026" />);
     await userEvent.click(screen.getByRole("button", { name: /^print$/i }));

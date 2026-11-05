@@ -31,6 +31,7 @@ import {
   ExternalLink,
   ChevronRight,
   Eye,
+  ScanLine,
 } from "lucide-react";
 import {
   type TicketDesignConfig,
@@ -235,9 +236,46 @@ export default function TicketStudio({
   const sampleAttendee = SAMPLE_ATTENDEES[activeAttendeeIndex];
   const [isFullscreen, setIsFullscreen] = useState(false);
   const previewContainerRef = useRef<HTMLDivElement>(null);
-
-  // Mobile viewport view tab
+  const previewViewportRef = useRef<HTMLDivElement>(null);
+  const previewCardRef = useRef<HTMLDivElement>(null);
+  const [previewSize, setPreviewSize] = useState({ width: 360, height: 680 });
   const [mobileTab, setMobileTab] = useState<"controls" | "preview">("controls");
+
+  const fitPreview = useCallback(() => {
+    const viewport = previewViewportRef.current;
+    const card = previewCardRef.current;
+    if (!viewport || !card || viewport.clientWidth === 0 || viewport.clientHeight === 0) return;
+    if (card.offsetWidth === 0 || card.offsetHeight === 0) return;
+
+    const availableWidth = Math.max(1, viewport.clientWidth - (viewport.clientWidth < 640 ? 80 : 112));
+    const availableHeight = Math.max(1, viewport.clientHeight - 160);
+    const fitted = Math.min(availableWidth / card.offsetWidth, availableHeight / card.offsetHeight, 1.3);
+    setPreviewSize({ width: card.offsetWidth, height: card.offsetHeight });
+    setZoomLevel(Math.max(30, Math.min(130, Math.floor(fitted * 20) * 5)));
+  }, []);
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(fitPreview);
+    const viewport = previewViewportRef.current;
+    if (!viewport) return () => cancelAnimationFrame(frame);
+    if (typeof ResizeObserver === "undefined") return () => cancelAnimationFrame(frame);
+    const observer = new ResizeObserver(fitPreview);
+    observer.observe(viewport);
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
+  }, [activeFormat, mobileTab, fitPreview]);
+
+  useEffect(() => {
+    const card = previewCardRef.current;
+    if (!card || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => {
+      setPreviewSize({ width: card.offsetWidth, height: card.offsetHeight });
+    });
+    observer.observe(card);
+    return () => observer.disconnect();
+  }, [activeFormat]);
 
   // 4. Modals State
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
@@ -2151,24 +2189,35 @@ export default function TicketStudio({
         {/* ──────── RIGHT LARGE LIVE TICKET PREVIEW (60–65% width) ──────── */}
         <main
           ref={previewContainerRef}
-          className={`flex-1 bg-[#F5F6F7] flex flex-col h-full overflow-hidden ${
+          className={`flex-1 min-w-0 bg-[#e9edf3] flex flex-col h-full overflow-hidden ${
             mobileTab === "preview" ? "flex" : "hidden md:flex"
           }`}
         >
           {/* Top Preview Controls Toolbar */}
-          <div className="h-14 bg-white border-b border-neutral-200 px-4 sm:px-6 flex items-center justify-between shrink-0 no-print">
+          <div className="min-h-16 bg-white/95 border-b border-slate-200 px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3 shrink-0 no-print shadow-[0_1px_0_rgba(15,23,42,0.03)] z-10">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="hidden xl:flex items-center gap-2 pr-3 border-r border-slate-200">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-50 text-violet-700">
+                  <ScanLine className="h-4 w-4" />
+                </span>
+                <div className="leading-tight">
+                  <p className="text-[10px] font-bold tracking-[0.14em] text-slate-400 uppercase">Live canvas</p>
+                  <p className="text-xs font-semibold text-slate-800">Ticket preview</p>
+                </div>
+              </div>
             {/* Format Selector: Mobile Pass | Lanyard Badge | Printable Ticket */}
-            <div className="inline-flex items-center p-0.5 bg-neutral-100 rounded-lg border border-neutral-200 text-xs font-medium">
+            <div className="inline-flex items-center p-1 bg-slate-100 rounded-xl border border-slate-200 text-xs font-medium" role="group" aria-label="Preview format">
               <button
                 type="button"
                 onClick={() => {
                   setActiveFormat("mobile");
                   updateConfig((c) => ({ ...c, format: "mobile" }));
                 }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all cursor-pointer ${
+                aria-pressed={activeFormat === "mobile"}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                   activeFormat === "mobile"
-                    ? "bg-white text-neutral-900 shadow-2xs font-semibold"
-                    : "text-neutral-600 hover:text-neutral-900"
+                    ? "bg-slate-900 text-white shadow-sm font-semibold"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-white/70"
                 }`}
               >
                 <Smartphone className="w-3.5 h-3.5" />
@@ -2180,10 +2229,11 @@ export default function TicketStudio({
                   setActiveFormat("badge");
                   updateConfig((c) => ({ ...c, format: "badge" }));
                 }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all cursor-pointer ${
+                aria-pressed={activeFormat === "badge"}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                   activeFormat === "badge"
-                    ? "bg-white text-neutral-900 shadow-2xs font-semibold"
-                    : "text-neutral-600 hover:text-neutral-900"
+                    ? "bg-slate-900 text-white shadow-sm font-semibold"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-white/70"
                 }`}
               >
                 <CreditCard className="w-3.5 h-3.5" />
@@ -2195,21 +2245,23 @@ export default function TicketStudio({
                   setActiveFormat("print");
                   updateConfig((c) => ({ ...c, format: "print" }));
                 }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all cursor-pointer ${
+                aria-pressed={activeFormat === "print"}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                   activeFormat === "print"
-                    ? "bg-white text-neutral-900 shadow-2xs font-semibold"
-                    : "text-neutral-600 hover:text-neutral-900"
+                    ? "bg-slate-900 text-white shadow-sm font-semibold"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-white/70"
                 }`}
               >
                 <FileText className="w-3.5 h-3.5" />
                 <span>Print</span>
               </button>
             </div>
+            </div>
 
             {/* Realistic Sample Attendee Switcher */}
-            <div className="hidden lg:flex items-center gap-1.5 text-xs text-neutral-500">
-              <span className="text-[11px] font-normal text-neutral-400">Sample:</span>
-              <div className="inline-flex items-center bg-neutral-50 border border-neutral-200 rounded-lg p-0.5">
+            <div className="hidden 2xl:flex items-center gap-2 text-xs text-slate-500">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Preview as</span>
+              <div className="inline-flex items-center bg-slate-100 border border-slate-200 rounded-lg p-0.5">
                 {SAMPLE_ATTENDEES.map((att, i) => (
                   <button
                     key={att.ticketId}
@@ -2217,8 +2269,8 @@ export default function TicketStudio({
                     onClick={() => setActiveAttendeeIndex(i)}
                     className={`px-2.5 py-1 rounded text-[11px] font-medium transition-colors cursor-pointer ${
                       activeAttendeeIndex === i
-                        ? "bg-white text-neutral-900 shadow-2xs font-semibold"
-                        : "text-neutral-500 hover:text-neutral-900"
+                        ? "bg-white text-slate-900 shadow-sm font-semibold"
+                        : "text-slate-500 hover:text-slate-900"
                     }`}
                   >
                     {att.name.split(" ")[0]} ({att.ticketType.split(" ")[0]})
@@ -2228,21 +2280,21 @@ export default function TicketStudio({
             </div>
 
             {/* Minimal Zoom & Fullscreen Controls: − 100% + Fit Fullscreen */}
-            <div className="flex items-center gap-1.5">
-              <div className="inline-flex items-center bg-white border border-neutral-200 rounded-lg px-1.5 py-0.5 shadow-2xs">
+            <div className="flex items-center gap-1.5 ml-auto">
+              <div className="inline-flex items-center bg-slate-50 border border-slate-200 rounded-lg px-1 py-0.5">
                 <button
                   type="button"
-                  onClick={() => setZoomLevel((z) => Math.max(70, z - 10))}
-                  disabled={zoomLevel <= 70}
+                  onClick={() => setZoomLevel((z) => Math.max(30, z - 10))}
+                  disabled={zoomLevel <= 30}
                   aria-label="Zoom out"
-                  className="w-6 h-6 flex items-center justify-center text-neutral-600 hover:text-neutral-900 disabled:opacity-30 cursor-pointer font-bold text-sm"
+                  className="w-7 h-7 flex items-center justify-center rounded-md text-slate-600 hover:text-slate-900 hover:bg-white disabled:opacity-30 cursor-pointer font-bold text-sm"
                 >
                   −
                 </button>
                 <button
                   type="button"
                   onClick={() => setZoomLevel(100)}
-                  className="px-1.5 text-[11px] font-mono font-medium text-neutral-700 hover:text-neutral-900 cursor-pointer"
+                  className="px-1.5 min-w-12 text-[11px] font-mono font-semibold text-slate-700 hover:text-slate-900 cursor-pointer"
                   title="Reset zoom"
                 >
                   {zoomLevel}%
@@ -2252,7 +2304,7 @@ export default function TicketStudio({
                   onClick={() => setZoomLevel((z) => Math.min(130, z + 10))}
                   disabled={zoomLevel >= 130}
                   aria-label="Zoom in"
-                  className="w-6 h-6 flex items-center justify-center text-neutral-600 hover:text-neutral-900 disabled:opacity-30 cursor-pointer font-bold text-sm"
+                  className="w-7 h-7 flex items-center justify-center rounded-md text-slate-600 hover:text-slate-900 hover:bg-white disabled:opacity-30 cursor-pointer font-bold text-sm"
                 >
                   +
                 </button>
@@ -2260,8 +2312,8 @@ export default function TicketStudio({
 
               <button
                 type="button"
-                onClick={() => setZoomLevel(100)}
-                className="hidden sm:inline-flex px-2.5 py-1.5 text-[11px] font-medium text-neutral-600 bg-white border border-neutral-200 hover:bg-neutral-50 rounded-lg transition-colors cursor-pointer"
+                onClick={fitPreview}
+                className="inline-flex px-2.5 py-2 text-[11px] font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer"
               >
                 Fit
               </button>
@@ -2271,7 +2323,7 @@ export default function TicketStudio({
                 onClick={toggleFullscreen}
                 aria-label="Toggle Fullscreen"
                 title="Fullscreen Preview"
-                className="p-1.5 text-neutral-500 hover:text-neutral-900 bg-white border border-neutral-200 hover:bg-neutral-50 rounded-lg transition-colors cursor-pointer"
+                className="p-2 text-slate-600 hover:text-slate-900 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer"
               >
                 {isFullscreen ? (
                   <Minimize2 className="w-3.5 h-3.5" />
@@ -2282,18 +2334,38 @@ export default function TicketStudio({
             </div>
           </div>
 
-          {/* Live Preview Neutral Workspace (#F5F6F7, centered, subtle natural shadow) */}
-          <div className="flex-1 overflow-auto flex items-center justify-center p-6 sm:p-10 relative">
+          {/* Preview artboard. Chrome remains outside the exportable ticket card. */}
+          <div
+            ref={previewViewportRef}
+            data-testid="ticket-preview-viewport"
+            className="flex-1 min-h-0 overflow-auto relative bg-[#e9edf3] bg-[radial-gradient(circle,rgba(100,116,139,0.23)_0.8px,transparent_0.8px)] [background-size:20px_20px]"
+          >
+            <div className="min-h-full min-w-full w-max flex flex-col items-center justify-center p-8 sm:p-12">
+              <div className="mb-4 flex w-full max-w-[760px] items-center justify-between gap-4 text-[11px] text-slate-500 select-none no-print">
+                <span className="inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/75 px-3 py-1.5 font-semibold shadow-sm backdrop-blur-sm">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  {activeFormat === "mobile" ? "Digital pass" : activeFormat === "badge" ? "Event badge" : "Printable ticket"}
+                  <span className="text-slate-300">/</span>
+                  Live preview
+                </span>
+                <span className="hidden sm:inline font-mono text-slate-400">{zoomLevel}% view</span>
+              </div>
             <div
-              className="transition-transform duration-150 flex items-center justify-center"
+              className="relative shrink-0 transition-[width,height] duration-150"
               style={{
-                transform: `scale(${zoomLevel / 100})`,
-                transformOrigin: "center center",
+                width: `${previewSize.width * zoomLevel / 100}px`,
+                height: `${previewSize.height * zoomLevel / 100}px`,
               }}
+            >
+            <div
+              className="absolute left-0 top-0 origin-top-left transition-transform duration-150"
+              style={{ transform: `scale(${zoomLevel / 100})` }}
             >
               {/* ──────── 1. MOBILE PASS FORMAT ──────── */}
               {activeFormat === "mobile" && (
                 <div
+                  ref={previewCardRef}
+                  data-testid="ticket-preview-card"
                   id="printable-ticket-card"
                   className={`w-[350px] sm:w-[360px] ${shapeRadius} border ${cardBorder} ${cardBg} overflow-hidden shadow-[0_16px_40px_-6px_rgba(0,0,0,0.12),0_4px_16px_-2px_rgba(0,0,0,0.06)] relative transition-all duration-150`}
                 >
@@ -2649,6 +2721,8 @@ export default function TicketStudio({
               {/* ──────── 2. LANYARD BADGE FORMAT ──────── */}
               {activeFormat === "badge" && (
                 <div
+                  ref={previewCardRef}
+                  data-testid="ticket-preview-card"
                   id="printable-ticket-card"
                   className="w-[330px] sm:w-[340px] bg-white rounded-2xl border border-neutral-200 overflow-hidden shadow-[0_16px_40px_-6px_rgba(0,0,0,0.12)] flex flex-col transition-all duration-150 relative"
                 >
@@ -2747,6 +2821,8 @@ export default function TicketStudio({
               {/* ──────── 3. PRINTABLE TICKET STUB FORMAT ──────── */}
               {activeFormat === "print" && (
                 <div
+                  ref={previewCardRef}
+                  data-testid="ticket-preview-card"
                   id="printable-ticket-card"
                   className={`w-[520px] min-h-[250px] ${cardBg} ${shapeRadius} border ${cardBorder} shadow-[0_16px_40px_-6px_rgba(0,0,0,0.12)] flex overflow-hidden transition-all duration-150 relative`}
                 >
@@ -2835,19 +2911,33 @@ export default function TicketStudio({
                 </div>
               )}
             </div>
+            </div>
+            <p className="mt-5 text-center text-[11px] font-medium text-slate-500 select-none no-print">
+              Sample data only · Saved designs apply to every ticket in this format
+            </p>
+            </div>
           </div>
 
           {/* Bottom Preview Helper Actions */}
-          <div className="h-11 bg-white border-t border-neutral-200 px-6 flex items-center justify-between shrink-0 text-xs text-neutral-500">
-            <span className="text-[11px] text-neutral-400 font-normal">
-              Changes reflect live across all formats
-            </span>
+          <div className="min-h-12 bg-white border-t border-slate-200 px-4 sm:px-6 py-2 flex flex-wrap items-center justify-between gap-3 shrink-0 text-xs text-slate-500 no-print">
+            <label className="flex items-center gap-2 text-[11px] font-semibold text-slate-600">
+              <span className="hidden sm:inline">Preview attendee</span>
+              <select
+                value={activeAttendeeIndex}
+                onChange={(event) => setActiveAttendeeIndex(Number(event.target.value))}
+                className="max-w-[180px] rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-[11px] font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-400"
+              >
+                {SAMPLE_ATTENDEES.map((attendee, index) => (
+                  <option key={attendee.ticketId} value={index}>{attendee.name} · {attendee.ticketType}</option>
+                ))}
+              </select>
+            </label>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4 text-[11px] font-semibold">
               <button
                 type="button"
                 onClick={() => setTestModalOpen(true)}
-                className="hover:text-neutral-900 transition-colors flex items-center gap-1 cursor-pointer"
+                className="hover:text-slate-900 transition-colors flex items-center gap-1 cursor-pointer"
               >
                 <Mail className="w-3.5 h-3.5 text-neutral-400" />
                 <span>Send test</span>
@@ -2856,7 +2946,7 @@ export default function TicketStudio({
               <button
                 type="button"
                 onClick={handleDownloadSample}
-                className="hover:text-neutral-900 transition-colors flex items-center gap-1 cursor-pointer"
+                className="hover:text-slate-900 transition-colors flex items-center gap-1 cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5 text-neutral-400" />
                 <span>Download / Print</span>
