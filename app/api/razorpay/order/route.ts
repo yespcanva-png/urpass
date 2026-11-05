@@ -207,6 +207,9 @@ export async function POST(req: NextRequest) {
   // Re-validate coupon server-side to compute the trusted charged amount
   let discountAmount = 0;
   let appliedCouponId: string | null = null;
+  let referralDiscountApplied = 0;
+  let referralCodeApplied: string | null = null;
+  let referralAttributionId: string | null = null;
 
   if (couponCode && typeof couponCode === "string") {
     const code = couponCode.trim().toUpperCase();
@@ -248,6 +251,22 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // Non-stackable referral discount: If no coupon applied, check for referral discount (₹100 off on eligible plan >= ₹499)
+  if (discountAmount === 0 && currencyCode === "INR") {
+    try {
+      const { calculateReferralDiscount } = await import("@/lib/referrals/service");
+      const refCheck = await calculateReferralDiscount(user.id, normalizedSlug, baseAmount / 100);
+      if (refCheck.eligible && refCheck.discountPaise > 0) {
+        discountAmount = refCheck.discountPaise;
+        referralDiscountApplied = refCheck.discountPaise;
+        referralCodeApplied = refCheck.referralCode || null;
+        referralAttributionId = refCheck.attributionId || null;
+      }
+    } catch (refErr) {
+      console.warn("[api/razorpay/order] Referral discount calculation warning:", refErr);
+    }
+  }
+
   const discountedBase = Math.max(0, baseAmount - discountAmount);
   const taxAmount = Math.round(discountedBase * taxRate);
   const totalAmount = Math.round(discountedBase + taxAmount);
@@ -285,6 +304,9 @@ export async function POST(req: NextRequest) {
         billing_cycle: String(effectiveBillingCycle),
         base_amount: String(baseAmount),
         discount_amount: String(discountAmount),
+        referral_discount_applied: String(referralDiscountApplied),
+        referral_code: String(referralCodeApplied || ""),
+        referral_attribution_id: String(referralAttributionId || ""),
         coupon_id: String(appliedCouponId ?? ""),
         billing_address: billingAddress,
         billing_state: billingState,

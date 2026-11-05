@@ -2970,3 +2970,222 @@ export async function notifyOwnerSubscriptionReactivated(params: {
   }
 }
 
+// ---------------------------------------------------------------------------
+// UrPass Refer & Earn Email Notifications
+// ---------------------------------------------------------------------------
+
+export async function sendReferralSignupNotification(params: {
+  referrerEmail: string;
+  referrerName: string;
+  refereeMaskedName: string;
+}): Promise<boolean> {
+  const safeReferrer = escapeHtml(params.referrerName);
+  const safeReferee = escapeHtml(params.refereeMaskedName);
+  const subject = `🎉 ${safeReferee} just signed up with your UrPass referral link!`;
+
+  const html = `<!DOCTYPE html>
+<html>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:24px;background:#0d091b;margin:0;">
+  <div style="max-width:540px;margin:0 auto;background:#130f24;border:1px solid rgba(255,255,255,0.1);border-radius:20px;overflow:hidden;color:#ffffff;">
+    <div style="padding:28px;background:linear-gradient(135deg, #7c3aed, #4c1d95);text-align:center;">
+      <h1 style="margin:0;font-size:22px;color:#ffffff;font-weight:800;">New Referral Signup! 🎉</h1>
+      <p style="margin:8px 0 0;font-size:14px;color:rgba(255,255,255,0.85);">Give ₹100, Get ₹150</p>
+    </div>
+    <div style="padding:28px;">
+      <p style="font-size:15px;line-height:1.6;color:#e2e8f0;margin:0 0 16px;">
+        Hi <strong>${safeReferrer}</strong>,
+      </p>
+      <p style="font-size:14px;line-height:1.6;color:#cbd5e1;margin:0 0 20px;">
+        Great news! <strong>${safeReferee}</strong> just signed up for UrPass using your referral link.
+      </p>
+      <div style="background:rgba(124,58,237,0.15);border:1px dashed #a78bfa;border-radius:12px;padding:16px;margin-bottom:24px;">
+        <p style="margin:0 0 8px;font-size:13px;font-weight:700;color:#c4b5fd;">Next Steps for Your ₹150 Credit:</p>
+        <p style="margin:0;font-size:12px;color:#cbd5e1;line-height:1.6;">
+          1. <strong>${safeReferee}</strong> creates their first event.<br/>
+          2. They upgrade to any qualifying plan (they save ₹100 off!).<br/>
+          3. You receive <strong>₹150 in UrPass credits</strong> on your billing account!
+        </p>
+      </div>
+      <div style="text-align:center;">
+        <a href="https://urpass.space/dashboard/referrals" style="display:inline-block;background:#7c3aed;color:#ffffff;font-weight:700;font-size:14px;padding:12px 24px;border-radius:10px;text-decoration:none;">
+          View Referral Dashboard &rarr;
+        </a>
+      </div>
+    </div>
+    <div style="padding:14px 28px;background:rgba(0,0,0,0.3);border-top:1px solid rgba(255,255,255,0.05);text-align:center;font-size:11px;color:#64748b;">
+      UrPass Refer &amp; Earn &middot; <a href="https://urpass.space/dashboard/referrals" style="color:#a78bfa;text-decoration:none;">urpass.space</a>
+    </div>
+  </div>
+</body>
+</html>`.trim();
+
+  try {
+    await sendEmail({ from: getFromEmail(), to: params.referrerEmail, subject, html });
+    return true;
+  } catch (err) {
+    console.error("[email] Failed to send referral signup notification:", err);
+    return false;
+  }
+}
+
+export async function sendReferralFirstEventNotification(params: {
+  referrerEmail: string;
+  referrerName: string;
+  refereeMaskedName: string;
+  eventName: string;
+}): Promise<boolean> {
+  const safeReferrer = escapeHtml(params.referrerName);
+  const safeReferee = escapeHtml(params.refereeMaskedName);
+  const safeEvent = escapeHtml(params.eventName);
+  const subject = `🚀 ${safeReferee} just created their first event on UrPass!`;
+
+  const html = `<!DOCTYPE html>
+<html>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:24px;background:#0d091b;margin:0;">
+  <div style="max-width:540px;margin:0 auto;background:#130f24;border:1px solid rgba(255,255,255,0.1);border-radius:20px;overflow:hidden;color:#ffffff;">
+    <div style="padding:28px;background:linear-gradient(135deg, #2563eb, #1e40af);text-align:center;">
+      <h1 style="margin:0;font-size:22px;color:#ffffff;font-weight:800;">Milestone Reached! 🚀</h1>
+      <p style="margin:8px 0 0;font-size:14px;color:rgba(255,255,255,0.85);">${safeEvent}</p>
+    </div>
+    <div style="padding:28px;">
+      <p style="font-size:15px;line-height:1.6;color:#e2e8f0;margin:0 0 16px;">
+        Hi <strong>${safeReferrer}</strong>,
+      </p>
+      <p style="font-size:14px;line-height:1.6;color:#cbd5e1;margin:0 0 20px;">
+        Your invited organiser <strong>${safeReferee}</strong> is actively setting up <strong>${safeEvent}</strong>. They are just one step away from launching and purchasing a paid plan.
+      </p>
+      <div style="text-align:center;">
+        <a href="https://urpass.space/dashboard/referrals" style="display:inline-block;background:#2563eb;color:#ffffff;font-weight:700;font-size:14px;padding:12px 24px;border-radius:10px;text-decoration:none;">
+          Check Referral Status &rarr;
+        </a>
+      </div>
+    </div>
+    <div style="padding:14px 28px;background:rgba(0,0,0,0.3);border-top:1px solid rgba(255,255,255,0.05);text-align:center;font-size:11px;color:#64748b;">
+      UrPass Refer &amp; Earn &middot; <a href="https://urpass.space/dashboard/referrals" style="color:#60a5fa;text-decoration:none;">urpass.space</a>
+    </div>
+  </div>
+</body>
+</html>`.trim();
+
+  try {
+    await sendEmail({ from: getFromEmail(), to: params.referrerEmail, subject, html });
+    return true;
+  } catch (err) {
+    console.error("[email] Failed to send referral first event notification:", err);
+    return false;
+  }
+}
+
+export async function sendReferralPendingRewardNotification(params: {
+  referrerEmail: string;
+  referrerName: string;
+  refereeMaskedName: string;
+  rewardRupees: number;
+  holdDays: number;
+}): Promise<boolean> {
+  const safeReferrer = escapeHtml(params.referrerName);
+  const safeReferee = escapeHtml(params.refereeMaskedName);
+  const rewardRupees = params.rewardRupees;
+  const holdDays = params.holdDays;
+  const subject = `💰 You earned ₹${rewardRupees} in UrPass credits! (Verification Hold)`;
+
+  const html = `<!DOCTYPE html>
+<html>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:24px;background:#0d091b;margin:0;">
+  <div style="max-width:540px;margin:0 auto;background:#130f24;border:1px solid rgba(255,255,255,0.1);border-radius:20px;overflow:hidden;color:#ffffff;">
+    <div style="padding:28px;background:linear-gradient(135deg, #059669, #065f46);text-align:center;">
+      <h1 style="margin:0;font-size:24px;color:#ffffff;font-weight:800;">₹${rewardRupees} Credit Earned! 💰</h1>
+      <p style="margin:8px 0 0;font-size:14px;color:rgba(255,255,255,0.85);">Qualified Organiser Conversion</p>
+    </div>
+    <div style="padding:28px;">
+      <p style="font-size:15px;line-height:1.6;color:#e2e8f0;margin:0 0 16px;">
+        Hi <strong>${safeReferrer}</strong>,
+      </p>
+      <p style="font-size:14px;line-height:1.6;color:#cbd5e1;margin:0 0 20px;">
+        Congratulations! <strong>${safeReferee}</strong> has completed an eligible paid plan purchase with their ₹100 referral welcome discount.
+      </p>
+      <div style="background:rgba(5,150,105,0.15);border:1px dashed #34d399;border-radius:12px;padding:16px;margin-bottom:24px;">
+        <div style="font-size:13px;font-weight:700;color:#6ee7b7;margin-bottom:6px;">Reward Details:</div>
+        <div style="font-size:13px;color:#e2e8f0;line-height:1.6;">
+          &bull; <strong>Reward:</strong> ₹${rewardRupees} UrPass Billing Credit<br/>
+          &bull; <strong>Status:</strong> ${holdDays}-Day Verification Hold<br/>
+          &bull; <strong>Spendable On:</strong> Future subscription invoices
+        </div>
+      </div>
+      <div style="text-align:center;">
+        <a href="https://urpass.space/dashboard/referrals" style="display:inline-block;background:#059669;color:#ffffff;font-weight:700;font-size:14px;padding:12px 24px;border-radius:10px;text-decoration:none;">
+          View Reward Status &rarr;
+        </a>
+      </div>
+    </div>
+    <div style="padding:14px 28px;background:rgba(0,0,0,0.3);border-top:1px solid rgba(255,255,255,0.05);text-align:center;font-size:11px;color:#64748b;">
+      UrPass Refer &amp; Earn &middot; <a href="https://urpass.space/dashboard/referrals" style="color:#34d399;text-decoration:none;">urpass.space</a>
+    </div>
+  </div>
+</body>
+</html>`.trim();
+
+  try {
+    await sendEmail({ from: getFromEmail(), to: params.referrerEmail, subject, html });
+    return true;
+  } catch (err) {
+    console.error("[email] Failed to send referral pending reward notification:", err);
+    return false;
+  }
+}
+
+export async function sendReferralRewardMaturedNotification(params: {
+  referrerEmail: string;
+  referrerName: string;
+  rewardRupees: number;
+  totalAvailableRupees: number;
+}): Promise<boolean> {
+  const safeReferrer = escapeHtml(params.referrerName);
+  const rewardRupees = params.rewardRupees;
+  const totalRupees = params.totalAvailableRupees;
+  const subject = `✨ ₹${rewardRupees} UrPass credit is now available to spend!`;
+
+  const html = `<!DOCTYPE html>
+<html>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:24px;background:#0d091b;margin:0;">
+  <div style="max-width:540px;margin:0 auto;background:#130f24;border:1px solid rgba(255,255,255,0.1);border-radius:20px;overflow:hidden;color:#ffffff;">
+    <div style="padding:28px;background:linear-gradient(135deg, #d97706, #b45309);text-align:center;">
+      <h1 style="margin:0;font-size:24px;color:#ffffff;font-weight:800;">Credits Matured! ✨</h1>
+      <p style="margin:8px 0 0;font-size:14px;color:rgba(255,255,255,0.85);">Total Available: ₹${totalRupees}</p>
+    </div>
+    <div style="padding:28px;">
+      <p style="font-size:15px;line-height:1.6;color:#e2e8f0;margin:0 0 16px;">
+        Hi <strong>${safeReferrer}</strong>,
+      </p>
+      <p style="font-size:14px;line-height:1.6;color:#cbd5e1;margin:0 0 20px;">
+        Your 14-day hold has ended. Your <strong>₹${rewardRupees}</strong> referral credit has matured and is now in your UrPass account.
+      </p>
+      <div style="background:rgba(217,119,6,0.15);border:1px dashed #fbbf24;border-radius:12px;padding:16px;margin-bottom:24px;">
+        <p style="margin:0 0 6px;font-size:13px;font-weight:700;color:#fde68a;">Available Balance: ₹${totalRupees}</p>
+        <p style="margin:0;font-size:12px;color:#cbd5e1;line-height:1.6;">
+          This credit will be automatically applied as a discount on your next UrPass subscription invoice.
+        </p>
+      </div>
+      <div style="text-align:center;">
+        <a href="https://urpass.space/dashboard/referrals" style="display:inline-block;background:#d97706;color:#ffffff;font-weight:700;font-size:14px;padding:12px 24px;border-radius:10px;text-decoration:none;">
+          View Credit Balance &rarr;
+        </a>
+      </div>
+    </div>
+    <div style="padding:14px 28px;background:rgba(0,0,0,0.3);border-top:1px solid rgba(255,255,255,0.05);text-align:center;font-size:11px;color:#64748b;">
+      UrPass Refer &amp; Earn &middot; <a href="https://urpass.space/dashboard/referrals" style="color:#fbbf24;text-decoration:none;">urpass.space</a>
+    </div>
+  </div>
+</body>
+</html>`.trim();
+
+  try {
+    await sendEmail({ from: getFromEmail(), to: params.referrerEmail, subject, html });
+    return true;
+  } catch (err) {
+    console.error("[email] Failed to send referral matured notification:", err);
+    return false;
+  }
+}
+
+

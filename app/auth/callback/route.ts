@@ -77,6 +77,16 @@ export async function GET(request: Request) {
     const createdAt = new Date(user.created_at).getTime();
     const isNew = Date.now() - createdAt < 15 * 60 * 1000;
     if (isNew) {
+      const refCode = searchParams.get("ref") || cookieStore.get("urpass_ref")?.value;
+      if (refCode) {
+        try {
+          const { attachReferralOnSignup } = await import("@/lib/referrals/service");
+          await attachReferralOnSignup(user.id, refCode);
+        } catch (refErr) {
+          console.warn("[auth/callback] referral attribution error:", refErr);
+        }
+      }
+
       await recordFirstEventConversion({ userId: user.id, eventName: "signup_completed",
         idempotencyKey: `signup:${user.id}`, pageSlug: "/signup" });
       try {

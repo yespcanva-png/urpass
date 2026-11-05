@@ -294,6 +294,16 @@ export async function createEvent(data: EventInput, organizationId?: string): Pr
         idempotencyKey: `first_event_created:${event.id}`,
         metadata: { event_id: event.id, name: baseFields.name },
       });
+
+      try {
+        const { recordReferralMilestone } = await import("@/lib/referrals/service");
+        await recordReferralMilestone(user.id, "first_event_created", {
+          eventId: event.id,
+          eventName: baseFields.name,
+        });
+      } catch (refErr) {
+        console.warn("[events] referral milestone error:", refErr);
+      }
     }
   } catch {
     // Non-blocking

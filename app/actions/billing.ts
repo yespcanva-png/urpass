@@ -1311,6 +1311,21 @@ export async function activatePaidSubscription(
     }
   }
 
+  // Record referral conversion if referee made an eligible paid purchase
+  if (verifiedPaymentId && normalizedSlug !== "free") {
+    try {
+      const { recordReferralConversion } = await import("@/lib/referrals/service");
+      await recordReferralConversion(
+        user.id,
+        verifiedPaymentId,
+        orderBasePaise / 100,
+        normalizedSlug
+      );
+    } catch (refErr) {
+      console.warn("[billing] recordReferralConversion non-critical warning:", refErr);
+    }
+  }
+
   try {
     await admin.auth.admin.updateUserById(user.id, {
       user_metadata: {

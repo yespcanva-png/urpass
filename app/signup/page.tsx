@@ -18,6 +18,7 @@ import {
   Building2,
   ShieldCheck,
   CheckCircle2,
+  Gift,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { sendSignupNotifications } from "@/app/actions/notifications";
@@ -25,6 +26,7 @@ import { lookupSSOByEmail } from "@/app/actions/sso";
 import { resolvePostAuthRedirect } from "@/lib/auth-redirect";
 import { trackConversionEvent } from "@/lib/conversion/tracker";
 import { recordSignupCompletion } from "@/app/actions/first-event";
+import { attachSignupReferralAction } from "@/app/actions/referrals";
 import SignupAssistanceModal from "@/components/conversion/SignupAssistanceModal";
 import { VisitorSegment } from "@/lib/conversion/types";
 
@@ -162,6 +164,10 @@ function SignupContent() {
     if (error) {
       setServerError(error.message);
       return;
+    }
+    if (signUpData.user?.id) {
+      const refParam = searchParams.get("ref");
+      await attachSignupReferralAction(signUpData.user.id, refParam || undefined).catch(() => {});
     }
     try {
       await sendSignupNotifications({
@@ -363,6 +369,15 @@ function SignupContent() {
               <div className="min-w-0">
                 <p className="font-bold text-violet-950 truncate">Publishing &ldquo;{eventName}&rdquo;</p>
                 <p className="text-[11px] text-violet-600 mt-0.5">Create your organizer login to activate your pass & scanner.</p>
+              </div>
+            </div>
+          )}
+          {searchParams.get("ref") && (
+            <div className="mb-4 p-3 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center gap-2.5 text-xs text-emerald-900">
+              <Gift className="w-4 h-4 text-emerald-600 shrink-0" />
+              <div className="min-w-0">
+                <p className="font-semibold text-emerald-950">Referral benefit unlocked: ₹100 off</p>
+                <p className="text-[11px] text-emerald-700 mt-0.5">You will get ₹100 off your first eligible event management plan purchase!</p>
               </div>
             </div>
           )}

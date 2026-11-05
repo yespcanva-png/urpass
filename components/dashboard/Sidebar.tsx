@@ -27,14 +27,16 @@ import {
   SlidersHorizontal,
   Sparkles,
   HelpCircle,
+  Gift,
 } from "lucide-react";
 import type { CampusContext, CampusRole } from "@/types";
 
 const mainNav = [
-  { label: "Dashboard", href: "/dashboard",        icon: LayoutDashboard, exact: true },
-  { label: "Events",    href: "/dashboard/events", icon: Calendar,        exact: false },
-  { label: "Analytics", href: "/dashboard/analytics", icon: BarChart3,    exact: false },
-  { label: "Scanner",   href: "/scan",              icon: ScanLine,        exact: false },
+  { label: "Dashboard",    href: "/dashboard",           icon: LayoutDashboard, exact: true },
+  { label: "Events",       href: "/dashboard/events",    icon: Calendar,        exact: false },
+  { label: "Analytics",    href: "/dashboard/analytics", icon: BarChart3,       exact: false },
+  { label: "Refer & Earn", href: "/dashboard/referrals", icon: Gift,           exact: false },
+  { label: "Scanner",      href: "/scan",                 icon: ScanLine,        exact: false },
 ];
 
 const campusNav: {
