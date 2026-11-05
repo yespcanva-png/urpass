@@ -41,7 +41,7 @@ export default function UkCardiffPage() {
     "keyPoints": [
       "Sub-second (<0.3s) camera scanning with instant audio and visual verification",
       "Offline resilience designed for dense crowds in stadium and arena concourses",
-      "0% per-ticket commission with flat GBP subscriptions",
+      "0% per-ticket commission on free events with GBP paid ticketing in preview",
       "Used by Cardiff University, USW, and Cardiff Met student societies"
     ]
   },
@@ -191,7 +191,7 @@ export default function UkCardiffPage() {
       },
       {
         "col1": "Ticket Fee Model",
-        "col2": "0% commission; flat GBP plan",
+        "col2": "0% commission on free events (GBP paid in preview)",
         "col3": "Up to 6.95% + £0.59 deducted per ticket"
       }
     ]
@@ -207,7 +207,7 @@ export default function UkCardiffPage() {
     },
     {
       "q": "Does URPASS charge per-ticket commission in Cardiff?",
-      "a": "No. URPASS charges 0% commission on ticket sales. Organisers pay a transparent flat GBP monthly subscription."
+      "a": "URPASS offers free event registration with 0% platform commission and instant QR pass issuance. Commercial paid ticketing in GBP is currently in preview pending payment provider certification."
     },
     {
       "q": "Can Cardiff student unions use URPASS for balls and fests?",

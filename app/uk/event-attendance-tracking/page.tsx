@@ -112,7 +112,7 @@ export default function UkEventAttendanceTrackingPage() {
           description:
             "Knowing exact real-time attendance is critical for venue safety limits, fire regulations, and CPD certification compliance.",
           bullets: [
-            "Transparent pricing available from £15/mo with 0% ticket fees",
+            "100% Free for free events with 0% ticket fees",
             "In-browser scanner runs on any mobile device (<0.28s)",
             "Instant multi-door cloud sync across venue entry gates",
             "One-click CSV exports with verified delegate arrival timestamps",
@@ -144,7 +144,7 @@ export default function UkEventAttendanceTrackingPage() {
           },
         ],
         ctaTitle: "Upgrade your event attendance tracking",
-        ctaDescription: "Plans from £15/mo · Sub-0.3s gate scanning · Real-time headcount · UK GDPR compliant",
+        ctaDescription: "Free event registration & sub-0.3s gate scanning · Real-time headcount · UK GDPR ready",
       }}
     />
   );

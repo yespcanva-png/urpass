@@ -73,7 +73,7 @@ export default function BelfastEventTicketingPage() {
           keyPoints: [
             "Queen's University & Ulster: Ideal for student society balls, hackathons, and academic seminars",
             "In-Browser Scanner: <0.28s gate validation without downloading native apps from app stores",
-            "Zero Platform Fees: 0% per-ticket commission with plans from £15/month",
+            "Zero Platform Fees: 0% per-ticket commission on free events with GBP paid ticketing in preview",
             "UK GDPR & PECR Compliant: Data stored with strict privacy standards and full organizer ownership",
           ],
         },
@@ -105,7 +105,7 @@ export default function BelfastEventTicketingPage() {
           {
             icon: Banknote,
             title: "0% Ticket Commission",
-            desc: "Keep 100% of your ticket revenues. Direct daily or T+2 payouts via Stripe into your UK business bank account.",
+            desc: "Keep 100% of your revenue on free events. Commercial GBP paid ticketing is in preview pending payment provider certification.",
           },
           {
             icon: Users,
@@ -132,7 +132,7 @@ export default function BelfastEventTicketingPage() {
           description:
             "Say goodbye to printed paper rosters and slow name lookups. URPASS brings modern, professional entry control to events across Northern Ireland.",
           bullets: [
-            "Transparent pricing available from £15/mo with 0% ticket fees",
+            "100% Free for free events with 0% ticket fees",
             "In-browser scanner runs on any mobile device (<0.28s)",
             "Instant multi-door cloud sync across venue entry gates",
             "Full UK GDPR compliance with one-click CSV attendance exports",
@@ -150,7 +150,7 @@ export default function BelfastEventTicketingPage() {
         faqs: [
           {
             q: "Can student societies in Belfast use URPASS for free?",
-            a: "URPASS provides transparent flat subscriptions starting at £15/month with 0% ticket commission and unlimited scanning.",
+            a: "Yes! URPASS provides 100% free registration and QR pass issuance for free student and community events. Commercial GBP ticketing is in preview pending provider certification.",
           },
           {
             q: "Do Belfast event staff need special scanning equipment?",
@@ -158,7 +158,7 @@ export default function BelfastEventTicketingPage() {
           },
           {
             q: "Does URPASS charge per-ticket fees for paid events in Northern Ireland?",
-            a: "No! URPASS charges 0% platform ticket fees. You only pay standard Stripe payment processing fees, and payouts flow directly into your UK bank account in GBP (£).",
+            a: "No! URPASS charges 0% platform ticket fees. Free registrations are 100% fee-free. Commercial GBP checkout is currently in preview pending provider certification.",
           },
           {
             q: "Is attendee personal data handled in accordance with UK GDPR?",
@@ -167,7 +167,7 @@ export default function BelfastEventTicketingPage() {
         ],
 
         ctaTitle: "Power your Belfast event with URPASS",
-        ctaDescription: "Plans from £15/mo · Apple Wallet passes · 0.28s gate scanning · 0% ticket fees",
+        ctaDescription: "Free event registration · Sub-0.3s gate scanning · UK GDPR ready · 0% ticket fees",
       }}
     />
   );

@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     type: "website",
   },
   other: {
-    "geo.region": "Greater London",
+    "geo.region": "GB-LND",
     "geo.placename": "London",
     "geo.position": "51.5074;-0.1278",
     "ICBM": "51.5074, -0.1278",
@@ -40,8 +40,8 @@ export default function Page() {
         description: "High-speed QR code ticket check-in for London venues, business summits, West End showcases and tech colloquiums. Sub-0.3s camera scanning.",
         ctaLabel: "Start London Event Check-In",
         ctaHref: "/signup",
-        secondaryCtaLabel: "View GBP Pricing",
-        secondaryCtaHref: "/pricing",
+        secondaryCtaLabel: "Explore UK Hub",
+        secondaryCtaHref: "/uk",
         directAnswer: {
           title: "What is the best event QR check in London for modern organisers?",
           summary: "UrPass is an event registration, digital QR pass and check-in platform that lets organisers collect registrations, manage attendees and verify entry from one system. For london event producers, venue operations & corporate planners, UrPass delivers lightning-fast registration forms, instant automated QR pass delivery, sub-second smartphone check-in, atomic duplicate blocking, and 0% ticket fees.",
@@ -129,11 +129,11 @@ export default function Page() {
           },
           {
                     "q": "Can UrPass manage free and paid events?",
-                    "a": "Yes. UrPass fully supports free registrations, tiered paid tickets, and approval-only guest lists with integrated Razorpay/Stripe checkout and zero commission."
+                    "a": "Yes. UrPass fully supports free registrations and guest approvals with zero platform fees. GBP paid ticket sales and merchant accounts are currently in preview pending payment provider certification."
           }
 ],
         ctaTitle: "Event QR Code Check-In Built for London Venues & Summits",
-        ctaDescription: "Launch your event registration in minutes. Plans starting from ₹499/month with 0% ticket commission.",
+        ctaDescription: "Launch your event registration in minutes with 0% ticket commission. Sub-second QR check-in on any volunteer phone.",
         geo: {"region":"Greater London","placename":"London","position":"51.5074;-0.1278","latitude":51.5074,"longitude":-0.1278,"country":"United Kingdom","countryCode":"GB"},
       }}
     />

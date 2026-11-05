@@ -41,7 +41,7 @@ export default function UkGlasgowPage() {
     "keyPoints": [
       "Sub-second (<0.3s) camera scanning with instant green/red verification",
       "Proven for high-capacity venue throughput across SEC, Hydro, and SWG3",
-      "0% per-ticket commission with flat GBP subscriptions",
+      "0% per-ticket commission on free events with GBP paid ticketing in preview",
       "Used by University of Glasgow, Strathclyde, and GCU student teams"
     ]
   },
@@ -191,7 +191,7 @@ export default function UkGlasgowPage() {
       },
       {
         "col1": "Ticket Fee Model",
-        "col2": "0% commission; flat GBP plan",
+        "col2": "0% commission on free events (GBP paid in preview)",
         "col3": "Up to 6.95% + £0.59 deducted per ticket"
       }
     ]
@@ -207,7 +207,7 @@ export default function UkGlasgowPage() {
     },
     {
       "q": "Does URPASS charge per-ticket commission in Glasgow?",
-      "a": "No. URPASS charges 0% commission on ticket sales. Organisers pay a transparent flat GBP monthly subscription."
+      "a": "URPASS offers free event registration with 0% platform commission and instant QR pass issuance. Commercial paid ticketing in GBP is currently in preview pending payment provider certification."
     },
     {
       "q": "Can Glasgow university societies use URPASS for balls and fests?",

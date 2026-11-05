@@ -64,7 +64,7 @@ export default function UkEventTicketingSoftwarePage() {
           },
           {
             criteria: "Free Event Organizer Limits",
-            urpass: "Plans from £15/mo with 0% ticket fee",
+            urpass: "100% Free with unlimited tickets and 0% commission",
             competitor: "Strict 25-ticket cap on free events before mandatory upgrade",
             urpassAdvantage: true,
           },

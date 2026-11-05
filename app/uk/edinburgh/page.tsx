@@ -191,7 +191,7 @@ export default function UkEdinburghPage() {
       },
       {
         "col1": "Ticket Fee Model",
-        "col2": "0% commission; flat GBP plan",
+        "col2": "0% commission on free events (GBP paid in preview)",
         "col3": "Up to 6.95% + £0.59 deducted per ticket"
       }
     ]
@@ -207,7 +207,7 @@ export default function UkEdinburghPage() {
     },
     {
       "q": "Does URPASS charge per-ticket commission in Edinburgh?",
-      "a": "No. URPASS charges 0% commission on ticket sales. Organisers pay a transparent flat GBP monthly subscription."
+      "a": "URPASS offers free event registration with 0% platform commission and instant QR pass issuance. Commercial paid ticketing in GBP is currently in preview pending payment provider certification."
     },
     {
       "q": "Can Edinburgh university societies use URPASS for balls and fests?",

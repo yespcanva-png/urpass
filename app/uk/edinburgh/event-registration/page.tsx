@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     type: "website",
   },
   other: {
-    "geo.region": "Scotland",
+    "geo.region": "GB-EDH",
     "geo.placename": "Edinburgh",
     "geo.position": "55.9533;-3.1883",
     "ICBM": "55.9533, -3.1883",
@@ -40,8 +40,8 @@ export default function Page() {
         description: "Event registration and QR check-in software for Edinburgh festival venues, university symposiums, medical conferences and arts galas.",
         ctaLabel: "Launch Edinburgh Event",
         ctaHref: "/signup",
-        secondaryCtaLabel: "View GBP Pricing",
-        secondaryCtaHref: "/pricing",
+        secondaryCtaLabel: "Explore UK Hub",
+        secondaryCtaHref: "/uk",
         directAnswer: {
           title: "What is the best event registration software Edinburgh for modern organisers?",
           summary: "UrPass is an event registration, digital QR pass and check-in platform that lets organisers collect registrations, manage attendees and verify entry from one system. For edinburgh festival producers, academic chairs & venue managers, UrPass delivers lightning-fast registration forms, instant automated QR pass delivery, sub-second smartphone check-in, atomic duplicate blocking, and 0% ticket fees.",
@@ -129,11 +129,11 @@ export default function Page() {
           },
           {
                     "q": "Can UrPass manage free and paid events?",
-                    "a": "Yes. UrPass fully supports free registrations, tiered paid tickets, and approval-only guest lists with integrated Razorpay/Stripe checkout and zero commission."
+                    "a": "Yes. UrPass fully supports free registrations and guest approvals with zero platform fees. GBP paid ticket sales and merchant accounts are currently in preview pending payment provider certification."
           }
 ],
         ctaTitle: "Event Registration Software Built for Edinburgh Festivals & Colloquiums",
-        ctaDescription: "Launch your event registration in minutes. Plans starting from ₹499/month with 0% ticket commission.",
+        ctaDescription: "Launch your event registration in minutes with 0% ticket commission. Sub-second QR check-in on any volunteer phone.",
         geo: {"region":"Scotland","placename":"Edinburgh","position":"55.9533;-3.1883","latitude":55.9533,"longitude":-3.1883,"country":"United Kingdom","countryCode":"GB"},
       }}
     />

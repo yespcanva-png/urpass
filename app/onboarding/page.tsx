@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -37,10 +38,12 @@ export default async function OnboardingPage() {
   const firstName = profile?.full_name?.split(" ")[0] ?? "there";
 
   return (
-    <OnboardingClient
-      firstName={firstName}
-      canCreateOrg={plan.canCreateOrganizations}
-      planSlug={plan.slug}
-    />
+    <Suspense fallback={<div className="min-h-screen bg-neutral-50 flex items-center justify-center p-4">Loading onboarding...</div>}>
+      <OnboardingClient
+        firstName={firstName}
+        canCreateOrg={plan.canCreateOrganizations}
+        planSlug={plan.slug}
+      />
+    </Suspense>
   );
 }

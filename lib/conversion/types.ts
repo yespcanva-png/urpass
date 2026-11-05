@@ -27,6 +27,8 @@ export type ConversionEventName =
   | "registration_setup_completed"
   | "first_event_published"
   | "managed_service_enquiry"
+  | "demo_requested"
+  | "waitlist_submitted"
   | "subscription_started"
   | "experiment_exposed"
   | "recovery_modal_shown"

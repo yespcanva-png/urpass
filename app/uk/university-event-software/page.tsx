@@ -234,13 +234,13 @@ export default function UkUniversityEventSoftwarePage() {
           },
           {
             q: "Is there a free tier for small student society events?",
-            a: "Yes. URPASS offers a Transparent GBP plans: Starter (£15/mo), Pro (£35/mo), and Business (£79/mo) with zero platform ticket commissions.",
+            a: "Yes. URPASS provides free event registration and digital QR pass issuance with 0% ticket commission for student societies and campus events. Paid GBP ticketing is currently in preview pending payment provider certification.",
           },
         ],
 
         ctaTitle: "Bring modern event technology to your campus",
         ctaDescription:
-          "Get started on URPASS today with transparent GBP plans. No credit card required. Up and running for your university in minutes.",
+          "Get started on URPASS today with free event registration. No credit card required. Up and running for your university in minutes.",
       }}
     />
   );

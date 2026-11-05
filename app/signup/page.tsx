@@ -92,12 +92,16 @@ function SignupContent() {
   const fromPage = searchParams.get("from") || "/signup";
 
   useEffect(() => {
+    const market = searchParams.get("market") || searchParams.get("country");
+    if (market && (market.toUpperCase() === "GB" || market.toUpperCase() === "UK")) {
+      document.cookie = `urpass_country=GB; path=/; max-age=31536000; SameSite=Lax${window.location.protocol === "https:" ? "; Secure" : ""}`;
+    }
     trackConversionEvent("landing_page_view", {
       pageSlug: "/signup",
       visitorSegment: segment,
-      metadata: { from: fromPage },
+      metadata: { from: fromPage, market: market?.toUpperCase() },
     });
-  }, [segment, fromPage]);
+  }, [segment, fromPage, searchParams]);
 
   const markFormStarted = () => {
     if (!hasStartedForm) {
@@ -206,6 +210,12 @@ function SignupContent() {
       "from",
       "source",
       "campaign",
+      "market",
+      "country",
+      "utm_source",
+      "utm_medium",
+      "utm_campaign",
+      "utm_content",
     ];
     for (const key of forwardKeys) {
       const val = searchParams.get(key);

@@ -254,7 +254,7 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
       "@type": "ListItem",
       position: 2,
       name: "Events in the UK",
-      item: "https://urpass.space/uk/event-management-software",
+      item: "https://urpass.space/uk",
     });
     breadcrumbItems.push({
       "@type": "ListItem",
@@ -267,7 +267,7 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
       "@type": "ListItem",
       position: 2,
       name: "Events in the UK",
-      item: "https://urpass.space/uk/event-management-software",
+      item: "https://urpass.space/uk",
     });
   } else if (isGuidePage) {
     breadcrumbItems.push({
@@ -365,15 +365,35 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
           },
         },
         serviceOutput: "Digital QR Event Pass & Real-time Attendance Analytics",
-        offers: {
-          "@type": "AggregateOffer",
-          priceCurrency: isUkPage ? "GBP" : "INR",
-          lowPrice: isUkPage ? "15" : "499",
-          highPrice: isUkPage ? "79" : "2499",
-          offerCount: "3",
-        },
+        offers: isUkPage
+          ? {
+              "@type": "Offer",
+              price: "0",
+              priceCurrency: "GBP",
+              name: "Free Event Registration",
+              description: "Free registration, digital QR pass issuance, and volunteer smartphone scanning. Paid GBP checkout in preview pending provider approval.",
+            }
+          : {
+              "@type": "AggregateOffer",
+              priceCurrency: "INR",
+              lowPrice: "499",
+              highPrice: "2499",
+              offerCount: "3",
+            },
       }
     : null;
+
+  const canonicalPath = canonical.replace("https://urpass.space", "") || "/";
+  const defaultUkCtaHref = `/signup?market=GB&source=uk_seo&from=${encodeURIComponent(canonicalPath)}`;
+  const resolvedCtaHref = config.ctaHref
+    ? (isUkPage && !config.ctaHref.includes("market=") ? `${config.ctaHref}${config.ctaHref.includes("?") ? "&" : "?"}market=GB&source=uk_seo` : config.ctaHref)
+    : (isUkPage ? defaultUkCtaHref : "/signup");
+  const resolvedSecondaryCtaHref = config.secondaryCtaHref
+    ? config.secondaryCtaHref
+    : (isUkPage ? "/uk#features" : "/pricing");
+  const resolvedSecondaryCtaLabel = config.secondaryCtaLabel
+    ? config.secondaryCtaLabel
+    : (isUkPage ? "Explore UK Features" : "View pricing");
 
   return (
     <div className="min-h-screen bg-white text-neutral-900 flex flex-col justify-between">
@@ -477,13 +497,21 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
               url: "https://yespstudio.com",
             },
             description: `${config.description} — URPASS is an event registration, ticketing, digital pass, QR check-in and attendance management platform for colleges, conferences, workshops and large-scale events developed by Yesp Corporation.`,
-            offers: {
-              "@type": "AggregateOffer",
-              priceCurrency: isUkPage ? "GBP" : "INR",
-              lowPrice: isUkPage ? "15" : "499",
-              highPrice: isUkPage ? "79" : "2499",
-              offerCount: "3",
-            },
+            offers: isUkPage
+              ? {
+                  "@type": "Offer",
+                  price: "0",
+                  priceCurrency: "GBP",
+                  name: "Free Event Tier",
+                  description: "Free registration, digital QR pass issuance, and volunteer smartphone scanning. Paid GBP checkout in preview pending provider approval.",
+                }
+              : {
+                  "@type": "AggregateOffer",
+                  priceCurrency: "INR",
+                  lowPrice: "499",
+                  highPrice: "2499",
+                  offerCount: "3",
+                },
           }),
         }}
       />
@@ -549,21 +577,21 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
-              href={config.ctaHref ?? "/signup"}
+              href={resolvedCtaHref}
               className="inline-flex items-center justify-center gap-2 bg-neutral-900 text-white px-7 py-3.5 rounded-xl text-sm font-semibold hover:bg-neutral-700 transition-colors shadow-sm"
             >
-              {config.ctaLabel ?? "Start for free"}
+              {config.ctaLabel ?? (isUkPage ? "Create Free UK Event" : "Start for free")}
               <span className="text-neutral-400">→</span>
             </Link>
             <Link
-              href={config.secondaryCtaHref ?? "/pricing"}
+              href={resolvedSecondaryCtaHref}
               className="inline-flex items-center justify-center gap-2 border border-neutral-200 px-7 py-3.5 rounded-xl text-sm font-medium text-neutral-600 hover:bg-neutral-50 transition-colors"
             >
-              {config.secondaryCtaLabel ?? "View pricing"}
+              {resolvedSecondaryCtaLabel}
             </Link>
           </div>
           <p className="mt-6 text-xs text-neutral-400">
-            {isUkPage ? "Plans from £15/mo · 0% ticket commission · Cancel anytime" : "Plans from ₹499/mo · 0% ticket commission · Cancel anytime"}
+            {isUkPage ? "100% Free for free events · 0% ticket commission · Setup in 3 minutes" : "Plans from ₹499/mo · 0% ticket commission · Cancel anytime"}
           </p>
 
           {/* Direct Answer at the top: 40-80 words engineered for Featured Snippets & AI Search */}
@@ -1207,20 +1235,20 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
               {config.ctaTitle ?? "Start your first event today"}
             </h2>
             <p className="text-white/50 mb-8 leading-relaxed">
-              {config.ctaDescription ?? (isUkPage ? "Plans from £15/mo · 0% ticket commission · Up and running in 5 minutes" : "Plans from ₹499/mo · 0% ticket commission · Up and running in 5 minutes")}
+              {config.ctaDescription ?? (isUkPage ? "Free event registration & sub-second QR entry · 0% ticket commission · Setup in 3 minutes" : "Plans from ₹499/mo · 0% ticket commission · Up and running in 5 minutes")}
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link
-                href={config.ctaHref ?? "/signup"}
+                href={resolvedCtaHref}
                 className="inline-flex items-center justify-center gap-2 bg-white text-neutral-900 px-7 py-3.5 rounded-xl text-sm font-semibold hover:bg-neutral-100 transition-colors shadow-sm"
               >
-                {config.ctaLabel ?? "Get Started →"}
+                {config.ctaLabel ?? (isUkPage ? "Create Free UK Event" : "Get Started →")}
               </Link>
               <Link
-                href={config.secondaryCtaHref ?? "/pricing"}
+                href={resolvedSecondaryCtaHref}
                 className="inline-flex items-center justify-center gap-2 border border-white/20 text-white px-7 py-3.5 rounded-xl text-sm font-medium hover:bg-white/10 transition-colors"
               >
-                {config.secondaryCtaLabel ?? "See plans"}
+                {resolvedSecondaryCtaLabel}
               </Link>
             </div>
           </AnimateIn>

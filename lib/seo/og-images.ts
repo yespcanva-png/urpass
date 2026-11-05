@@ -1,6 +1,16 @@
 export const DEFAULT_BRAND_OG_IMAGE = "https://urpass.space/og-image.png";
 export const DEFAULT_EVENT_REGISTRATION_OG_IMAGE = "https://urpass.space/ticket-og-image.png";
 export const TICKET_OG_IMAGE = DEFAULT_EVENT_REGISTRATION_OG_IMAGE;
+export const UK_OG_IMAGE = "https://urpass.space/og-image-uk.png";
+
+export const UK_OG_IMAGE_META = {
+  url: UK_OG_IMAGE,
+  secureUrl: UK_OG_IMAGE,
+  width: 1200,
+  height: 630,
+  type: "image/png",
+  alt: "URPASS UK — Event Registration & QR Check-In Platform",
+};
 
 export const TICKET_OG_IMAGE_META = {
   url: TICKET_OG_IMAGE,

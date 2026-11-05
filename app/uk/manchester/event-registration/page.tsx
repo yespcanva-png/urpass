@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     type: "website",
   },
   other: {
-    "geo.region": "North West",
+    "geo.region": "GB-MAN",
     "geo.placename": "Manchester",
     "geo.position": "53.4808;-2.2426",
     "ICBM": "53.4808, -2.2426",
@@ -40,8 +40,8 @@ export default function Page() {
         description: "Event registration and mobile QR ticketing for Manchester conferences, creative agencies, student union fests and business forums.",
         ctaLabel: "Launch Manchester Event",
         ctaHref: "/signup",
-        secondaryCtaLabel: "View GBP Pricing",
-        secondaryCtaHref: "/pricing",
+        secondaryCtaLabel: "Explore UK Hub",
+        secondaryCtaHref: "/uk",
         directAnswer: {
           title: "What is the best event registration software Manchester for modern organisers?",
           summary: "UrPass is an event registration, digital QR pass and check-in platform that lets organisers collect registrations, manage attendees and verify entry from one system. For manchester event agencies, student unions & conference planners, UrPass delivers lightning-fast registration forms, instant automated QR pass delivery, sub-second smartphone check-in, atomic duplicate blocking, and 0% ticket fees.",
@@ -129,11 +129,11 @@ export default function Page() {
           },
           {
                     "q": "Can UrPass manage free and paid events?",
-                    "a": "Yes. UrPass fully supports free registrations, tiered paid tickets, and approval-only guest lists with integrated Razorpay/Stripe checkout and zero commission."
+                    "a": "Yes. UrPass fully supports free registrations and guest approvals with zero platform fees. GBP paid ticket sales and merchant accounts are currently in preview pending payment provider certification."
           }
 ],
         ctaTitle: "Event Registration Software Built for Manchester Events & Academics",
-        ctaDescription: "Launch your event registration in minutes. Plans starting from ₹499/month with 0% ticket commission.",
+        ctaDescription: "Launch your event registration in minutes with 0% ticket commission. Sub-second QR check-in on any volunteer phone.",
         geo: {"region":"North West","placename":"Manchester","position":"53.4808;-2.2426","latitude":53.4808,"longitude":-2.2426,"country":"United Kingdom","countryCode":"GB"},
       }}
     />

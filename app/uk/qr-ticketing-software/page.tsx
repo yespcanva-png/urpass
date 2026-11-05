@@ -23,10 +23,10 @@ export const metadata: Metadata = {
     type: "website",
   },
   other: {
-    "geo.region": "UK",
+    "geo.region": "GB",
     "geo.placename": "United Kingdom",
     "geo.position": "55.3781;-3.4360",
-    "ICBM": "55.3781, -3.436",
+    "ICBM": "55.3781, -3.4360",
   },
 };
 
@@ -40,8 +40,8 @@ export default function Page() {
         description: "The UK's modern QR ticketing software. Sell GBP tickets, deliver digital Apple Wallet passes, and check in attendees with sub-second camera scanning.",
         ctaLabel: "Start Your UK Event",
         ctaHref: "/signup",
-        secondaryCtaLabel: "View GBP Pricing",
-        secondaryCtaHref: "/pricing",
+        secondaryCtaLabel: "Explore UK Hub",
+        secondaryCtaHref: "/uk",
         directAnswer: {
           title: "What is the best QR ticketing software UK for modern organisers?",
           summary: "UrPass is an event registration, digital QR pass and check-in platform that lets organisers collect registrations, manage attendees and verify entry from one system. For uk event organisers, venues & festival producers, UrPass delivers lightning-fast registration forms, instant automated QR pass delivery, sub-second smartphone check-in, atomic duplicate blocking, and 0% ticket fees.",
@@ -129,12 +129,12 @@ export default function Page() {
           },
           {
                     "q": "Can UrPass manage free and paid events?",
-                    "a": "Yes. UrPass fully supports free registrations, tiered paid tickets, and approval-only guest lists with integrated Razorpay/Stripe checkout and zero commission."
+                    "a": "Yes. UrPass fully supports free registrations and guest approvals with zero platform fees. GBP paid ticket sales and merchant accounts are currently in preview pending payment provider certification."
           }
 ],
         ctaTitle: "QR Ticketing Software Built for UK Organisers & Venues",
-        ctaDescription: "Launch your event registration in minutes. Plans starting from ₹499/month with 0% ticket commission.",
-        geo: {"region":"UK","placename":"United Kingdom","position":"55.3781;-3.4360","latitude":55.3781,"longitude":-3.436,"country":"United Kingdom","countryCode":"GB"},
+        ctaDescription: "Launch your event registration in minutes with 0% ticket commission. Sub-second QR check-in on any volunteer phone.",
+        geo: {"region":"GB","placename":"United Kingdom","position":"55.3781;-3.4360","latitude":55.3781,"longitude":-3.436,"country":"United Kingdom","countryCode":"GB"},
       }}
     />
   );

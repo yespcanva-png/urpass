@@ -72,6 +72,43 @@ export const CORE_INDEXNOW_URLS: string[] = [
   "https://urpass.space/compare/allevents-alternative",
 ];
 
+export const UK_INDEXNOW_URLS: string[] = [
+  "https://urpass.space/uk",
+  "https://urpass.space/uk/event-registration-software",
+  "https://urpass.space/uk/event-ticketing-software",
+  "https://urpass.space/uk/event-check-in-software",
+  "https://urpass.space/uk/eventbrite-alternative",
+  "https://urpass.space/uk/qr-check-in",
+  "https://urpass.space/uk/qr-ticketing-system",
+  "https://urpass.space/uk/university-event-software",
+  "https://urpass.space/uk/student-union-event-ticketing",
+  "https://urpass.space/uk/conference-registration-software",
+  "https://urpass.space/uk/conference-check-in-software",
+  "https://urpass.space/uk/workshop-registration-software",
+  "https://urpass.space/uk/attendee-management-software",
+  "https://urpass.space/uk/digital-event-pass",
+  "https://urpass.space/uk/event-attendance-tracking",
+  "https://urpass.space/uk/london",
+  "https://urpass.space/uk/manchester",
+  "https://urpass.space/uk/birmingham",
+  "https://urpass.space/uk/edinburgh",
+  "https://urpass.space/uk/glasgow",
+  "https://urpass.space/uk/bristol",
+  "https://urpass.space/uk/leeds",
+  "https://urpass.space/uk/liverpool",
+  "https://urpass.space/uk/cambridge",
+  "https://urpass.space/uk/oxford",
+  "https://urpass.space/uk/cardiff",
+  "https://urpass.space/uk/belfast",
+];
+
+/**
+ * Submits UK organic acquisition URLs to the IndexNow protocol endpoint.
+ */
+export async function submitUkUrlsToIndexNow(): Promise<IndexNowSubmissionResult> {
+  return submitToIndexNow(UK_INDEXNOW_URLS);
+}
+
 /**
  * Submits a batch of URLs to the IndexNow protocol endpoint.
  */

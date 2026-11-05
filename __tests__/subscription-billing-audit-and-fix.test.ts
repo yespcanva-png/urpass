@@ -196,7 +196,7 @@ describe("Phase 11 — Gateway Auto-Reconciliation for Concluded Trials", () => 
 
     expect(targetState.status).toBe("active");
     expect(targetState.is_trial).toBe(false);
-    expect(new Date(targetState.current_period_end).getTime()).toBeGreaterThan(Date.now());
+    expect(new Date(targetState.current_period_end!).getTime()).toBeGreaterThan(Date.now());
   });
 
   it("marks subscription expired when trial concludes and mandate is cancelled on Razorpay", async () => {

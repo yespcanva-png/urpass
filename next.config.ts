@@ -280,6 +280,82 @@ const nextConfig: NextConfig = {
         destination: "/in/kochi",
         permanent: true,
       },
+      // UK Canonical Consolidation 301 Redirects: map flat root UK routes to /uk/* cluster
+      {
+        source: "/event-registration-software-uk",
+        destination: "/uk/event-registration-software",
+        permanent: true,
+      },
+      {
+        source: "/eventbrite-alternative-uk",
+        destination: "/uk/eventbrite-alternative",
+        permanent: true,
+      },
+      {
+        source: "/eventbrite-replacement-uk",
+        destination: "/uk/eventbrite-alternative",
+        permanent: true,
+      },
+      {
+        source: "/eventbrite-competitor-uk",
+        destination: "/uk/eventbrite-alternative",
+        permanent: true,
+      },
+      {
+        source: "/compare/eventbrite-alternative-uk",
+        destination: "/uk/eventbrite-alternative",
+        permanent: true,
+      },
+      {
+        source: "/uk-event-registration-platform",
+        destination: "/uk/event-registration-software",
+        permanent: true,
+      },
+      {
+        source: "/uk-event-ticketing-platform",
+        destination: "/uk/event-ticketing-software",
+        permanent: true,
+      },
+      {
+        source: "/uk-qr-event-check-in",
+        destination: "/uk/qr-check-in",
+        permanent: true,
+      },
+      {
+        source: "/uk-event-check-in-app",
+        destination: "/uk/event-check-in-software",
+        permanent: true,
+      },
+      {
+        source: "/uk-conference-ticketing-software",
+        destination: "/uk/conference-registration-software",
+        permanent: true,
+      },
+      {
+        source: "/uk-workshop-registration-software",
+        destination: "/uk/workshop-registration-software",
+        permanent: true,
+      },
+      {
+        source: "/uk-seminar-registration-software",
+        destination: "/uk/conference-registration-software",
+        permanent: true,
+      },
+      {
+        source: "/uk-college-event-ticketing",
+        destination: "/uk/college-event-registration",
+        permanent: true,
+      },
+      {
+        source: "/uk-university-event-ticketing-platform",
+        destination: "/uk/university-event-software",
+        permanent: true,
+      },
+      {
+        source: "/uk-event-attendance-tracking-software",
+        destination: "/uk/event-attendance-tracking",
+        permanent: true,
+      },
     ];
   },
   async headers() {

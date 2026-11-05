@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Ticket,
   Building2,
@@ -45,12 +45,25 @@ const STEPS: Array<{ key: WizardStep; label: string; number: number }> = [
 
 export default function OnboardingClient({ firstName, canCreateOrg }: Props) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [currentStep, setCurrentStep] = useState<WizardStep>("org");
 
   // Step 1: Org State
   const [orgType, setOrgType] = useState<"personal" | "org">("personal");
   const [orgName, setOrgName] = useState("");
-  const [countryCode, setCountryCode] = useState<CountryCode>("IN");
+  const [countryCode, setCountryCode] = useState<CountryCode>(() => {
+    const market = searchParams?.get("market") || searchParams?.get("country");
+    if (market && (market.toUpperCase() === "GB" || market.toUpperCase() === "UK")) {
+      return "GB";
+    }
+    if (typeof document !== "undefined") {
+      const match = document.cookie.match(/(?:^|; )urpass_country=([^;]*)/);
+      if (match && (match[1]?.toUpperCase() === "GB" || match[1]?.toUpperCase() === "UK")) {
+        return "GB";
+      }
+    }
+    return "IN";
+  });
   const [orgSlug, setOrgSlug] = useState("");
   const [orgBrandColor, setOrgBrandColor] = useState("#6D28D9");
   const [completionError, setCompletionError] = useState("");

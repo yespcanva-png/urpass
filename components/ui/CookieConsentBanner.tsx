@@ -41,6 +41,7 @@ export function shouldShowCookieConsent(pathname?: string | null, isUkVisitor: b
 
   if (isUkVisitor) {
     return (
+      p.startsWith("/uk") ||
       p.startsWith("/apply") ||
       p.startsWith("/e/") ||
       p.startsWith("/events") ||

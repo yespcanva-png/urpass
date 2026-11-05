@@ -196,7 +196,7 @@ export default function UkLondonPage() {
       },
       {
         "col1": "Ticket Fee Model",
-        "col2": "0% commission; flat GBP plan",
+        "col2": "0% commission on free events (GBP paid in preview)",
         "col3": "Up to 6.95% + £0.59 deducted per ticket"
       },
       {
@@ -233,7 +233,7 @@ export default function UkLondonPage() {
     },
     {
       "q": "How much does URPASS cost for London events?",
-      "a": "URPASS offers a free plan for free events and transparent flat monthly GBP subscriptions (£15 / £35 / £79/mo) for paid events with 0% ticketing commission."
+      "a": "URPASS offers free event registration with 0% platform commission and instant mobile QR passes. Commercial paid ticketing in GBP is currently in preview pending payment provider certification."
     },
     {
       "q": "Can door staff manually search attendees if their phone dies?",
