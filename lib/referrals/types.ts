@@ -138,3 +138,4 @@ export const REFERRAL_COMMERCIAL_RULES = {
   COOKIE_NAME: "urpass_ref",
   COOKIE_MAX_AGE_SECONDS: 30 * 24 * 60 * 60, // 30 days
 } as const;
+

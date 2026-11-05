@@ -29,3 +29,4 @@ export default function OpsReferralClient({ initialAuthenticated, initialData }:
 
   return <OpsReferralDashboard initialData={initialData} />;
 }
+

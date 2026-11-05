@@ -1,0 +1,74 @@
+name: UrPass UK Platform — Sovereign CI & Regression Pipeline
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'lib/core/**'
+      - 'lib/markets/**'
+      - 'lib/routing/**'
+      - 'lib/invoices-uk.ts'
+      - 'supabase/migrations_uk/**'
+      - 'app/uk/**'
+      - '__tests__/uk-*.test.ts'
+      - '.env.uk.example'
+      - '.github/workflows/ci-uk.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'lib/core/**'
+      - 'lib/markets/**'
+      - 'lib/routing/**'
+      - 'lib/invoices-uk.ts'
+      - 'supabase/migrations_uk/**'
+      - 'app/uk/**'
+      - '__tests__/uk-*.test.ts'
+      - '.env.uk.example'
+
+concurrency:
+  group: uk-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify-uk-platform:
+    name: UK Sovereign Platform Verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      NODE_ENV: test
+      NEXT_PUBLIC_APP_URL: https://app.uk.urpass.space
+      NEXT_PUBLIC_MARKETING_URL: https://uk.urpass.space
+      NEXT_PUBLIC_DEFAULT_COUNTRY: GB
+      NEXT_PUBLIC_DEFAULT_CURRENCY: GBP
+      NEXT_PUBLIC_DEFAULT_TIMEZONE: Europe/London
+      NEXT_PUBLIC_DEFAULT_LOCALE: en-GB
+      NEXT_PUBLIC_UK_PAID_TICKETING: "false"
+      NEXT_PUBLIC_UK_ORGANIZER_MOR: "false"
+      NEXT_PUBLIC_SUPABASE_URL: https://sjzuheujgwkpanykkdin.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqenVoZXVqZ3drcGFueWtrZGluIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5OTQxNzcsImV4cCI6MjEwMzU3MDE3N30.sJ1ad0CpUKFOUli-CU_tfQkYChKvB_j_4k4ddEunj3k
+      SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqenVoZXVqZ3drcGFueWtrZGluIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4Nzk5NDE3NywiZXhwIjoyMTAzNTcwMTc3fQ.VPsxGFLAi4SDALVcDYxBqPy82NA5EYnOthEyFhvbZuU
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+
+      - name: Install Dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Type Check (TypeScript)
+        run: npx tsc --noEmit
+
+      - name: Execute UK Sovereign Platform Tests
+        run: npx vitest run __tests__/uk-*.test.ts
+
+      - name: Verify Indian Workflows Zero-Regression
+        run: npx vitest run __tests__/duplicate-event.test.ts __tests__/explore-actions.test.ts

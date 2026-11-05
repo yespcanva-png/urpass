@@ -395,3 +395,4 @@ export default function ReferralDashboardClient({ initialData }: Props) {
     </div>
   );
 }
+

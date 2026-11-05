@@ -43,3 +43,4 @@ export async function matureRewardsCronAction() {
   // Can be called by scheduled tasks / cron
   return await maturePendingReferralRewards();
 }
+

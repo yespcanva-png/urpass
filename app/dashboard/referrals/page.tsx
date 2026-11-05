@@ -25,3 +25,4 @@ export default async function ReferralsPage() {
 
   return <ReferralDashboardClient initialData={dashboardData} />;
 }
+
