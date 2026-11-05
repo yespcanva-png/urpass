@@ -535,4 +535,229 @@ describe("UrPass Refer & Earn V1 Commercial Engine", () => {
       expect(deductionEntry.balance_after_paise).toBe(0);
     });
   });
+
+  describe("6. Production Referral Redirect & Attribution Safety", () => {
+    const originalEnv = process.env;
+
+    beforeEach(() => {
+      vi.resetModules();
+      process.env = { ...originalEnv };
+    });
+
+    it("getPublicAppOrigin strictly rejects localhost / 127.0.0.1 in production", async () => {
+      (process.env as any).NODE_ENV = "production";
+      process.env.NEXT_PUBLIC_APP_URL = "http://localhost:3000";
+
+      const { getPublicAppOrigin } = await import("@/lib/supabase/config");
+
+      // Test with request having localhost host
+      const mockReqLocal = {
+        headers: {
+          get: (name: string) => (name.toLowerCase() === "host" ? "localhost:3000" : null),
+        },
+      };
+      expect(getPublicAppOrigin(mockReqLocal)).toBe("https://urpass.space");
+
+      // Test with request having 127.0.0.1
+      const mockReqLoopback = {
+        headers: {
+          get: (name: string) => (name.toLowerCase() === "x-forwarded-host" ? "127.0.0.1:3000" : null),
+        },
+      };
+      expect(getPublicAppOrigin(mockReqLoopback)).toBe("https://urpass.space");
+
+      // Test with null request (falls back to env / canonical)
+      expect(getPublicAppOrigin(null)).toBe("https://urpass.space");
+
+      // Test with genuine production domain
+      const mockReqProd = {
+        headers: {
+          get: (name: string) => (name.toLowerCase() === "host" ? "urpass.space" : null),
+        },
+      };
+      expect(getPublicAppOrigin(mockReqProd)).toBe("https://urpass.space");
+
+      // Test with UK subdomain
+      const mockReqUk = {
+        headers: {
+          get: (name: string) => (name.toLowerCase() === "host" ? "uk.urpass.space" : null),
+        },
+      };
+      expect(getPublicAppOrigin(mockReqUk)).toBe("https://uk.urpass.space");
+    });
+
+    it("getPublicAppOrigin allows localhost in development environment only", async () => {
+      (process.env as any).NODE_ENV = "development";
+      process.env.NEXT_PUBLIC_APP_URL = "http://localhost:3000";
+
+      const { getPublicAppOrigin } = await import("@/lib/supabase/config");
+
+      const mockReqLocal = {
+        headers: {
+          get: (name: string) => (name.toLowerCase() === "host" ? "localhost:3000" : null),
+        },
+      };
+      expect(getPublicAppOrigin(mockReqLocal)).toBe("http://localhost:3000");
+    });
+
+    it("validateReferralCode validates code format, existence, and active state", async () => {
+      const { validateReferralCode } = await import("@/lib/referrals/service");
+
+      // 1. Invalid formats
+      const resBadFormat = await validateReferralCode("!!");
+      expect(resBadFormat.valid).toBe(false);
+      expect(resBadFormat.reason).toBe("invalid_format");
+
+      // 2. Mock DB check for active and disabled codes
+      const mockAdmin: any = {
+        from: (table: string) => {
+          if (table === "referral_codes") {
+            return {
+              select: () => ({
+                eq: (col: string, val: string) => ({
+                  maybeSingle: async () => {
+                    if (val === "UP-TX6BF") {
+                      return {
+                        data: {
+                          id: "code-1",
+                          code: "UP-TX6BF",
+                          user_id: "user-1",
+                          is_active: true,
+                          clicks_count: 5,
+                        },
+                        error: null,
+                      };
+                    }
+                    if (val === "UP-DISABLED") {
+                      return {
+                        data: {
+                          id: "code-2",
+                          code: "UP-DISABLED",
+                          user_id: "user-2",
+                          is_active: false,
+                          clicks_count: 0,
+                        },
+                        error: null,
+                      };
+                    }
+                    return { data: null, error: null };
+                  },
+                }),
+              }),
+            };
+          }
+          return {};
+        },
+      };
+
+      const validRes = await validateReferralCode("UP-TX6BF", mockAdmin);
+      expect(validRes.valid).toBe(true);
+      expect(validRes.codeRecord?.code).toBe("UP-TX6BF");
+
+      const disabledRes = await validateReferralCode("UP-DISABLED", mockAdmin);
+      expect(disabledRes.valid).toBe(false);
+      expect(disabledRes.reason).toBe("code_disabled");
+
+      const notFoundRes = await validateReferralCode("UP-NONEXIST", mockAdmin);
+      expect(notFoundRes.valid).toBe(false);
+      expect(notFoundRes.reason).toBe("code_not_found");
+    });
+
+    it("route /r/[code] redirects to canonical production domain and sets 30-day cookie", async () => {
+      (process.env as any).NODE_ENV = "production";
+      process.env.NEXT_PUBLIC_APP_URL = "https://urpass.space";
+
+      // Mock validateReferralCode and recordReferralClick
+      const { GET } = await import("@/app/r/[code]/route");
+      const { NextRequest } = await import("next/server");
+
+      // Simulate a request on an internal container port where nextUrl/host might be localhost:3000
+      const req = new NextRequest("http://localhost:3000/r/UP-TX6BF?utm_source=whatsapp&utm_medium=chat", {
+        headers: {
+          host: "localhost:3000",
+          "x-forwarded-host": "localhost:3000",
+        },
+      });
+
+      // Mock DB via validateReferralCode override or global mock if needed
+      // Note: route imports validateReferralCode from service; let's spy on it
+      const referralService = await import("@/lib/referrals/service");
+      const validateSpy = vi.spyOn(referralService, "validateReferralCode").mockResolvedValue({
+        valid: true,
+        codeRecord: {
+          id: "rec-1",
+          code: "UP-TX6BF",
+          user_id: "user-test",
+          program_id: "prog-1",
+          clicks_count: 10,
+          signups_count: 0,
+          conversions_count: 0,
+          is_active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+      });
+      const recordClickSpy = vi.spyOn(referralService, "recordReferralClick").mockResolvedValue({
+        success: true,
+      });
+
+      const response = await GET(req, { params: Promise.resolve({ code: "UP-TX6BF" }) });
+
+      // Verify redirect status
+      expect(response.status).toBe(307);
+
+      // Verify redirect Location header is strictly production domain (NO localhost!)
+      const location = response.headers.get("location");
+      expect(location).toBeDefined();
+      expect(location).not.toContain("localhost");
+      expect(location).not.toContain("127.0.0.1");
+      expect(location).toContain("https://urpass.space/signup");
+      expect(location).toContain("ref=UP-TX6BF");
+      expect(location).toContain("utm_source=whatsapp");
+      expect(location).toContain("utm_medium=chat");
+
+      // Verify cookie is set
+      const cookieHeader = response.headers.get("set-cookie");
+      expect(cookieHeader).toContain("urpass_ref=UP-TX6BF");
+      expect(cookieHeader).toContain("Max-Age=2592000"); // 30 days
+
+      validateSpy.mockRestore();
+      recordClickSpy.mockRestore();
+    });
+
+    it("route /r/[code] handles invalid referral codes safely without setting cookie or redirect loops", async () => {
+      (process.env as any).NODE_ENV = "production";
+
+      const { GET } = await import("@/app/r/[code]/route");
+      const { NextRequest } = await import("next/server");
+
+      const req = new NextRequest("http://localhost:3000/r/UP-INVALIDCODE?utm_source=twitter", {
+        headers: {
+          host: "localhost:3000",
+        },
+      });
+
+      const referralService = await import("@/lib/referrals/service");
+      const validateSpy = vi.spyOn(referralService, "validateReferralCode").mockResolvedValue({
+        valid: false,
+        reason: "code_not_found",
+      });
+
+      const response = await GET(req, { params: Promise.resolve({ code: "UP-INVALIDCODE" }) });
+
+      expect(response.status).toBe(307);
+      const location = response.headers.get("location");
+      expect(location).toContain("https://urpass.space/signup");
+      expect(location).toContain("ref_error=code_not_found");
+      expect(location).toContain("utm_source=twitter");
+      expect(location).not.toContain("ref=UP-INVALIDCODE");
+      expect(location).not.toContain("localhost");
+
+      // Ensure no urpass_ref cookie is set for invalid code
+      const cookieHeader = response.headers.get("set-cookie");
+      expect(cookieHeader).toBeNull();
+
+      validateSpy.mockRestore();
+    });
+  });
 });

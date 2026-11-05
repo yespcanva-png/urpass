@@ -21,6 +21,7 @@ import {
   Gift,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { getPublicAppOrigin } from "@/lib/supabase/config";
 import { sendSignupNotifications } from "@/app/actions/notifications";
 import { lookupSSOByEmail } from "@/app/actions/sso";
 import { resolvePostAuthRedirect } from "@/lib/auth-redirect";
@@ -158,17 +159,23 @@ function SignupContent() {
     }
 
     const supabase = createClient();
-    const appOrigin = typeof window !== "undefined" ? window.location.origin : "https://urpass.space";
+    const appOrigin = getPublicAppOrigin();
     const postSignupTarget = resolvePostAuthRedirect(
       searchParams,
       typeof document !== "undefined" ? document.referrer : null
     );
+    const refParam = searchParams.get("ref");
+    let emailRedirectTo = `${appOrigin}/auth/callback?next=${encodeURIComponent(postSignupTarget)}`;
+    if (refParam) {
+      emailRedirectTo += `&ref=${encodeURIComponent(refParam)}`;
+    }
+
     const { data: signUpData, error } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
       options: {
         data: { full_name: data.full_name },
-        emailRedirectTo: `${appOrigin}/auth/callback?next=${encodeURIComponent(postSignupTarget)}`,
+        emailRedirectTo,
       },
     });
     if (error) {
@@ -176,7 +183,6 @@ function SignupContent() {
       return;
     }
     if (signUpData.user?.id) {
-      const refParam = searchParams.get("ref");
       await attachSignupReferralAction(signUpData.user.id, refParam || undefined).catch(() => {});
     }
     try {
@@ -221,6 +227,7 @@ function SignupContent() {
     }
     const params = new URLSearchParams();
     const forwardKeys = [
+      "ref",
       "template",
       "eventName",
       "name",
@@ -283,7 +290,11 @@ function SignupContent() {
       ? "/onboarding/first-event"
       : "/onboarding/subscription";
     const destination = getPostAuthDestination(rawDestination);
-    const redirectUrl = `/api/auth/google/redirect?next=${encodeURIComponent(destination)}&segment=${encodeURIComponent(segment)}&from=${encodeURIComponent(fromPage)}`;
+    const refParam = searchParams.get("ref");
+    let redirectUrl = `/api/auth/google/redirect?next=${encodeURIComponent(destination)}&segment=${encodeURIComponent(segment)}&from=${encodeURIComponent(fromPage)}`;
+    if (refParam) {
+      redirectUrl += `&ref=${encodeURIComponent(refParam)}`;
+    }
     window.location.href = redirectUrl;
   }
 

@@ -1,13 +1,13 @@
 import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { resolvePostAuthRedirect } from "@/lib/auth-redirect";
-import { getAppOrigin, getGoogleOAuthCredentials } from "@/lib/supabase/config";
+import { getPublicAppOrigin, getGoogleOAuthCredentials } from "@/lib/supabase/config";
 import { logAuth, logAuthError } from "@/lib/auth/logger";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
-  const origin = getAppOrigin(req);
+  const origin = getPublicAppOrigin(req);
   const { clientId } = getGoogleOAuthCredentials();
   const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || "unknown";
 
@@ -30,6 +30,7 @@ export async function GET(req: NextRequest) {
   const segment = req.nextUrl.searchParams.get("segment") || "general";
   const fromPage = req.nextUrl.searchParams.get("from") || null;
   const anonSessionId = req.cookies.get("urpass_anon_session")?.value || null;
+  const refCode = req.nextUrl.searchParams.get("ref") || req.cookies.get("urpass_ref")?.value || null;
 
   const nonce = crypto.randomBytes(16).toString("hex");
   const redirectUri = `${origin}/auth/google/callback`;
@@ -40,6 +41,7 @@ export async function GET(req: NextRequest) {
     segment,
     from: fromPage,
     sessionId: anonSessionId,
+    ref: refCode,
     ts: Date.now(),
   };
   const encodedState = Buffer.from(JSON.stringify(statePayload)).toString("base64url");

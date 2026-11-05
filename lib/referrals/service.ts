@@ -1,5 +1,5 @@
 import { createClient as createAdminClient, SupabaseClient } from "@supabase/supabase-js";
-import { getSupabaseUrl } from "@/lib/supabase/config";
+import { getSupabaseUrl, getPublicAppOrigin } from "@/lib/supabase/config";
 import {
   REFERRAL_COMMERCIAL_RULES,
   ReferralCode,
@@ -142,6 +142,50 @@ export async function getOrCreateReferralCode(
   } catch (err) {
     console.error("[referrals] getOrCreateReferralCode exception:", err);
     return null;
+  }
+}
+
+/**
+ * Server-side referral code validation.
+ * Verifies code format, existence, and active state.
+ */
+export async function validateReferralCode(
+  code: string,
+  clientOverride?: SupabaseClient
+): Promise<{ valid: boolean; codeRecord?: ReferralCode | null; reason?: string }> {
+  if (!code || typeof code !== "string") {
+    return { valid: false, reason: "missing_code" };
+  }
+
+  const normalized = code.trim().toUpperCase();
+  if (!/^[A-Z0-9_-]{3,20}$/.test(normalized)) {
+    return { valid: false, reason: "invalid_format" };
+  }
+
+  const admin = clientOverride || getAdminClient();
+  if (!admin) {
+    return { valid: false, reason: "service_unavailable" };
+  }
+
+  try {
+    const { data: codeRecord, error } = await admin
+      .from("referral_codes")
+      .select("*")
+      .eq("code", normalized)
+      .maybeSingle();
+
+    if (error || !codeRecord) {
+      return { valid: false, reason: "code_not_found" };
+    }
+
+    if (!codeRecord.is_active) {
+      return { valid: false, reason: "code_disabled", codeRecord: codeRecord as ReferralCode };
+    }
+
+    return { valid: true, codeRecord: codeRecord as ReferralCode };
+  } catch (err) {
+    console.error("[referrals] validateReferralCode error:", err);
+    return { valid: false, reason: "validation_exception" };
   }
 }
 
@@ -794,9 +838,14 @@ export async function getUserReferralDashboard(
   clientOverride?: SupabaseClient
 ): Promise<ReferralDashboardData> {
   const admin = clientOverride || getAdminClient();
+  const safeOrigin =
+    process.env.NODE_ENV === "production" && (appOrigin.includes("localhost") || appOrigin.includes("127.0.0.1") || appOrigin.includes("0.0.0.0"))
+      ? "https://urpass.space"
+      : appOrigin.replace(/\/$/, "");
+
   const fallbackData: ReferralDashboardData = {
     referralCode: "UP-EARN",
-    referralUrl: `${appOrigin}/r/UP-EARN`,
+    referralUrl: `${safeOrigin}/r/UP-EARN`,
     stats: {
       totalSignups: 0,
       paidReferrals: 0,
@@ -814,7 +863,7 @@ export async function getUserReferralDashboard(
     // 1. Get or create referral code
     const codeObj = await getOrCreateReferralCode(userId, null, admin);
     const code = codeObj?.code || "UP-EARN";
-    const referralUrl = `${appOrigin}/r/${code}`;
+    const referralUrl = `${safeOrigin}/r/${code}`;
 
     // 2. Fetch pending rewards
     const { data: pendingRewards } = await admin

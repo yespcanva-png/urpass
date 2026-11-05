@@ -174,7 +174,11 @@ describe("Google Standalone OAuth Routes", () => {
         JSON.stringify({ next: "/dashboard", nonce: "test-nonce-123", redirect_uri: "https://urpass.space/auth/google/callback", ts: Date.now() })
       ).toString("base64url");
 
-      const req = new NextRequest(`https://urpass.space/auth/google/callback?code=valid_code&state=${statePayload}`);
+      const req = new NextRequest(`https://urpass.space/auth/google/callback?code=valid_code&state=${statePayload}`, {
+        headers: {
+          cookie: "oauth_state_nonce=test-nonce-123",
+        },
+      });
       const res = await googleCallbackGet(req);
 
       expect(res.status).toBe(307);
@@ -219,7 +223,11 @@ describe("Google Standalone OAuth Routes", () => {
         JSON.stringify({ next: "/billing", nonce: "test-nonce-123", redirect_uri: "https://urpass.space/auth/google/callback", ts: Date.now() })
       ).toString("base64url");
 
-      const req = new NextRequest(`https://urpass.space/auth/google/callback?code=valid_code_billing&state=${statePayload}`);
+      const req = new NextRequest(`https://urpass.space/auth/google/callback?code=valid_code_billing&state=${statePayload}`, {
+        headers: {
+          cookie: "oauth_state_nonce=test-nonce-123",
+        },
+      });
       const res = await googleCallbackGet(req);
 
       expect(res.status).toBe(307);
@@ -268,7 +276,11 @@ describe("Google Standalone OAuth Routes", () => {
         JSON.stringify({ next: "/dashboard", nonce: "test-nonce-123", redirect_uri: "https://urpass.space/auth/google/callback", ts: Date.now() })
       ).toString("base64url");
 
-      const req = new NextRequest(`https://urpass.space/auth/google/callback?code=valid_code_otp&state=${statePayload}`);
+      const req = new NextRequest(`https://urpass.space/auth/google/callback?code=valid_code_otp&state=${statePayload}`, {
+        headers: {
+          cookie: "oauth_state_nonce=test-nonce-123",
+        },
+      });
       const res = await googleCallbackGet(req);
 
       expect(res.status).toBe(307);
@@ -360,7 +372,11 @@ describe("Google Standalone OAuth Routes", () => {
         JSON.stringify({ next: "/dashboard", nonce: "test-nonce-789", redirect_uri: "https://urpass.space/auth/google/callback", ts: Date.now() })
       ).toString("base64url");
 
-      const req = new NextRequest(`https://urpass.space/auth/google/callback?code=valid_new_user_code&state=${statePayload}`);
+      const req = new NextRequest(`https://urpass.space/auth/google/callback?code=valid_new_user_code&state=${statePayload}`, {
+        headers: {
+          cookie: "oauth_state_nonce=test-nonce-789",
+        },
+      });
       const res = await googleCallbackGet(req);
 
       expect(res.status).toBe(307);

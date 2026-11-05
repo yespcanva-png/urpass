@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getPublicAppOrigin } from "@/lib/supabase/config";
 import { getUserReferralDashboard } from "@/lib/referrals/service";
 import ReferralDashboardClient from "@/components/dashboard/ReferralDashboardClient";
 
@@ -20,7 +21,7 @@ export default async function ReferralsPage() {
     redirect("/login?next=/dashboard/referrals");
   }
 
-  const appOrigin = process.env.NEXT_PUBLIC_APP_URL || "https://urpass.space";
+  const appOrigin = getPublicAppOrigin();
   const dashboardData = await getUserReferralDashboard(user.id, appOrigin);
 
   return <ReferralDashboardClient initialData={dashboardData} />;

@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { getPublicAppOrigin } from "@/lib/supabase/config";
 import { cookies } from "next/headers";
 import {
   attachReferralOnSignup,
@@ -34,7 +35,7 @@ export async function getReferralDashboardAction() {
     return { error: "Unauthorized" };
   }
 
-  const appOrigin = process.env.NEXT_PUBLIC_APP_URL || "https://urpass.space";
+  const appOrigin = getPublicAppOrigin();
   const data = await getUserReferralDashboard(user.id, appOrigin);
   return { success: true, data };
 }

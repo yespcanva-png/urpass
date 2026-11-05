@@ -185,7 +185,12 @@ function LoginContent() {
       searchParams,
       typeof document !== "undefined" ? document.referrer : null
     );
-    window.location.href = `/api/auth/google/redirect?next=${encodeURIComponent(target)}`;
+    const refParam = searchParams.get("ref");
+    let redirectUrl = `/api/auth/google/redirect?next=${encodeURIComponent(target)}`;
+    if (refParam) {
+      redirectUrl += `&ref=${encodeURIComponent(refParam)}`;
+    }
+    window.location.href = redirectUrl;
   }
 
   return (

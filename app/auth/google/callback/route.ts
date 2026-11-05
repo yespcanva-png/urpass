@@ -120,6 +120,7 @@ export async function GET(req: NextRequest) {
     let stateFrom: string | null = null;
     let stateSessionId: string | null = null;
     let stateNonce: string | null = null;
+    let stateRef: string | null = null;
     if (state) {
       try {
         const decodedStr = Buffer.from(state, "base64url").toString("utf8");
@@ -134,6 +135,7 @@ export async function GET(req: NextRequest) {
             if (parsed.from) stateFrom = String(parsed.from);
             if (parsed.sessionId) stateSessionId = String(parsed.sessionId);
             if (parsed.nonce) stateNonce = String(parsed.nonce);
+            if (parsed.ref && typeof parsed.ref === "string") stateRef = parsed.ref;
           }
         } else {
           targetPath = state;
@@ -152,6 +154,7 @@ export async function GET(req: NextRequest) {
               if (parsed.from) stateFrom = String(parsed.from);
               if (parsed.sessionId) stateSessionId = String(parsed.sessionId);
               if (parsed.nonce) stateNonce = String(parsed.nonce);
+              if (parsed.ref && typeof parsed.ref === "string") stateRef = parsed.ref;
             }
           } else {
             targetPath = state;
@@ -446,18 +449,48 @@ export async function GET(req: NextRequest) {
 
     const conversionSessionId = stateSessionId || req.cookies.get(ANON_SESSION_COOKIE)?.value;
     if (userId && conversionSessionId) await linkSessionToUserId(conversionSessionId, userId);
-    if (userId && isNewUser) await recordFirstEventConversion({ userId,
-      eventName: "signup_completed", idempotencyKey: `signup:${userId}`, pageSlug: "/signup" });
+    if (userId && isNewUser) {
+      await recordFirstEventConversion({
+        userId,
+        eventName: "signup_completed",
+        idempotencyKey: `signup:${userId}`,
+        pageSlug: "/signup",
+      });
+
+      const effectiveRef = stateRef || req.cookies.get("urpass_ref")?.value;
+      if (effectiveRef) {
+        try {
+          const { attachReferralOnSignup } = await import("@/lib/referrals/service");
+          const clientIp =
+            req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+            req.headers.get("x-real-ip") ||
+            undefined;
+          await attachReferralOnSignup(userId, effectiveRef, {
+            ip: clientIp,
+            userAgent: req.headers.get("user-agent") || undefined,
+          });
+        } catch (refErr) {
+          console.warn("[google_callback] referral attribution error:", refErr);
+        }
+      }
+    }
 
     const tokenHash = linkRes.data.properties.hashed_token;
     const verificationType = (linkRes.data.properties.verification_type as "magiclink" | "signup" | "email") || "magiclink";
 
     // 5. Determine post-login redirect destination
-    const destination = target !== "/dashboard"
+    let destination = target !== "/dashboard"
       ? target
       : (isNewUser
         ? (process.env.NEXT_PUBLIC_FIRST_EVENT_CONVERSION_ENABLED === "true" ? "/onboarding/first-event" : "/onboarding/subscription")
         : "/dashboard");
+
+    // Preserve referral code on onboarding destination if present
+    const effectiveRef = stateRef || req.cookies.get("urpass_ref")?.value;
+    if (effectiveRef && destination.startsWith("/onboarding/") && !destination.includes("ref=")) {
+      const sep = destination.includes("?") ? "&" : "?";
+      destination = `${destination}${sep}ref=${encodeURIComponent(effectiveRef)}`;
+    }
 
     const response = NextResponse.redirect(`${origin}${destination}`);
 
