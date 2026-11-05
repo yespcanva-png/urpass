@@ -255,7 +255,8 @@ export async function POST(req: NextRequest) {
   if (discountAmount === 0 && currencyCode === "INR") {
     try {
       const { calculateReferralDiscount } = await import("@/lib/referrals/service");
-      const refCheck = await calculateReferralDiscount(user.id, normalizedSlug, baseAmount / 100);
+      const refCandidate = body?.referralCode || req.cookies.get("urpass_ref")?.value || null;
+      const refCheck = await calculateReferralDiscount(user.id, normalizedSlug, baseAmount / 100, refCandidate);
       if (refCheck.eligible && refCheck.discountPaise > 0) {
         discountAmount = refCheck.discountPaise;
         referralDiscountApplied = refCheck.discountPaise;

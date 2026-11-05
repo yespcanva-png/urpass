@@ -471,9 +471,21 @@ export async function calculateReferralDiscount(
   refereeUserId: string,
   planSlug: string,
   baseRupees: number,
+  codeCandidateOrClient?: string | null | SupabaseClient,
   clientOverride?: SupabaseClient
 ): Promise<ReferralDiscountResult> {
-  const admin = clientOverride || getAdminClient();
+  let referralCodeCandidate: string | null = null;
+  let admin: SupabaseClient | null = null;
+
+  if (codeCandidateOrClient && typeof codeCandidateOrClient === "object" && "from" in codeCandidateOrClient) {
+    admin = codeCandidateOrClient as SupabaseClient;
+  } else if (typeof codeCandidateOrClient === "string") {
+    referralCodeCandidate = codeCandidateOrClient;
+    admin = clientOverride || getAdminClient();
+  } else {
+    admin = clientOverride || getAdminClient();
+  }
+
   if (!admin) {
     return { eligible: false, discountRupees: 0, discountPaise: 0, reason: "service_unavailable" };
   }
@@ -496,13 +508,39 @@ export async function calculateReferralDiscount(
   }
 
   try {
-    // Check if referee has active attribution
-    const { data: attribution } = await admin
+    // 1. Check if referee already has an active attribution
+    let { data: attribution } = await admin
       .from("referral_attributions")
       .select("id, referral_code, status, expires_at")
       .eq("referee_user_id", refereeUserId)
       .in("status", ["signed_up", "activated"])
       .maybeSingle();
+
+    // 2. If no attribution exists, but a referral code candidate is provided, attempt to attach attribution
+    if (!attribution && referralCodeCandidate) {
+      const attachRes = await attachReferralOnSignup(
+        refereeUserId,
+        referralCodeCandidate,
+        undefined,
+        admin
+      );
+      if (attachRes.success && attachRes.attributionId) {
+        const { data: newlyAttached } = await admin
+          .from("referral_attributions")
+          .select("id, referral_code, status, expires_at")
+          .eq("id", attachRes.attributionId)
+          .maybeSingle();
+        attribution = newlyAttached;
+      } else if (attachRes.reason === "self_referral_blocked") {
+        return {
+          eligible: false,
+          discountRupees: 0,
+          discountPaise: 0,
+          reason: "self_referral_blocked",
+          referralCode: referralCodeCandidate,
+        };
+      }
+    }
 
     if (!attribution) {
       return { eligible: false, discountRupees: 0, discountPaise: 0, reason: "no_active_referral" };

@@ -37,6 +37,8 @@ interface Props {
   successRedirect?: string;
   introOfferEligible?: boolean;
   priceMonthlyOverride?: number;
+  referralDiscountRupees?: number;
+  referralCode?: string | null;
 }
 
 export default function CheckoutButton({
@@ -45,6 +47,7 @@ export default function CheckoutButton({
   userEmail, userName, userPhone,
   currency = "INR",
   children, className = "", style, successRedirect, introOfferEligible = false, priceMonthlyOverride,
+  referralDiscountRupees, referralCode,
 }: Props) {
   const [open, setOpen] = useState(false);
   const isUk = (currency || "").toUpperCase() === "GBP";
@@ -77,6 +80,8 @@ export default function CheckoutButton({
         annualTotal={prices.annualTotal}
         successRedirect={successRedirect}
         introOfferEligible={introOfferEligible}
+        referralDiscountRupees={referralDiscountRupees}
+        referralCode={referralCode}
       />
     </>
   );

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Check, LogOut, ShieldCheck, Ticket, Sparkles, ArrowRight, Loader2 } from "lucide-react";
+import { Check, LogOut, ShieldCheck, Ticket, Sparkles, ArrowRight, Loader2, Gift, AlertCircle, Tag } from "lucide-react";
 import CheckoutButton from "@/components/billing/CheckoutButton";
 import { detectCountryClient, persistCountryPreference } from "@/lib/country-config";
 import { selectFreePlan } from "@/app/actions/billing";
@@ -89,6 +89,14 @@ const PLANS = [
   },
 ];
 
+export interface ReferralInfo {
+  code: string;
+  eligible: boolean;
+  discountRupees: number;
+  isSelfReferral?: boolean;
+  reason?: string;
+}
+
 interface Props {
   country: "IN" | "GB";
   userEmail: string;
@@ -98,6 +106,7 @@ interface Props {
   introOfferEligible: boolean;
   freeTrialEligible?: boolean;
   draftId?: string;
+  referralInfo?: ReferralInfo | null;
 }
 
 export default function SubscriptionOnboardingClient({
@@ -108,6 +117,7 @@ export default function SubscriptionOnboardingClient({
   accessState,
   freeTrialEligible = false,
   draftId,
+  referralInfo,
 }: Props) {
   const router = useRouter();
   const [trialLoading, setTrialLoading] = useState(false);
@@ -331,6 +341,53 @@ export default function SubscriptionOnboardingClient({
           </div>
         </section>
 
+        {/* Referral discount banner */}
+        {!isUk && referralInfo?.eligible && (
+          <div className="mt-8 overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 p-5 text-white shadow-md border border-emerald-500/30">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3.5">
+                <span className="p-2.5 bg-white/20 rounded-xl shrink-0">
+                  <Gift className="w-6 h-6 text-emerald-100" />
+                </span>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-bold uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full text-white">
+                      Referral Offer Active
+                    </span>
+                    <span className="text-xs font-mono font-semibold text-emerald-200">
+                      {referralInfo.code}
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-extrabold text-white mt-1">
+                    Give ₹100, Get ₹150 — ₹100 Discount Applied!
+                  </h3>
+                  <p className="text-xs text-emerald-100/90 mt-0.5">
+                    Your first purchase of any plan ₹499+ is automatically discounted by ₹100.
+                  </p>
+                </div>
+              </div>
+              <div className="shrink-0 bg-white text-emerald-800 font-extrabold text-sm px-4 py-2 rounded-xl shadow-xs">
+                -₹100 Off Today
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Self-referral notice */}
+        {!isUk && referralInfo?.isSelfReferral && (
+          <div className="mt-8 rounded-2xl bg-amber-50 border border-amber-300/80 p-5 text-amber-950 flex items-start gap-3.5">
+            <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+            <div className="text-xs sm:text-sm">
+              <p className="font-bold text-amber-900">
+                Self-Referral Protected ({referralInfo.code})
+              </p>
+              <p className="text-amber-800 mt-1 leading-relaxed">
+                You are currently signed in as the owner of referral code <span className="font-mono font-semibold">{referralInfo.code}</span>. UrPass commercial rules prevent self-referrals on your own account. Share this link with new organisers to earn ₹150 in billing credits per qualifying customer!
+              </p>
+            </div>
+          </div>
+        )}
+
         {!isUk && freeTrialEligible && (
           <div className="mt-8 overflow-hidden rounded-2xl border-2 border-[#6D28D9] bg-gradient-to-br from-violet-950 via-purple-900 to-neutral-950 p-6 sm:p-7 text-white shadow-lg">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
@@ -412,15 +469,29 @@ export default function SubscriptionOnboardingClient({
         <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {PLANS.map((plan) => {
             const isFree = plan.slug === "free";
+            const qualifiesForReferral =
+              !isUk &&
+              !isFree &&
+              referralInfo?.eligible &&
+              ((isAnnual ? plan.annualInr : plan.renewalInr) >= 499);
+
+            const originalPriceNum = isAnnual ? plan.annualInr : plan.renewalInr;
+            const discountedPriceNum = qualifiesForReferral ? Math.max(0, originalPriceNum - 100) : originalPriceNum;
+
             const todayPrice = isFree
               ? isUk ? "£0" : "₹0"
               : isAnnual
               ? isUk
                 ? `£${plan.annualGbp}`
-                : `₹${plan.annualInr.toLocaleString("en-IN")}`
+                : `₹${discountedPriceNum.toLocaleString("en-IN")}`
               : isUk
                 ? `£${plan.gbp}`
-                : `₹${plan.renewalInr.toLocaleString("en-IN")}`;
+                : `₹${discountedPriceNum.toLocaleString("en-IN")}`;
+
+            const originalPriceDisplay = (!isFree && !isUk && qualifiesForReferral)
+              ? `₹${originalPriceNum.toLocaleString("en-IN")}`
+              : null;
+
             const period = isFree ? "forever" : isAnnual ? "/ year" : "/ month";
             const renewalText = isFree
               ? "Zero payment or autopay required"
@@ -452,10 +523,21 @@ export default function SubscriptionOnboardingClient({
                 </div>
 
                 <div className="mt-6 border-y border-neutral-100 py-5">
-                  <div className="flex items-baseline gap-2">
+                  <div className="flex items-baseline gap-2 flex-wrap">
                     <span className="text-4xl font-bold tracking-tight text-neutral-950">{todayPrice}</span>
+                    {originalPriceDisplay && (
+                      <span className="text-lg font-medium text-neutral-400 line-through">
+                        {originalPriceDisplay}
+                      </span>
+                    )}
                     <span className="text-sm font-medium text-neutral-500">{period}</span>
                   </div>
+                  {qualifiesForReferral && (
+                    <span className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+                      <Tag className="w-3 h-3" />
+                      ₹100 referral discount applied
+                    </span>
+                  )}
                   <p className="mt-2 text-xs font-semibold text-neutral-600">{renewalText}</p>
                 </div>
 
@@ -498,6 +580,8 @@ export default function SubscriptionOnboardingClient({
                     currency={isUk ? "GBP" : "INR"}
                     successRedirect={draftId ? `/event/${draftId}/settings` : "/dashboard"}
                     introOfferEligible={false}
+                    referralDiscountRupees={qualifiesForReferral ? 100 : 0}
+                    referralCode={referralInfo?.code}
                     className={`mt-6 w-full rounded-lg px-4 py-3 text-sm font-bold ${
                       plan.recommended
                         ? "bg-[#6D28D9] text-white hover:bg-violet-800"

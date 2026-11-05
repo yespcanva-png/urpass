@@ -141,6 +141,129 @@ describe("UrPass Refer & Earn V1 Commercial Engine", () => {
       expect(res.discountRupees).toBe(0);
       expect(res.reason).toBe("referral_already_converted");
     });
+
+    it("seamlessly attaches attribution from candidate referral code if not yet attached", async () => {
+      let insertedAttribution: any = null;
+      const mockAdmin: any = {
+        from: (table: string) => {
+          if (table === "referral_codes") {
+            return {
+              select: () => ({
+                eq: () => ({
+                  eq: () => ({
+                    maybeSingle: async () => ({
+                      data: {
+                        id: "code-candidate-1",
+                        code: "UP-TX6BF",
+                        user_id: "referrer-99", // Different user!
+                        is_active: true,
+                      },
+                    }),
+                  }),
+                }),
+              }),
+              update: () => ({
+                eq: async () => ({ error: null }),
+              }),
+            };
+          }
+          if (table === "referral_events") {
+            return {
+              insert: async () => ({ error: null }),
+            };
+          }
+          if (table === "referral_attributions") {
+            return {
+              select: () => ({
+                eq: (col: string, val: string) => ({
+                  in: () => ({
+                    maybeSingle: async () => ({
+                      data: insertedAttribution,
+                    }),
+                  }),
+                  maybeSingle: async () => ({
+                    data: insertedAttribution,
+                  }),
+                }),
+              }),
+              insert: (record: any) => ({
+                select: () => ({
+                  single: async () => {
+                    insertedAttribution = {
+                      id: "attr-new-1",
+                      referral_code: record.referral_code,
+                      status: "signed_up",
+                      expires_at: new Date(Date.now() + 86400000).toISOString(),
+                    };
+                    return { data: insertedAttribution, error: null };
+                  },
+                }),
+              }),
+            };
+          }
+          if (table === "referral_conversions") {
+            return {
+              select: () => ({
+                eq: async () => ({ count: 0 }),
+              }),
+            };
+          }
+          return {};
+        },
+      };
+
+      const res = await calculateReferralDiscount("new-user-1", "starter", 499, "UP-TX6BF", mockAdmin);
+      expect(res.eligible).toBe(true);
+      expect(res.discountRupees).toBe(100);
+      expect(res.referralCode).toBe("UP-TX6BF");
+    });
+
+    it("identifies self-referral candidate code and blocks discount safely", async () => {
+      const mockAdmin: any = {
+        from: (table: string) => {
+          if (table === "referral_attributions") {
+            return {
+              select: () => ({
+                eq: () => ({
+                  in: () => ({
+                    maybeSingle: async () => ({ data: null }),
+                  }),
+                }),
+              }),
+            };
+          }
+          if (table === "referral_codes") {
+            return {
+              select: () => ({
+                eq: () => ({
+                  eq: () => ({
+                    maybeSingle: async () => ({
+                      data: {
+                        id: "code-self",
+                        code: "UP-TX6BF",
+                        user_id: "srinithi-user-id", // Same as user
+                        is_active: true,
+                      },
+                    }),
+                  }),
+                }),
+              }),
+            };
+          }
+          if (table === "referral_fraud_flags") {
+            return {
+              insert: async () => ({ data: null, error: null }),
+            };
+          }
+          return {};
+        },
+      };
+
+      const res = await calculateReferralDiscount("srinithi-user-id", "starter", 499, "UP-TX6BF", mockAdmin);
+      expect(res.eligible).toBe(false);
+      expect(res.reason).toBe("self_referral_blocked");
+      expect(res.referralCode).toBe("UP-TX6BF");
+    });
   });
 
   describe("3. Signup Attribution & Fraud Protection", () => {

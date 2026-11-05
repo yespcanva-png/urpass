@@ -24,6 +24,8 @@ interface Props {
   annualTotal: number;
   successRedirect?: string;
   introOfferEligible?: boolean;
+  referralDiscountRupees?: number;
+  referralCode?: string | null;
 }
 
 declare global {
@@ -96,6 +98,7 @@ export default function CheckoutModal({
   currency = "INR",
   priceMonthly, annualTotal,
   successRedirect,
+  referralDiscountRupees, referralCode,
 }: Props) {
   const [couponInput, setCouponInput]       = useState("");
   const [couponLoading, setCouponLoading]   = useState(false);
@@ -153,12 +156,16 @@ export default function CheckoutModal({
     : billingCycle === "annual"
     ? annualTotal
     : priceMonthly;
+  const referralDeduction =
+    !coupon && (referralDiscountRupees ?? 0) > 0 && !isUk && baseAmount >= 499
+      ? (referralDiscountRupees ?? 100)
+      : 0;
   const baseTax    = Math.round(baseAmount * (isUk ? 20 : 18)) / 100;
   const baseTotal  = Math.round((baseAmount + baseTax) * 100) / 100;
 
-  const subtotal    = coupon ? coupon.discountedAmountRupees : baseAmount;
-  const taxDisplay  = coupon ? coupon.gstRupees              : baseTax;
-  const totalToday  = coupon ? coupon.totalRupees            : baseTotal;
+  const subtotal    = coupon ? coupon.discountedAmountRupees : Math.max(0, baseAmount - referralDeduction);
+  const taxDisplay  = coupon ? coupon.gstRupees              : Math.round(subtotal * (isUk ? 20 : 18)) / 100;
+  const totalToday  = coupon ? coupon.totalRupees            : Math.round((subtotal + taxDisplay) * 100) / 100;
 
   async function applyCoupon() {
     const code = couponInput.trim();
@@ -233,6 +240,7 @@ export default function CheckoutModal({
           billingCycle,
           currency: isUk ? "GBP" : "INR",
           couponCode: coupon?.code ?? null,
+          referralCode: referralDeduction > 0 ? (referralCode ?? null) : null,
           billingDetails: isUk
             ? undefined
             : {
@@ -531,6 +539,16 @@ export default function CheckoutModal({
                   <span className="font-normal text-emerald-600 ml-1">({coupon.label})</span>
                 </span>
                 <span className="font-semibold text-emerald-700">− {sym}{fmt(coupon.discountAmountRupees)}</span>
+              </div>
+            )}
+
+            {referralDeduction > 0 && !coupon && (
+              <div className="flex items-center justify-between text-emerald-700">
+                <span className="font-medium flex items-center gap-1.5">
+                  <Tag className="w-3.5 h-3.5 text-emerald-600" />
+                  Referral Discount ({referralCode || "UP-OFFER"})
+                </span>
+                <span className="font-semibold text-emerald-700">− {sym}{fmt(referralDeduction)}</span>
               </div>
             )}
 

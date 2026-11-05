@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 export default async function SubscriptionOnboardingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ draft?: string }>;
+  searchParams: Promise<{ draft?: string; ref?: string }>;
 }) {
   const supabase = await createClient();
   const {
@@ -23,7 +23,8 @@ export default async function SubscriptionOnboardingPage({
 
   if (!user) redirect("/login?next=/onboarding/subscription");
 
-  const requestedDraftId = (await searchParams).draft;
+  const resolvedParams = await searchParams;
+  const requestedDraftId = resolvedParams.draft;
   const { data: ownedDraft } = requestedDraftId
     ? await supabase.from("events").select("id, status, is_onboarding_draft")
         .eq("id", requestedDraftId).eq("organizer_id", user.id).maybeSingle()
@@ -45,6 +46,47 @@ export default async function SubscriptionOnboardingPage({
   const headerCountry = detectCountryFromHeaders(reqHeaders);
   const country: "IN" | "GB" = cookieCountry === "GB" || cookieCountry === "UK" ? "GB" : headerCountry === "GB" && cookieCountry !== "IN" ? "GB" : "IN";
 
+  // Check referral attribution and eligible discount
+  const refCodeCandidate = resolvedParams.ref || cookieStore.get("urpass_ref")?.value || null;
+  let referralInfo: {
+    code: string;
+    eligible: boolean;
+    discountRupees: number;
+    isSelfReferral?: boolean;
+    reason?: string;
+  } | null = null;
+
+  if (refCodeCandidate) {
+    try {
+      const { calculateReferralDiscount } = await import("@/lib/referrals/service");
+      const refCheck = await calculateReferralDiscount(user.id, "starter", 499, refCodeCandidate);
+      if (refCheck.eligible && refCheck.discountRupees > 0) {
+        referralInfo = {
+          code: refCheck.referralCode || refCodeCandidate,
+          eligible: true,
+          discountRupees: refCheck.discountRupees,
+        };
+      } else if (refCheck.reason === "self_referral_blocked") {
+        referralInfo = {
+          code: refCodeCandidate,
+          eligible: false,
+          discountRupees: 0,
+          isSelfReferral: true,
+          reason: "self_referral_blocked",
+        };
+      } else {
+        referralInfo = {
+          code: refCodeCandidate,
+          eligible: false,
+          discountRupees: 0,
+          reason: refCheck.reason,
+        };
+      }
+    } catch (refErr) {
+      console.warn("[onboarding/subscription] Referral discount calculation error:", refErr);
+    }
+  }
+
   return (
     <SubscriptionOnboardingClient
       country={country}
@@ -55,6 +97,7 @@ export default async function SubscriptionOnboardingPage({
       introOfferEligible={access.introOfferEligible}
       freeTrialEligible={false}
       draftId={draftId}
+      referralInfo={referralInfo}
     />
   );
 }

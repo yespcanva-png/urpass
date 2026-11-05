@@ -1,5 +1,5 @@
 -- ============================================================================
--- UrPass UK Platform — Sovereign Baseline Migration
+-- UrPass UK Platform — Sovereign Baseline Migration (Idempotent & Resilient)
 -- Migration: 001_uk_platform_baseline.sql
 -- Target: Dedicated UrPass UK Supabase Project (AWS eu-west-2 London)
 -- Locale: en-GB | Timezone: Europe/London | Currency: GBP (£)
@@ -13,8 +13,8 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE IF NOT EXISTS public.profiles (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  full_name text NOT NULL,
-  email text NOT NULL,
+  full_name text NOT NULL DEFAULT '',
+  email text NOT NULL DEFAULT '',
   avatar_url text,
   phone text,
   country_code text NOT NULL DEFAULT 'GB',
@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   CONSTRAINT profiles_user_id_key UNIQUE (user_id)
 );
 
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS country_code text NOT NULL DEFAULT 'GB';
 CREATE INDEX IF NOT EXISTS idx_profiles_email ON public.profiles(email);
 
 -- ── 2. Organizations & Tenancy ───────────────────────────────────────────────
@@ -31,7 +32,8 @@ CREATE TABLE IF NOT EXISTS public.organizations (
   name text NOT NULL,
   slug text NOT NULL UNIQUE,
   logo_url text,
-  owner_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE RESTRICT,
+  created_by uuid REFERENCES auth.users(id) ON DELETE RESTRICT,
+  owner_id uuid REFERENCES auth.users(id) ON DELETE RESTRICT,
   country_code text NOT NULL DEFAULT 'GB',
   billing_currency text NOT NULL DEFAULT 'GBP',
   billing_timezone text NOT NULL DEFAULT 'Europe/London',
@@ -42,21 +44,37 @@ CREATE TABLE IF NOT EXISTS public.organizations (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
+-- Idempotently ensure both created_by and owner_id columns exist regardless of legacy schema state
+ALTER TABLE public.organizations ADD COLUMN IF NOT EXISTS created_by uuid REFERENCES auth.users(id) ON DELETE RESTRICT;
+ALTER TABLE public.organizations ADD COLUMN IF NOT EXISTS owner_id uuid REFERENCES auth.users(id) ON DELETE RESTRICT;
+ALTER TABLE public.organizations ADD COLUMN IF NOT EXISTS country_code text NOT NULL DEFAULT 'GB';
+ALTER TABLE public.organizations ADD COLUMN IF NOT EXISTS billing_currency text NOT NULL DEFAULT 'GBP';
+ALTER TABLE public.organizations ADD COLUMN IF NOT EXISTS billing_timezone text NOT NULL DEFAULT 'Europe/London';
+ALTER TABLE public.organizations ADD COLUMN IF NOT EXISTS billing_entity_id text;
+ALTER TABLE public.organizations ADD COLUMN IF NOT EXISTS tax_information jsonb NOT NULL DEFAULT '{"taxType":"VAT","taxRate":20}'::jsonb;
+ALTER TABLE public.organizations ADD COLUMN IF NOT EXISTS market_configuration jsonb NOT NULL DEFAULT '{"market":"GB","terms":{"institution":"University","governingBody":"Students Union"}}'::jsonb;
+
+-- Sync created_by and owner_id symmetrically
+UPDATE public.organizations SET owner_id = created_by WHERE owner_id IS NULL AND created_by IS NOT NULL;
+UPDATE public.organizations SET created_by = owner_id WHERE created_by IS NULL AND owner_id IS NOT NULL;
+
 CREATE INDEX IF NOT EXISTS idx_organizations_slug ON public.organizations(slug);
+CREATE INDEX IF NOT EXISTS idx_organizations_created_by ON public.organizations(created_by);
 CREATE INDEX IF NOT EXISTS idx_organizations_owner ON public.organizations(owner_id);
 
 CREATE TABLE IF NOT EXISTS public.organization_members (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   organization_id uuid NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
   user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  role text NOT NULL DEFAULT 'member'
-    CHECK (role IN ('owner', 'admin', 'event_manager', 'checkin_staff', 'member')),
-  status text NOT NULL DEFAULT 'active'
-    CHECK (status IN ('active', 'invited', 'suspended')),
+  role text NOT NULL DEFAULT 'member',
+  status text NOT NULL DEFAULT 'active',
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT org_members_org_user_unique UNIQUE (organization_id, user_id)
 );
+
+ALTER TABLE public.organization_members ADD COLUMN IF NOT EXISTS role text NOT NULL DEFAULT 'member';
+ALTER TABLE public.organization_members ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'active';
 
 CREATE INDEX IF NOT EXISTS idx_org_members_user ON public.organization_members(user_id);
 CREATE INDEX IF NOT EXISTS idx_org_members_org ON public.organization_members(organization_id);
@@ -73,7 +91,35 @@ CREATE TABLE IF NOT EXISTS public.organization_settings (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
--- ── 3. Billing Plans & Subscriptions ─────────────────────────────────────────
+ALTER TABLE public.organization_settings ADD COLUMN IF NOT EXISTS default_country_code text NOT NULL DEFAULT 'GB';
+ALTER TABLE public.organization_settings ADD COLUMN IF NOT EXISTS default_currency text NOT NULL DEFAULT 'GBP';
+ALTER TABLE public.organization_settings ADD COLUMN IF NOT EXISTS default_timezone text NOT NULL DEFAULT 'Europe/London';
+
+-- ── 3. Role & Membership Helper Functions ───────────────────────────────────
+CREATE OR REPLACE FUNCTION public.get_user_org_role(p_org_id uuid)
+RETURNS text LANGUAGE sql SECURITY DEFINER STABLE
+SET search_path = public
+AS $$
+  SELECT role FROM public.organization_members
+  WHERE organization_id = p_org_id
+    AND user_id = auth.uid()
+    AND status = 'active'
+  LIMIT 1;
+$$;
+
+CREATE OR REPLACE FUNCTION public.is_org_member(p_org_id uuid)
+RETURNS boolean LANGUAGE sql SECURITY DEFINER STABLE
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.organization_members
+    WHERE organization_id = p_org_id
+      AND user_id = auth.uid()
+      AND status = 'active'
+  );
+$$;
+
+-- ── 4. Billing Plans & Subscriptions ─────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.plans (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   name text NOT NULL,
@@ -87,6 +133,8 @@ CREATE TABLE IF NOT EXISTS public.plans (
   is_active boolean NOT NULL DEFAULT true,
   created_at timestamptz NOT NULL DEFAULT now()
 );
+
+ALTER TABLE public.plans ADD COLUMN IF NOT EXISTS currency text NOT NULL DEFAULT 'GBP';
 
 -- Seed UK initial tiers (Free tier active immediately; paid tiers pending provider activation)
 INSERT INTO public.plans (name, slug, price_monthly, price_yearly, currency, max_events, max_attendees, features, is_active)
@@ -115,7 +163,7 @@ CREATE TABLE IF NOT EXISTS public.subscriptions (
 
 CREATE INDEX IF NOT EXISTS idx_subscriptions_user ON public.subscriptions(user_id);
 
--- ── 4. Events & Ticket Types ────────────────────────────────────────────────
+-- ── 5. Events & Ticket Types ────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.events (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   organizer_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -147,6 +195,15 @@ CREATE TABLE IF NOT EXISTS public.events (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
+ALTER TABLE public.events ADD COLUMN IF NOT EXISTS starts_at_utc timestamptz;
+ALTER TABLE public.events ADD COLUMN IF NOT EXISTS ends_at_utc timestamptz;
+ALTER TABLE public.events ADD COLUMN IF NOT EXISTS country_code text NOT NULL DEFAULT 'GB';
+ALTER TABLE public.events ADD COLUMN IF NOT EXISTS currency text NOT NULL DEFAULT 'GBP';
+ALTER TABLE public.events ADD COLUMN IF NOT EXISTS timezone text NOT NULL DEFAULT 'Europe/London';
+ALTER TABLE public.events ADD COLUMN IF NOT EXISTS locale text NOT NULL DEFAULT 'en-GB';
+ALTER TABLE public.events ADD COLUMN IF NOT EXISTS custom_fields jsonb DEFAULT '[]'::jsonb;
+ALTER TABLE public.events ADD COLUMN IF NOT EXISTS organization_id uuid REFERENCES public.organizations(id) ON DELETE SET NULL;
+
 CREATE INDEX IF NOT EXISTS idx_events_organizer ON public.events(organizer_id);
 CREATE INDEX IF NOT EXISTS idx_events_org ON public.events(organization_id);
 CREATE INDEX IF NOT EXISTS idx_events_apply_slug ON public.events(apply_slug);
@@ -169,9 +226,14 @@ CREATE TABLE IF NOT EXISTS public.ticket_types (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
+ALTER TABLE public.ticket_types ADD COLUMN IF NOT EXISTS price_minor bigint NOT NULL DEFAULT 0;
+ALTER TABLE public.ticket_types ADD COLUMN IF NOT EXISTS fee_minor bigint NOT NULL DEFAULT 0;
+ALTER TABLE public.ticket_types ADD COLUMN IF NOT EXISTS tax_minor bigint NOT NULL DEFAULT 0;
+ALTER TABLE public.ticket_types ADD COLUMN IF NOT EXISTS currency text NOT NULL DEFAULT 'GBP';
+
 CREATE INDEX IF NOT EXISTS idx_ticket_types_event ON public.ticket_types(event_id);
 
--- ── 5. Attendees, Passes, and Check-Ins ──────────────────────────────────────
+-- ── 6. Attendees, Passes, and Check-Ins ──────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.attendees (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   event_id uuid NOT NULL REFERENCES public.events(id) ON DELETE CASCADE,
@@ -191,6 +253,11 @@ CREATE TABLE IF NOT EXISTS public.attendees (
   updated_at timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT attendees_event_email_key UNIQUE (event_id, email)
 );
+
+ALTER TABLE public.attendees ADD COLUMN IF NOT EXISTS custom_responses jsonb DEFAULT '{}'::jsonb;
+ALTER TABLE public.attendees ADD COLUMN IF NOT EXISTS consent_recorded_at timestamptz NOT NULL DEFAULT now();
+ALTER TABLE public.attendees ADD COLUMN IF NOT EXISTS privacy_version text NOT NULL DEFAULT 'uk_gdpr_v1';
+ALTER TABLE public.attendees ADD COLUMN IF NOT EXISTS ticket_type_id uuid REFERENCES public.ticket_types(id) ON DELETE SET NULL;
 
 CREATE INDEX IF NOT EXISTS idx_attendees_event ON public.attendees(event_id);
 CREATE INDEX IF NOT EXISTS idx_attendees_status ON public.attendees(event_id, application_status);
@@ -215,6 +282,12 @@ CREATE TABLE IF NOT EXISTS public.passes (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
+ALTER TABLE public.passes ADD COLUMN IF NOT EXISTS total_guests integer NOT NULL DEFAULT 1;
+ALTER TABLE public.passes ADD COLUMN IF NOT EXISTS checked_in_guests integer NOT NULL DEFAULT 0;
+ALTER TABLE public.passes ADD COLUMN IF NOT EXISTS is_group_master boolean NOT NULL DEFAULT false;
+ALTER TABLE public.passes ADD COLUMN IF NOT EXISTS is_group_pass boolean NOT NULL DEFAULT false;
+ALTER TABLE public.passes ADD COLUMN IF NOT EXISTS ticket_type_id uuid REFERENCES public.ticket_types(id) ON DELETE SET NULL;
+
 CREATE INDEX IF NOT EXISTS idx_passes_event ON public.passes(event_id);
 CREATE INDEX IF NOT EXISTS idx_passes_token ON public.passes(pass_token);
 
@@ -230,6 +303,9 @@ CREATE TABLE IF NOT EXISTS public.check_ins (
   gate_name text DEFAULT 'Main Entrance',
   created_at timestamptz NOT NULL DEFAULT now()
 );
+
+ALTER TABLE public.check_ins ADD COLUMN IF NOT EXISTS scan_operation_id text;
+ALTER TABLE public.check_ins ADD COLUMN IF NOT EXISTS gate_name text DEFAULT 'Main Entrance';
 
 CREATE INDEX IF NOT EXISTS idx_check_ins_pass ON public.check_ins(pass_id);
 CREATE INDEX IF NOT EXISTS idx_check_ins_event ON public.check_ins(event_id);
@@ -251,7 +327,7 @@ CREATE TABLE IF NOT EXISTS public.ticket_reservations (
 
 CREATE INDEX IF NOT EXISTS idx_reservations_event ON public.ticket_reservations(event_id, ticket_type_id, status, expires_at);
 
--- ── 6. UK GDPR Compliance & Privacy ─────────────────────────────────────────
+-- ── 7. UK GDPR Compliance & Privacy ─────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.privacy_erasure_requests (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   reference_id text NOT NULL UNIQUE,
@@ -270,7 +346,7 @@ CREATE TABLE IF NOT EXISTS public.privacy_erasure_requests (
 CREATE INDEX IF NOT EXISTS idx_privacy_erasure_email ON public.privacy_erasure_requests(email);
 CREATE INDEX IF NOT EXISTS idx_privacy_erasure_token ON public.privacy_erasure_requests(verification_token);
 
--- ── 7. UK Organic Acquisition & Lead Capture ────────────────────────────────
+-- ── 8. UK Organic Acquisition & Lead Capture ────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.lead_captures (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   email text NOT NULL,
@@ -286,7 +362,7 @@ CREATE TABLE IF NOT EXISTS public.lead_captures (
 
 CREATE INDEX IF NOT EXISTS idx_lead_captures_email ON public.lead_captures(email);
 
--- ── 8. Stored Procedures / RPCs ─────────────────────────────────────────────
+-- ── 9. Stored Procedures / RPCs ─────────────────────────────────────────────
 
 -- Atomic Check-in RPC
 CREATE OR REPLACE FUNCTION public.atomic_check_in_pass(
@@ -445,7 +521,7 @@ BEGIN
 END;
 $$;
 
--- ── 9. Row Level Security Policies ──────────────────────────────────────────
+-- ── 10. Row Level Security Policies ─────────────────────────────────────────
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.organizations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.organization_members ENABLE ROW LEVEL SECURITY;
@@ -459,47 +535,70 @@ ALTER TABLE public.privacy_erasure_requests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.lead_captures ENABLE ROW LEVEL SECURITY;
 
 -- Profiles: Users manage own profile
+DROP POLICY IF EXISTS "profiles_user_all" ON public.profiles;
 CREATE POLICY "profiles_user_all" ON public.profiles FOR ALL USING (auth.uid() = user_id);
 
--- Organizations: Members can select, Owners/Admins can update
-CREATE POLICY "org_member_select" ON public.organizations FOR SELECT USING (
+-- Organizations: Members can select, Creators/Owners can update
+DROP POLICY IF EXISTS "org_member_select" ON public.organizations;
+DROP POLICY IF EXISTS "organizations_member_select" ON public.organizations;
+CREATE POLICY "organizations_member_select" ON public.organizations FOR SELECT USING (
+  created_by = auth.uid() OR
   owner_id = auth.uid() OR
-  EXISTS (SELECT 1 FROM public.organization_members WHERE organization_id = organizations.id AND user_id = auth.uid() AND status = 'active')
+  public.is_org_member(id)
 );
-CREATE POLICY "org_owner_all" ON public.organizations FOR ALL USING (owner_id = auth.uid());
+
+DROP POLICY IF EXISTS "org_owner_all" ON public.organizations;
+DROP POLICY IF EXISTS "organizations_owner_all" ON public.organizations;
+CREATE POLICY "organizations_owner_all" ON public.organizations FOR ALL USING (
+  created_by = auth.uid() OR
+  owner_id = auth.uid()
+);
 
 -- Events: Public can view active/published events; Organizers manage own events
+DROP POLICY IF EXISTS "events_public_select" ON public.events;
 CREATE POLICY "events_public_select" ON public.events FOR SELECT USING (status IN ('active', 'published'));
+
+DROP POLICY IF EXISTS "events_organizer_all" ON public.events;
 CREATE POLICY "events_organizer_all" ON public.events FOR ALL USING (
   organizer_id = auth.uid() OR
-  (organization_id IS NOT NULL AND EXISTS (
-    SELECT 1 FROM public.organization_members 
-    WHERE organization_id = events.organization_id AND user_id = auth.uid() AND status = 'active' AND role IN ('owner', 'admin', 'event_manager')
-  ))
+  (organization_id IS NOT NULL AND public.is_org_member(organization_id))
 );
 
 -- Ticket Types: Public can view active ticket types; Organizers manage them
+DROP POLICY IF EXISTS "ticket_types_public_select" ON public.ticket_types;
 CREATE POLICY "ticket_types_public_select" ON public.ticket_types FOR SELECT USING (status = 'active');
+
+DROP POLICY IF EXISTS "ticket_types_organizer_all" ON public.ticket_types;
 CREATE POLICY "ticket_types_organizer_all" ON public.ticket_types FOR ALL USING (
   EXISTS (SELECT 1 FROM public.events WHERE events.id = ticket_types.event_id AND events.organizer_id = auth.uid())
 );
 
 -- Attendees: Public can register (insert); Organizers can manage attendees
+DROP POLICY IF EXISTS "attendees_public_insert" ON public.attendees;
 CREATE POLICY "attendees_public_insert" ON public.attendees FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "attendees_organizer_all" ON public.attendees;
 CREATE POLICY "attendees_organizer_all" ON public.attendees FOR ALL USING (
   EXISTS (SELECT 1 FROM public.events WHERE events.id = attendees.event_id AND events.organizer_id = auth.uid())
 );
 
 -- Passes: Public can view pass by token; Organizers manage passes
+DROP POLICY IF EXISTS "passes_public_select" ON public.passes;
 CREATE POLICY "passes_public_select" ON public.passes FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "passes_organizer_all" ON public.passes;
 CREATE POLICY "passes_organizer_all" ON public.passes FOR ALL USING (
   EXISTS (SELECT 1 FROM public.events WHERE events.id = passes.event_id AND events.organizer_id = auth.uid())
 );
 
 -- Privacy Erasure Requests: STRICT SERVICE ROLE ONLY
+DROP POLICY IF EXISTS "privacy_erasure_service_only" ON public.privacy_erasure_requests;
 CREATE POLICY "privacy_erasure_service_only" ON public.privacy_erasure_requests
   FOR ALL TO service_role USING (true) WITH CHECK (true);
 
 -- Lead Captures: Public insert; Service role select
+DROP POLICY IF EXISTS "lead_captures_public_insert" ON public.lead_captures;
 CREATE POLICY "lead_captures_public_insert" ON public.lead_captures FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "lead_captures_service_select" ON public.lead_captures;
 CREATE POLICY "lead_captures_service_select" ON public.lead_captures FOR SELECT TO service_role USING (true);
