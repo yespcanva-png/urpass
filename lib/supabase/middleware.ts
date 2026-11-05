@@ -5,6 +5,7 @@ import { clearAuthCookies, isRefreshTokenMissingError } from "@/lib/supabase/aut
 import { logAuth, logAuthWarn } from "@/lib/auth/logger";
 import { resolveUserSubscriptionAccess } from "@/lib/billing/entitlement-resolver";
 import { resolveCustomDomainTarget } from "@/lib/dns/custom-domain-router";
+import { resolveDomainRoute } from "@/lib/routing/domain-router";
 
 const PROTECTED = ["/dashboard", "/event", "/create-event", "/scan", "/billing", "/org", "/studio"];
 const AUTH_PAGES = ["/login", "/signup"];
@@ -56,6 +57,18 @@ export async function updateSession(request: NextRequest) {
   }
 
   const pathname = url.pathname;
+
+  // Multi-Zone Domain & Subdomain Routing (uk.urpass.space and app.uk.urpass.space)
+  if (!isLocal) {
+    const domainResolution = resolveDomainRoute(host, pathname);
+    if (domainResolution.redirectUrl) {
+      return NextResponse.redirect(new URL(domainResolution.redirectUrl), { status: 302 });
+    }
+    if (domainResolution.rewritePath) {
+      url.pathname = domainResolution.rewritePath;
+      return NextResponse.rewrite(url);
+    }
+  }
 
   // Custom Domain edge rewrite: Map external CNAME domains to their registered event or conference route
   if (!isLocal) {
