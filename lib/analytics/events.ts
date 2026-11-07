@@ -16,7 +16,13 @@ export type UrPassLifecycleEvent =
   | "checkout_started"
   | "payment_succeeded"
   | "payment_failed"
-  | "subscription_cancelled";
+  | "subscription_cancelled"
+  | "diwali_welcome_shown"
+  | "diwali_welcome_skipped"
+  | "diwali_welcome_completed"
+  | "diwali_sale_popup_shown"
+  | "diwali_sale_popup_clicked"
+  | "diwali_sale_popup_dismissed";
 
 export interface LifecycleEventProperties {
   plan?: string;

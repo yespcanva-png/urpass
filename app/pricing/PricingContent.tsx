@@ -42,6 +42,7 @@ import Footer from "@/components/landing/Footer";
 import ConciergeSetupModal from "@/components/concierge/ConciergeSetupModal";
 import EventPassCheckoutModal from "@/components/billing/EventPassCheckoutModal";
 import { trackLifecycleEvent } from "@/lib/analytics/client";
+import { isDiwaliCampaignActive, DIWALI_COUPON_CODE } from "@/lib/billing/diwali-offer";
 
 interface Props {
   isAuthenticated?: boolean;
@@ -84,6 +85,15 @@ export default function PricingContent({
 
   // FAQ Accordion State
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+  const [couponParam, setCouponParam] = useState<string | null>(null);
+  const isDiwaliActive = isDiwaliCampaignActive();
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const code = new URLSearchParams(window.location.search).get("coupon")?.trim();
+      if (code) setCouponParam(code);
+    }
+  }, []);
 
   // Sync client-side country detection if not explicitly passed
   useEffect(() => {
@@ -129,12 +139,22 @@ export default function PricingContent({
         {/* ── Hero Section ── */}
         <section className="text-center max-w-4xl mx-auto mb-14">
           {/* Top Announcement Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-neutral-200/90 text-neutral-800 text-xs font-semibold tracking-wide shadow-2xs mb-5">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
-            <span>0% Platform Ticket Commission · Direct Gateway Payouts</span>
+          <div className="flex flex-wrap items-center justify-center gap-2 mb-5">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-neutral-200/90 text-neutral-800 text-xs font-semibold tracking-wide shadow-2xs">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span>0% Platform Ticket Commission · Direct Gateway Payouts</span>
+            </div>
+
+            {isDiwaliActive && (
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/40 text-amber-950 text-xs font-bold tracking-wide shadow-2xs animate-in fade-in">
+                <span className="text-amber-600">✨</span>
+                <span>Diwali Special: 70% OFF with code <strong className="font-mono text-amber-700 font-black">DIWALI70</strong></span>
+                <span className="text-amber-600">✨</span>
+              </div>
+            )}
           </div>
 
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-neutral-950 mb-5 leading-[1.15]">
@@ -602,10 +622,10 @@ export default function PricingContent({
                           isAuthenticated
                             ? plan.slug === "free"
                               ? "/dashboard"
-                              : `/billing?plan=${plan.slug}`
+                              : `/billing?plan=${plan.slug}${couponParam || (isDiwaliActive && country === "IN" ? `&coupon=${DIWALI_COUPON_CODE}` : "")}`
                             : plan.slug === "free"
                             ? "/signup?next=/dashboard"
-                            : `/billing?plan=${plan.slug}`
+                            : `/billing?plan=${plan.slug}${couponParam || (isDiwaliActive && country === "IN" ? `&coupon=${DIWALI_COUPON_CODE}` : "")}`
                         }
                         onClick={() => {
                           trackLifecycleEvent("subscription_selected", {

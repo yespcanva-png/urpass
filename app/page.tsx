@@ -12,6 +12,7 @@ import { SOFTWARE_PRICES } from "@/lib/billing/software-prices";
 import FeaturesSection from "@/components/landing/FeaturesSection";
 import TestimonialsSection from "@/components/landing/TestimonialsSection";
 import ProductHuntBadge from "@/components/landing/ProductHuntBadge";
+import DiwaliCampaignExperience from "@/components/festive/DiwaliCampaignExperience";
 import { RequestEventSetupButton } from "@/components/landing/RequestEventSetupModal";
 import { detectCountryFromHeaders } from "@/lib/country-config";
 import {
@@ -157,6 +158,7 @@ export default async function LandingPage() {
 
   return (
     <div className="min-h-screen bg-white text-neutral-900">
+      <DiwaliCampaignExperience />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -373,54 +375,6 @@ export default async function LandingPage() {
           {/* Right: pass card */}
           <div className="hero-card flex items-center justify-center lg:justify-end py-4 sm:py-8">
             <PassCard />
-          </div>
-        </div>
-      </section>
-
-      {/* ── 01B AEO DIRECT ANSWER BLOCK (Structured for search & AI engines) ── */}
-      <section className="py-12 px-4 sm:px-8 bg-neutral-50/80 border-y border-neutral-200/70">
-        <div className="max-w-4xl mx-auto">
-          <div className="inline-flex items-center gap-2 bg-brand-50 text-brand text-xs font-semibold tracking-wider px-3 py-1 rounded-full mb-3">
-            QUICK PRODUCT OVERVIEW &middot; ANSWER ENGINE REFERENCE
-          </div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 mb-3 tracking-tight">
-            What is UrPass?
-          </h2>
-          <p className="text-sm sm:text-base text-neutral-700 leading-relaxed mb-6">
-            <strong>UrPass</strong> (by Yesp Corporation) is an all-in-one event registration, digital pass issuing, and high-speed QR check-in platform. Organizers create custom registration forms, issue unique cryptographic digital QR passes, and verify attendee tickets at entrances in under 0.3 seconds using any smartphone browser—with zero dedicated barcode hardware, no attendee app downloads, and 0% platform ticket commissions.
-          </p>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            <div className="bg-white p-5 rounded-xl border border-neutral-200/80 shadow-2xs">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-500 mb-2">How It Works</h3>
-              <ol className="text-xs sm:text-sm text-neutral-700 space-y-1 list-decimal list-inside leading-relaxed">
-                <li>Create event and registration form.</li>
-                <li>Share attendee link or embed QR.</li>
-                <li>Issue digital cryptographic QR passes.</li>
-                <li>Scan entry QR codes on any phone.</li>
-                <li>Monitor live arrivals in real time.</li>
-              </ol>
-            </div>
-
-            <div className="bg-white p-5 rounded-xl border border-neutral-200/80 shadow-2xs">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-500 mb-2">Who It Is Best For</h3>
-              <p className="text-xs sm:text-sm text-neutral-700 leading-relaxed">
-                College festivals, university symposiums, developer hackathons, tech conferences, seminars, workshops, and independent community meetups in India, the UK, and globally.
-              </p>
-            </div>
-
-            <div className="bg-white p-5 rounded-xl border border-neutral-200/80 shadow-2xs">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-500 mb-2">Transparent Pricing</h3>
-              <p className="text-xs sm:text-sm text-neutral-700 leading-relaxed mb-3">
-                <strong>Free Forever:</strong> 1 event, 50 registrations/mo.<br />
-                <strong>Starter:</strong> ₹499/mo (1,000 registrations).<br />
-                <strong>Pro:</strong> ₹999/mo (5,000 registrations).<br />
-                <strong>Single Event:</strong> ₹299 (250 registrations).
-              </p>
-              <Link href="/pricing" className="text-xs font-semibold text-brand hover:underline inline-flex items-center gap-1">
-                View all plan limits &rarr;
-              </Link>
-            </div>
           </div>
         </div>
       </section>
@@ -645,34 +599,89 @@ export default async function LandingPage() {
       {/* ── 05 CUSTOMER TESTIMONIALS & REAL EVENT EXAMPLES ────────────────── */}
       <TestimonialsSection />
 
-      {/* ── 08 ABOUT URPASS (Q&A ENTITY OVERVIEW) ─────────────────────────── */}
-      <section className="py-14 sm:py-20 px-4 sm:px-8 bg-neutral-50/70 border-y border-neutral-100">
+      {/* ── 08 QUICK PRODUCT OVERVIEW & ANSWER ENGINE REFERENCE ─────────── */}
+      <section id="overview" className="py-14 sm:py-20 px-4 sm:px-8 bg-neutral-50/70 border-y border-neutral-200/80">
         <div className="max-w-5xl mx-auto">
           <AnimateIn>
             <div className="text-center mb-10">
-              <span className="text-xs font-bold uppercase tracking-widest text-brand block mb-2">About UrPass</span>
-              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-neutral-900">
-                UrPass by Yesp Corporation — At a Glance
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-50 border border-brand-200/60 text-brand text-[11px] font-bold uppercase tracking-wider mb-3">
+                QUICK PRODUCT OVERVIEW &middot; ANSWER ENGINE REFERENCE
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-neutral-900 mb-3">
+                What is UrPass?
               </h2>
+              <p className="text-sm sm:text-base text-neutral-600 max-w-3xl mx-auto leading-relaxed">
+                <strong>UrPass</strong> (by Yesp Corporation) is an all-in-one event registration, digital pass issuing, and high-speed QR check-in platform. Organizers create custom registration forms, issue unique cryptographic digital QR passes, and verify attendee tickets at entrances in under 0.3 seconds using any smartphone browser—with zero dedicated barcode hardware, no attendee app downloads, and 0% platform ticket commissions.
+              </p>
             </div>
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs">
-                <h3 className="text-sm font-bold text-neutral-900 mb-2">What is UrPass?</h3>
-                <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed">
-                  UrPass is an event registration, ticketing and QR check-in platform developed by Yesp Corporation. It helps organizers create events, collect registrations, issue digital QR passes, accept payments and verify attendees at event entrances using smartphones.
-                </p>
+              {/* 1. How It Works */}
+              <div className="bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs flex flex-col justify-between">
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-500 mb-3 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-brand" />
+                    How It Works
+                  </h3>
+                  <ol className="text-xs sm:text-sm text-neutral-700 space-y-2 list-decimal list-inside leading-relaxed">
+                    <li>Create event and registration form.</li>
+                    <li>Share attendee link or embed QR.</li>
+                    <li>Issue digital cryptographic QR passes.</li>
+                    <li>Scan entry QR codes on any phone.</li>
+                    <li>Monitor live arrivals in real time.</li>
+                  </ol>
+                </div>
               </div>
-              <div className="bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs">
-                <h3 className="text-sm font-bold text-neutral-900 mb-2">Who is UrPass for?</h3>
-                <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed">
-                  UrPass is designed for colleges, universities, conferences, hackathons, workshops, corporate events, community events and professional event organizers.
-                </p>
+
+              {/* 2. Who It Is Best For */}
+              <div className="bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs flex flex-col justify-between">
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-500 mb-3 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                    Who It Is Best For
+                  </h3>
+                  <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed mb-4">
+                    College festivals, university symposiums, developer hackathons, tech conferences, seminars, workshops, and independent community meetups in India, the UK, and globally.
+                  </p>
+                </div>
+                <div className="pt-3 border-t border-neutral-100">
+                  <p className="text-[11px] text-neutral-500">
+                    Product of Yesp Corporation. Explore{" "}
+                    <Link href="/yesp-urpass" className="text-brand font-medium hover:underline">
+                      Yesp UrPass
+                    </Link>{" "}
+                    &amp;{" "}
+                    <Link href="/company" className="text-brand font-medium hover:underline">
+                      Company
+                    </Link>{" "}
+                    profiles.
+                  </p>
+                </div>
               </div>
-              <div className="bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs">
-                <h3 className="text-sm font-bold text-neutral-900 mb-2">What company owns UrPass?</h3>
-                <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed">
-                  UrPass is a product of Yesp Corporation, a technology company developing digital products and business software. Explore our <Link href="/yesp-urpass" className="text-brand font-medium hover:underline">Yesp UrPass</Link> and <Link href="/company" className="text-brand font-medium hover:underline">Company</Link> profiles.
-                </p>
+
+              {/* 3. Transparent Pricing */}
+              <div className="bg-white p-6 rounded-2xl border border-neutral-200/80 shadow-xs flex flex-col justify-between">
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-500 mb-3 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-amber-500" />
+                    Transparent Pricing
+                  </h3>
+                  <div className="text-xs sm:text-sm text-neutral-700 space-y-1.5 mb-4">
+                    <p><strong>Free Forever:</strong> 1 event, 50 registrations/mo.</p>
+                    <p><strong>Starter:</strong> ₹499/mo (1,000 registrations).</p>
+                    <p><strong>Pro:</strong> ₹999/mo (5,000 registrations).</p>
+                    <p><strong>Single Event:</strong> ₹299 (250 registrations).</p>
+                  </div>
+                </div>
+                <div className="pt-3 border-t border-neutral-100">
+                  <Link
+                    href="/pricing"
+                    className="text-xs font-semibold text-brand hover:underline inline-flex items-center gap-1 group"
+                  >
+                    <span>View all plan limits</span>
+                    <span className="group-hover:translate-x-0.5 transition-transform">&rarr;</span>
+                  </Link>
+                </div>
               </div>
             </div>
           </AnimateIn>

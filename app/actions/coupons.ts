@@ -1,6 +1,12 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import {
+  DIWALI_COUPON_CODE,
+  isDiwaliCampaignActive,
+  isDiwaliEligiblePlan,
+  computeDiwaliDiscountAmounts,
+} from "@/lib/billing/diwali-offer";
 
 // Plan prices in rupees — must stay in sync with billing/page.tsx PLANS constant
 const PLAN_PRICES: Record<string, { monthly: number; annual: number }> = {
@@ -54,7 +60,26 @@ export async function validateCoupon(
     .eq("is_active", true)
     .single();
 
-  if (!coupon) return { error: "Coupon not found or expired." };
+  if (!coupon) {
+    if (trimmedCode === DIWALI_COUPON_CODE) {
+      if (!isDiwaliCampaignActive()) {
+        return { error: "The Diwali 70% flash sale has concluded." };
+      }
+      if (!isDiwaliEligiblePlan(planSlug)) {
+        return { error: "The Diwali discount applies to Starter, Pro, and Business plans." };
+      }
+      const baseAmount = billingCycle === "annual" ? prices.annual : prices.monthly;
+      const diwaliDetails = computeDiwaliDiscountAmounts(baseAmount, planSlug, billingCycle);
+      return {
+        valid: true,
+        coupon: {
+          couponId: "diwali-flash-sale-2026",
+          ...diwaliDetails,
+        },
+      };
+    }
+    return { error: "Coupon not found or expired." };
+  }
 
   // Temporal checks
   if (coupon.expiry_date && new Date(coupon.expiry_date) < new Date()) {

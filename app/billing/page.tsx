@@ -172,7 +172,7 @@ function BillingShellSkeleton() {
 }
 
 export default async function BillingPage(props: {
-  searchParams?: Promise<{ country?: string; trial?: string; tab?: string; reason?: string; plan?: string; pass?: string }>;
+  searchParams?: Promise<{ country?: string; trial?: string; tab?: string; reason?: string; plan?: string; pass?: string; coupon?: string }>;
 }) {
   const searchParams = props.searchParams ? await props.searchParams : {};
   const supabase = await createClient();
@@ -181,8 +181,9 @@ export default async function BillingPage(props: {
   } = await supabase.auth.getUser();
   if (!user) {
     const selectedPlan = searchParams?.plan;
+    const couponParam = searchParams?.coupon ? `&coupon=${encodeURIComponent(searchParams.coupon)}` : "";
     const next = selectedPlan && ["starter", "pro", "business", "founder"].includes(selectedPlan)
-      ? `/billing?plan=${encodeURIComponent(selectedPlan)}`
+      ? `/billing?plan=${encodeURIComponent(selectedPlan)}${couponParam}`
       : searchParams?.pass === "1" ? "/billing?pass=1" : "/billing";
     redirect(`/login?next=${encodeURIComponent(next)}`);
   }

@@ -149,6 +149,25 @@ export default function CheckoutModal({
         billingCycle,
         currency: (currency || "").toUpperCase() === "GBP" ? "GBP" : "INR",
       });
+
+      if (typeof window !== "undefined") {
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlCoupon = urlParams.get("coupon")?.trim();
+        if (urlCoupon && !coupon && !couponLoading) {
+          setCouponInput(urlCoupon);
+          void (async () => {
+            setCouponLoading(true);
+            try {
+              const res = await validateCoupon(urlCoupon, planSlug, billingCycle);
+              if (!("error" in res)) {
+                setCoupon(res.coupon);
+              }
+            } catch {} finally {
+              setCouponLoading(false);
+            }
+          })();
+        }
+      }
     }
   }, [isOpen, planSlug, billingCycle, currency]);
 

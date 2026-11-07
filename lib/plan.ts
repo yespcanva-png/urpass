@@ -27,7 +27,7 @@ export type EntitlementKey =
 export const ENTITLEMENTS = {
   FREE: {
     eventsPerMonth: 1,
-    registrationsPerMonth: 100,
+    registrationsPerMonth: 50,
     organizerSeats: 1,
     customFields: 3,
   },

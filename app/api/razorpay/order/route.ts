@@ -8,6 +8,12 @@ import { createClient } from "@/lib/supabase/server";
 import { notifyOwnerPaymentAttempt } from "@/lib/email";
 import { validateGstin } from "@/lib/validations/gstin";
 import { SOFTWARE_PRICES } from "@/lib/billing/software-prices";
+import {
+  DIWALI_COUPON_CODE,
+  isDiwaliCampaignActive,
+  isDiwaliEligiblePlan,
+  DIWALI_DISCOUNT_PERCENT,
+} from "@/lib/billing/diwali-offer";
 
 export const dynamic = "force-dynamic";
 
@@ -213,39 +219,45 @@ export async function POST(req: NextRequest) {
 
   if (couponCode && typeof couponCode === "string") {
     const code = couponCode.trim().toUpperCase();
-    const { data: coupon } = await supabase
-      .from("coupons")
-      .select("*")
-      .eq("code", code)
-      .eq("is_active", true)
-      .single();
 
-    if (coupon) {
-      const notExpired = !coupon.expiry_date || new Date(coupon.expiry_date) >= new Date();
-      const planApplies = !coupon.applicable_plans || coupon.applicable_plans.includes(normalizedSlug);
-      const cycleApplies = !coupon.billing_cycle || coupon.billing_cycle === billingCycle;
+    if (code === DIWALI_COUPON_CODE && isDiwaliCampaignActive() && isDiwaliEligiblePlan(normalizedSlug)) {
+      appliedCouponId = "diwali-flash-sale-2026";
+      discountAmount = Math.round((baseAmount * DIWALI_DISCOUNT_PERCENT) / 100);
+    } else {
+      const { data: coupon } = await supabase
+        .from("coupons")
+        .select("*")
+        .eq("code", code)
+        .eq("is_active", true)
+        .single();
 
-      const { count: userCount } = await supabase
-        .from("coupon_redemptions")
-        .select("*", { count: "exact", head: true })
-        .eq("coupon_id", coupon.id)
-        .eq("user_id", user.id);
+      if (coupon) {
+        const notExpired = !coupon.expiry_date || new Date(coupon.expiry_date) >= new Date();
+        const planApplies = !coupon.applicable_plans || coupon.applicable_plans.includes(normalizedSlug);
+        const cycleApplies = !coupon.billing_cycle || coupon.billing_cycle === billingCycle;
 
-      const withinLimit = (userCount ?? 0) < coupon.per_customer_limit;
+        const { count: userCount } = await supabase
+          .from("coupon_redemptions")
+          .select("*", { count: "exact", head: true })
+          .eq("coupon_id", coupon.id)
+          .eq("user_id", user.id);
 
-      if (notExpired && planApplies && cycleApplies && withinLimit) {
-        appliedCouponId = coupon.id;
+        const withinLimit = (userCount ?? 0) < coupon.per_customer_limit;
 
-        if (coupon.discount_type === "percentage") {
-          discountAmount = Math.round((baseAmount * coupon.discount_value) / 100);
-          if (coupon.max_discount_amount) {
-            discountAmount = Math.min(discountAmount, Math.round(coupon.max_discount_amount * 100));
+        if (notExpired && planApplies && cycleApplies && withinLimit) {
+          appliedCouponId = coupon.id;
+
+          if (coupon.discount_type === "percentage") {
+            discountAmount = Math.round((baseAmount * coupon.discount_value) / 100);
+            if (coupon.max_discount_amount) {
+              discountAmount = Math.min(discountAmount, Math.round(coupon.max_discount_amount * 100));
+            }
+          } else if (coupon.discount_type === "fixed") {
+            discountAmount = Math.min(Math.round(coupon.discount_value * 100), baseAmount);
+          } else if (coupon.discount_type === "free_months") {
+            const unitMonthly = isUk ? (UK_PRICES_PENCE[normalizedSlug]?.monthly ?? 3500) : priceMonthlyPaise;
+            discountAmount = Math.min(unitMonthly * coupon.discount_value, baseAmount);
           }
-        } else if (coupon.discount_type === "fixed") {
-          discountAmount = Math.min(Math.round(coupon.discount_value * 100), baseAmount);
-        } else if (coupon.discount_type === "free_months") {
-          const unitMonthly = isUk ? (UK_PRICES_PENCE[normalizedSlug]?.monthly ?? 3500) : priceMonthlyPaise;
-          discountAmount = Math.min(unitMonthly * coupon.discount_value, baseAmount);
         }
       }
     }
