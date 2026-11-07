@@ -15,6 +15,7 @@ import {
   isIntroOfferPlan,
 } from "@/lib/billing/razorpay-subscription-offers";
 import { recordFirstEventConversion } from "@/lib/conversion/first-event";
+import { getProductHuntOfferId, PRODUCT_HUNT_CODE, PRODUCT_HUNT_REGULAR_PAISE, PRODUCT_HUNT_DISCOUNTED_PAISE, PRODUCT_HUNT_CYCLES } from "@/lib/billing/product-hunt-offer";
 
 export const dynamic = "force-dynamic";
 
@@ -101,12 +102,26 @@ export async function POST(req: NextRequest) {
   const billingCycle = String(body?.billingCycle || "monthly").toLowerCase();
   const currency = String(body?.currency || "INR").toUpperCase();
   const billingDetails = (body?.billingDetails ?? null) as BillingDetailsInput | null;
+  const promoCode = String(body?.promoCode || "").trim().toUpperCase();
+  const isProductHunt = promoCode === PRODUCT_HUNT_CODE;
+
+  if (promoCode && !isProductHunt) {
+    return NextResponse.json({ error: "This promotion is not available for recurring subscriptions." }, { status: 400 });
+  }
 
   if (!isIntroOfferPlan(planSlug)) {
     return NextResponse.json({ error: "Razorpay subscriptions are available for Starter, Pro, and Business." }, { status: 400 });
   }
   if (billingCycle !== "monthly" || currency !== "INR") {
     return NextResponse.json({ error: "Recurring Razorpay offer subscriptions are available only for INR monthly plans." }, { status: 400 });
+  }
+  if (isProductHunt && planSlug !== "pro") {
+    return NextResponse.json({ error: "PRODUCTHUNT50 applies only to the Pro monthly plan in INR." }, { status: 400 });
+  }
+
+  const productHuntOfferId = isProductHunt ? getProductHuntOfferId() : null;
+  if (isProductHunt && !productHuntOfferId) {
+    return NextResponse.json({ error: "PRODUCTHUNT50 is not available yet. Please try again after launch." }, { status: 503 });
   }
 
   const billingAddress = billingDetails?.billingAddress?.trim() || "";
@@ -115,6 +130,46 @@ export async function POST(req: NextRequest) {
   const companyName = billingDetails?.companyName?.trim() || "";
   const gstin = billingDetails?.gstin?.trim().toUpperCase() || "";
 
+  const admin = adminClient();
+  if (isProductHunt) {
+    const [{ data: used, error: usedError }, { data: paidInvoices, error: invoicesError }] = await Promise.all([
+      admin.from("subscription_checkout_intents").select("id")
+        .eq("user_id", user.id).eq("promo_code", PRODUCT_HUNT_CODE)
+        .eq("status", "authorized").limit(1),
+      admin.from("invoices").select("id").eq("user_id", user.id)
+        .eq("payment_status", "paid").not("subscription_id", "is", null).limit(1),
+    ]);
+    if (usedError || invoicesError) {
+      return NextResponse.json({ error: "Promotion eligibility could not be checked." }, { status: 503 });
+    }
+    if (used?.length || paidInvoices?.length) {
+      return NextResponse.json({ error: "PRODUCTHUNT50 is for new organisers and can be used once per account." }, { status: 409 });
+    }
+  }
+  const { data: existingSub, error: existingSubError } = await admin
+    .from("subscriptions")
+    .select("status, provider, current_period_end, has_lifetime_access, lifetime_plan_slug, is_trial, trial_used, trial_ends_at, plan:plans!subscriptions_plan_id_fkey(slug)")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (existingSubError) {
+    return NextResponse.json({ error: "Subscription eligibility could not be checked." }, { status: 503 });
+  }
+
+  if (blocksNewSubscription(existingSub as ExistingSubscription | null)) {
+    return NextResponse.json(
+      { error: "This account already has an active paid subscription." },
+      { status: 409 }
+    );
+  }
+  if (isProductHunt && existingSub && !["free", ""].includes(planSlugFromSub(existingSub as ExistingSubscription))) {
+    return NextResponse.json({ error: "PRODUCTHUNT50 is for new organisers only." }, { status: 409 });
+  }
+  if (isProductHunt && body?.validateOnly === true) {
+    return NextResponse.json({ valid: true, promoCode: PRODUCT_HUNT_CODE,
+      regularAmountPaise: PRODUCT_HUNT_REGULAR_PAISE,
+      firstChargePaise: PRODUCT_HUNT_DISCOUNTED_PAISE,
+      discountedCycles: PRODUCT_HUNT_CYCLES, taxRatePercent: 18 });
+  }
   if (!billingAddress) {
     return NextResponse.json({ error: "Billing address is required before payment." }, { status: 400 });
   }
@@ -123,20 +178,6 @@ export async function POST(req: NextRequest) {
   }
   if (gstin && !validateGstin(gstin)) {
     return NextResponse.json({ error: "Invalid GSTIN format." }, { status: 400 });
-  }
-
-  const admin = adminClient();
-  const { data: existingSub } = await admin
-    .from("subscriptions")
-    .select("status, provider, current_period_end, has_lifetime_access, lifetime_plan_slug, is_trial, trial_used, trial_ends_at, plan:plans!subscriptions_plan_id_fkey(slug)")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (blocksNewSubscription(existingSub as ExistingSubscription | null)) {
-    return NextResponse.json(
-      { error: "This account already has an active paid subscription." },
-      { status: 409 }
-    );
   }
 
   const { data: plan } = await admin
@@ -172,7 +213,7 @@ export async function POST(req: NextRequest) {
   }
 
   const configuredOfferId = getIntroOfferId(planSlug);
-  const isValidOffer = Boolean(configuredOfferId && configuredOfferId.startsWith("offer_"));
+  const isValidOffer = !isProductHunt && Boolean(configuredOfferId && configuredOfferId.startsWith("offer_"));
   if (isValidOffer && (existingSub?.is_trial || existingSub?.trial_used || isFuture(existingSub?.trial_ends_at))) {
     return NextResponse.json(
       { error: "This account has already used a trial and is not eligible for the introductory subscription offer." },
@@ -209,9 +250,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Razorpay plan price differs from the billing catalog. Checkout is paused." }, { status: 503 });
     }
     const regularAmountPaise = Number(currentPrice.price_paise);
+    if (isProductHunt && regularAmountPaise !== PRODUCT_HUNT_REGULAR_PAISE) {
+      return NextResponse.json({ error: "Pro monthly price changed; promotion checkout is paused." }, { status: 503 });
+    }
     const monthlyWithGst = Math.round(regularAmountPaise * 1.18) / 100;
     const { data: pending, error: pendingError } = await admin.from("subscription_checkout_intents")
-      .select("id, plan_slug, provider_subscription_id, amount_paise, expires_at")
+      .select("id, plan_slug, provider_subscription_id, amount_paise, expires_at, promo_code")
       .eq("user_id", user.id).eq("status", "pending").maybeSingle();
     if (pendingError) return NextResponse.json({ error: "Checkout session storage is unavailable." }, { status: 503 });
     if (pending?.expires_at && new Date(pending.expires_at).getTime() <= Date.now()) {
@@ -228,7 +272,7 @@ export async function POST(req: NextRequest) {
       if (expiryError) return NextResponse.json({ error: "Could not release expired checkout." }, { status: 503 });
     }
     const activePending = pending?.expires_at && new Date(pending.expires_at).getTime() <= Date.now() ? null : pending;
-    if (activePending && (activePending.plan_slug !== planSlug || Number(activePending.amount_paise) !== regularAmountPaise)) {
+    if (activePending && (activePending.plan_slug !== planSlug || Number(activePending.amount_paise) !== regularAmountPaise || (activePending.promo_code || null) !== (isProductHunt ? PRODUCT_HUNT_CODE : null))) {
       return NextResponse.json({ error: "Finish or cancel your existing pending subscription authorization before choosing another plan." }, { status: 409 });
     }
     if (activePending && !activePending.provider_subscription_id) {
@@ -239,15 +283,21 @@ export async function POST(req: NextRequest) {
       if (!["created", "authenticated", "pending", "halted"].includes(String(previous?.status || ""))) {
         return NextResponse.json({ error: `Existing checkout is ${previous?.status || "unavailable"}. Contact support before starting another mandate.` }, { status: 409 });
       }
+      if (isProductHunt && previous.offer_id !== productHuntOfferId) {
+        return NextResponse.json({ error: "Existing checkout does not have the verified Product Hunt offer." }, { status: 409 });
+      }
       return NextResponse.json({ subscriptionId: activePending.provider_subscription_id, keyId,
         planName: plan.name, planSlug, billingCycle: "monthly", currency: "INR",
-        regularAmountPaise, firstChargePaise: regularAmountPaise,
-        estimatedTotalWithGst: monthlyWithGst, taxRatePercent: 18,
+        regularAmountPaise, firstChargePaise: isProductHunt ? PRODUCT_HUNT_DISCOUNTED_PAISE : regularAmountPaise,
+        promoCode: isProductHunt ? PRODUCT_HUNT_CODE : null,
+        discountedCycles: isProductHunt ? PRODUCT_HUNT_CYCLES : 0,
+        estimatedTotalWithGst: isProductHunt ? 589.41 : monthlyWithGst, taxRatePercent: 18,
         nextBillingDate: previous?.current_end ? new Date(Number(previous.current_end) * 1000).toISOString() : null,
         reused: true });
     }
     const { data: intent, error: intentError } = await admin.from("subscription_checkout_intents")
       .insert({ user_id: user.id, plan_slug: planSlug, billing_cycle: "monthly",
+        promo_code: isProductHunt ? PRODUCT_HUNT_CODE : null,
         currency: "INR", amount_paise: regularAmountPaise, status: "pending",
         expires_at: new Date(Date.now() + Math.max(5, Math.min(120,
           Number(process.env.BILLING_CHECKOUT_TIMEOUT_MINUTES) || 30)) * 60_000).toISOString() })
@@ -279,6 +329,7 @@ export async function POST(req: NextRequest) {
         billing_cycle: "monthly",
         regular_plan_id: String(razorpayPlanId),
         checkout_intent_id: intent.id,
+        promo_code: isProductHunt ? PRODUCT_HUNT_CODE : null,
         billing_address: billingAddress,
         billing_state: billingState,
         billing_state_code: billingStateCode,
@@ -287,8 +338,9 @@ export async function POST(req: NextRequest) {
       }),
     };
 
-    if (isValidOffer && configuredOfferId) {
-      subscriptionPayload.offer_id = configuredOfferId;
+    const selectedOfferId = isProductHunt ? productHuntOfferId : isValidOffer ? configuredOfferId : null;
+    if (selectedOfferId) {
+      subscriptionPayload.offer_id = selectedOfferId;
     }
 
     const subscription = await subscriptionsApi.create(subscriptionPayload);
@@ -301,7 +353,7 @@ export async function POST(req: NextRequest) {
         .update({ status: "cancelled", updated_at: new Date().toISOString() }).eq("id", intent.id);
       return NextResponse.json({ error: "Checkout could not be saved. Contact support before retrying authorization." }, { status: 503 });
     }
-    if (isValidOffer && configuredOfferId && subscription?.offer_id !== configuredOfferId) {
+    if (selectedOfferId && subscription?.offer_id !== selectedOfferId) {
       if (subscription?.id) {
         const cancelled = await subscriptionsApi.cancel(subscription.id, { cancel_at_cycle_end: 0 }).then(() => true).catch(() => false);
         if (cancelled) await admin.from("subscription_checkout_intents")
@@ -332,17 +384,21 @@ export async function POST(req: NextRequest) {
       planSlug,
       billingCycle: "monthly",
       currency: "INR",
-      hasIntroOffer: isValidOffer,
-      offerId: configuredOfferId || null,
+      hasIntroOffer: isValidOffer || isProductHunt,
+      promoCode: isProductHunt ? PRODUCT_HUNT_CODE : null,
+      discountedCycles: isProductHunt ? PRODUCT_HUNT_CYCLES : introDisclosure?.cycles || 0,
+      offerId: selectedOfferId,
       mandatePreviewVerified: true,
-      expectedIntroAmountPaise: introDisclosure ? introDisclosure.introAmountPaise : regularAmountPaise,
-      expectedDiscountPaise: introDisclosure ? introDisclosure.discountPaise : 0,
+      expectedIntroAmountPaise: isProductHunt ? PRODUCT_HUNT_DISCOUNTED_PAISE : introDisclosure ? introDisclosure.introAmountPaise : regularAmountPaise,
+      expectedDiscountPaise: isProductHunt ? PRODUCT_HUNT_DISCOUNTED_PAISE : introDisclosure ? introDisclosure.discountPaise : 0,
       regularAmountPaise: introDisclosure ? introDisclosure.regularAmountPaise : regularAmountPaise,
-      firstChargePaise: introDisclosure ? introDisclosure.introAmountPaise : regularAmountPaise,
+      firstChargePaise: isProductHunt ? PRODUCT_HUNT_DISCOUNTED_PAISE : introDisclosure ? introDisclosure.introAmountPaise : regularAmountPaise,
       nextBillingDate: subscription?.current_end ? new Date(Number(subscription.current_end) * 1000).toISOString() : null,
-      todayAmountWithGst: introDisclosure ? introDisclosure.todayAmountWithGst : monthlyWithGst,
-      month2AmountWithGst: introDisclosure ? introDisclosure.month2AmountWithGst : monthlyWithGst,
-      month3OnwardAmountWithGst: introDisclosure ? introDisclosure.month3OnwardAmountWithGst : monthlyWithGst,
+      todayAmountWithGst: isProductHunt ? 589.41 : introDisclosure ? introDisclosure.todayAmountWithGst : monthlyWithGst,
+      month2AmountWithGst: isProductHunt ? 589.41 : introDisclosure ? introDisclosure.month2AmountWithGst : monthlyWithGst,
+      month3OnwardAmountWithGst: isProductHunt ? null : introDisclosure ? introDisclosure.month3OnwardAmountWithGst : monthlyWithGst,
+      month3AmountWithGst: isProductHunt ? 589.41 : null,
+      month4OnwardAmountWithGst: isProductHunt ? 1178.82 : null,
       taxRatePercent: 18,
     });
   } catch (err: unknown) {

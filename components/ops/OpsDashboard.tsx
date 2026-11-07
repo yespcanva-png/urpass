@@ -611,6 +611,9 @@ export default function OpsDashboard({ onLogout }: Props) {
               Agent 01
             </Link>
             <Link href="/ops/campaigns" className="rounded-lg border border-neutral-700 bg-neutral-800/80 px-3 py-2 text-xs font-bold text-neutral-300 hover:bg-neutral-800">Campaigns</Link>
+            <Link href="/ops/intelligence" className="rounded-lg border border-indigo-400/30 bg-indigo-500/10 px-3 py-2 text-xs font-bold text-indigo-200 hover:bg-indigo-500/20">User Intelligence</Link>
+            <Link href="/ops/traffic" className="rounded-lg border border-cyan-400/30 bg-cyan-500/10 px-3 py-2 text-xs font-bold text-cyan-200 hover:bg-cyan-500/20">Traffic sources</Link>
+            <Link href="/ops/sales" className="rounded-lg border border-neutral-700 bg-neutral-800/80 px-3 py-2 text-xs font-bold text-neutral-300 hover:bg-neutral-800">Sales</Link>
             <Link href="/ops/explore" className="rounded-lg border border-violet-400/30 bg-violet-500/10 px-3 py-2 text-xs font-bold text-violet-200 hover:bg-violet-500/20">Explore review</Link>
             <div className="hidden md:flex items-center gap-3 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs font-mono">
               <div className="flex items-center gap-1.5">

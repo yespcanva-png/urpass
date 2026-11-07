@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Sparkles, Layers } from "lucide-react";
 import { saveQuickFirstEventDraft } from "@/app/actions/first-event";
+import { trackLifecycleEvent } from "@/lib/analytics/client";
 
 interface QuickFirstEventFormProps {
   initialName?: string;
@@ -25,6 +26,11 @@ export default function QuickFirstEventForm({
   const [expectedRegistrations, setExpectedRegistrations] = useState(initialCapacity);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    trackLifecycleEvent("onboarding_started", { template: initialTemplate });
+    trackLifecycleEvent("event_creation_started", { template: initialTemplate });
+  }, [initialTemplate]);
 
   const bannerText = useMemo(() => {
     if (initialTemplate === "badge") {
@@ -79,6 +85,11 @@ export default function QuickFirstEventForm({
         setError(result.error || "Could not save your draft.");
         return;
       }
+      trackLifecycleEvent("event_created", {
+        eventId: result.eventId,
+        isDraft: true,
+        template: initialTemplate,
+      });
       router.push(`/onboarding/first-event/plans?draft=${result.eventId}`);
     } catch {
       setError("Could not save your draft. Please try again.");

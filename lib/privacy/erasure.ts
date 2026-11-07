@@ -96,6 +96,21 @@ export async function executeDataErasure(params: {
       }
     }
 
+    // Remove consented traffic attribution linked to this organiser account.
+    if (!params.eventId) {
+      const { data: profile, error: trafficLookupError } = await admin.from("profiles")
+        .select("first_traffic_visitor_id, last_traffic_visitor_id")
+        .ilike("email", normalizedEmail).maybeSingle();
+      if (!trafficLookupError && profile) {
+        const ids = new Set([profile.first_traffic_visitor_id, profile.last_traffic_visitor_id].filter(Boolean));
+        for (const id of ids) {
+          const { error } = await admin.rpc("delete_traffic_visitor", { p_visitor_id: id });
+          if (error) return { success: false, recordsScrubbed, error: error.message };
+          recordsScrubbed++;
+        }
+      }
+    }
+
     // 3. Update privacy_erasure_requests record if reference provided
     if (params.referenceId) {
       await admin

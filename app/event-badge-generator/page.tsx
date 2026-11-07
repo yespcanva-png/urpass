@@ -121,10 +121,10 @@ export default function Page() {
           { q: "Can we add sponsor and company logos to the badges?", a: "Yes. You can upload event logos, organization branding, and sponsor logos to appear directly on the badges." },
           { q: "What happens if an attendee's name changes before the event?", a: "Because URPASS digital badges are web-based, any update you make to an attendee's record in your organizer dashboard immediately updates their live digital pass." },
           { q: "How do event staff verify badges at the venue entrance?", a: "Staff open the URPASS mobile camera scanner in Safari or Chrome on any phone and scan the badge QR code. It validates the pass in under 0.3 seconds." },
-          { q: "What plans include custom badge design?", a: "Badge and pass design with custom layouts, sponsor logos, and dynamic attendee credentials is included in the Pro plan (available with our plans from ₹499/mo for the first 2 months), or single-event passes starting at ₹299." },
+          { q: "What plans include custom badge design?", a: "Badge and pass design with custom layouts, sponsor logos, and dynamic attendee credentials is included in the Pro plan (₹999/mo), or single-event passes starting at ₹299." },
         ],
         ctaTitle: "Custom Event Badge and Pass Design Software",
-        ctaDescription: "Set up in 5 minutes · plans from ₹499/mo for first 2 months · 0% ticket commission",
+        ctaDescription: "Set up in 5 minutes · plans from ₹499/mo · single-event passes from ₹299 · 0% ticket commission",
       }}
     />
   );

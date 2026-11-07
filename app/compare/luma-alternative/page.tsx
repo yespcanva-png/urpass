@@ -101,7 +101,7 @@ export default function LumaAlternativePage() {
             },
             {
               criteria: "Free Tier Allowance",
-              urpass: "₹0 forever for up to 100 registrations/month",
+              urpass: "₹0 forever for up to 50 registrations/month (1 active event)",
               competitor: "Free events with standard branding",
               urpassAdvantage: false,
             },

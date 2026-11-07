@@ -48,7 +48,10 @@ export default function ConferenceClusterPage({ slug }: Props) {
         name: "UrPass",
         url: "https://urpass.space",
         logo: "https://urpass.space/icons/icon-512x512.png",
-        sameAs: ["https://x.com/urpass_space"],
+        sameAs: [
+          "https://www.producthunt.com/products/urpass",
+          "https://x.com/urpass_space"
+        ],
       },
       {
         "@type": "SoftwareApplication",

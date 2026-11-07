@@ -1,9 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { trackLifecycleEvent } from "@/lib/analytics/client";
 
 export default function ShareActions({ path, title }: { path: string; title: string }) {
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    trackLifecycleEvent("onboarding_completed", { path, title });
+  }, [path, title]);
+
   function url() { return `${window.location.origin}${path}`; }
   async function copy() {
     await navigator.clipboard.writeText(url());

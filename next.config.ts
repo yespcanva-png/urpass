@@ -14,6 +14,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "*.supabase.co", pathname: "/storage/v1/object/public/explore-ad-creatives/**" },
+      { protocol: "https", hostname: "api.producthunt.com" },
     ],
     formats: ["image/avif", "image/webp"],
   },
@@ -53,6 +54,11 @@ const nextConfig: NextConfig = {
       {
         source: "/founder-lifetime",
         destination: "/founder-lifetime-deal",
+        permanent: true,
+      },
+      {
+        source: "/free-event-registration",
+        destination: "/free-event-registration-software",
         permanent: true,
       },
       // SEO architecture: keep established flat commercial URLs canonical.

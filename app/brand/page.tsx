@@ -64,6 +64,7 @@ export default function BrandPage() {
     description:
       "URPASS (pronounced 'Your Pass') is a modern event ticketing, registration, and lightning QR entrance check-in platform developed by Yesp Corporation.",
     sameAs: [
+      "https://www.producthunt.com/products/urpass",
       "https://www.instagram.com/urpass.space",
       "https://www.youtube.com/channel/UCzUliQs5vwGlLAM7X6aB9zg/",
     ],

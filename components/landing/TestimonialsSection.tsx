@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { CheckCircle2, Star, Quote, Building2, GraduationCap, Laptop, Sparkles, ShieldCheck, Lock, ExternalLink } from "lucide-react";
 import AnimateIn from "@/components/ui/AnimateIn";
+import ProductHuntBadge from "./ProductHuntBadge";
 
 const testimonials = [
   {
@@ -165,6 +166,27 @@ export default function TestimonialsSection() {
             );
           })}
         </div>
+
+        {/* Global Community Trust & Product Hunt Reviews */}
+        <AnimateIn delay={350} from="up">
+          <div className="mt-12 p-6 sm:p-8 rounded-3xl bg-white border border-neutral-200/90 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold tracking-wider uppercase bg-violet-50 text-violet-700 border border-violet-200 mb-2">
+                <Sparkles className="w-3.5 h-3.5 text-violet-600" />
+                <span>COMMUNITY RECOGNIZED</span>
+              </div>
+              <h3 className="text-lg sm:text-xl font-extrabold text-neutral-950 tracking-tight">
+                Review UrPass on Product Hunt
+              </h3>
+              <p className="text-xs sm:text-sm text-neutral-600 mt-1 max-w-xl leading-relaxed">
+                See what event organizers, builders, and community leaders around the globe say about our sub-second QR entry and 0% ticketing fee model.
+              </p>
+            </div>
+            <div className="shrink-0">
+              <ProductHuntBadge />
+            </div>
+          </div>
+        </AnimateIn>
       </div>
     </section>
   );

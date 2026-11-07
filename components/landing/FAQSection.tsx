@@ -80,37 +80,25 @@ export default function FAQSection({ initialCountry = "IN" }: Props) {
 
         <div className="flex flex-col divide-y divide-neutral-100 border-y border-neutral-100">
           {faqs.map((faq, i) => (
-            <div key={i} className="py-1">
-              <button
-                id={`faq-question-${i}`}
-                type="button"
-                aria-expanded={open === i}
-                aria-controls={`faq-answer-${i}`}
-                onClick={() => setOpen(open === i ? null : i)}
-                className="w-full flex items-center justify-between py-5 text-left gap-4 hover:text-brand transition-colors cursor-pointer"
-              >
+            <details
+              key={i}
+              open={i === 0}
+              className="group py-1"
+            >
+              <summary className="w-full flex items-center justify-between py-5 text-left gap-4 hover:text-brand transition-colors cursor-pointer list-none select-none">
                 <span className="text-sm sm:text-base font-semibold text-neutral-900">
                   {faq.q}
                 </span>
-                <span className="shrink-0 text-neutral-400">
-                  {open === i ? (
-                    <Minus className="w-4 h-4 text-brand" />
-                  ) : (
-                    <Plus className="w-4 h-4" />
-                  )}
+                <span className="shrink-0 text-neutral-400 group-open:rotate-45 transition-transform">
+                  <Plus className="w-4 h-4" />
                 </span>
-              </button>
-              <div
-                id={`faq-answer-${i}`}
-                role="region"
-                aria-labelledby={`faq-question-${i}`}
-                className={open === i ? "block pb-5" : "hidden"}
-              >
+              </summary>
+              <div className="pb-5">
                 <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed">
                   {faq.a}
                 </p>
               </div>
-            </div>
+            </details>
           ))}
         </div>
       </div>

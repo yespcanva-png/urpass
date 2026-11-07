@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import EventImporter from "@/components/importer/EventImporter";
+import ProductHuntBadge from "@/components/landing/ProductHuntBadge";
 import Link from "next/link";
 import {
   Link2,
@@ -168,6 +169,14 @@ export default function SwitchToUrpassPage() {
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* Product Hunt Social Proof */}
+          <div className="mt-14 flex flex-col items-center justify-center text-center">
+            <p className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-3">
+              Trusted by tech communities and organizers · Review us on Product Hunt
+            </p>
+            <ProductHuntBadge />
           </div>
 
           {/* Bottom Conversion CTA */}

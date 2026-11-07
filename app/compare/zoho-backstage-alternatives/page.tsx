@@ -170,7 +170,7 @@ export default function ZohoBackstageAlternativesPage() {
           },
           {
             q: "Can I use URPASS for free events?",
-            a: "Yes! URPASS provides a introductory offer allowing you to host up to 50 attendees per event (and up to 100 registrations per month across events) at ₹0 forever.",
+            a: "Yes! URPASS provides a Free Forever plan allowing you to host 1 active event at a time and up to 50 registrations per month at ₹0 forever with full digital QR passes and camera scanning.",
           },
           {
             q: "Do my volunteers need to install an app to scan tickets?",

@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { ShieldCheck, Sparkles, CheckCircle2, Ticket, HelpCircle } from "lucide-react";
 import PaidPlanButton from "./PaidPlanButton";
 import { selectFreePlan } from "@/app/actions/billing";
+import { EVENT_PASSES } from "@/lib/billing/event-passes";
+import { trackLifecycleEvent } from "@/lib/analytics/client";
 
 type Plan = {
   slug: string;
@@ -41,16 +43,26 @@ export default function PlanChoices({
   const [error, setError] = useState("");
   const recommended = plans.find((plan) => plan.registrations >= expectedRegistrations)?.slug;
 
-  async function activateFree() {
+  async function activateFree(forEventPass = false) {
+    const freePlan = plans.find((plan) => plan.slug === "free");
+    if (!freePlan || (!forEventPass && expectedRegistrations > freePlan.registrations)) {
+      setError("Your expected registrations exceed the Free monthly limit. Choose a plan that fits or lower your estimate.");
+      return;
+    }
     setFreeLoading(true);
     setError("");
+    trackLifecycleEvent("subscription_selected", {
+      plan: "free",
+      amount: 0,
+      currency: "INR",
+    });
     const result = await selectFreePlan().catch(() => ({ error: "Could not activate Free. Try again." }));
     if (result?.error) {
       setError(result.error);
       setFreeLoading(false);
       return;
     }
-    router.push(`/event/${draftId}/settings`);
+    router.push(forEventPass ? "/billing" : `/event/${draftId}/settings`);
     router.refresh();
   }
 
@@ -176,8 +188,8 @@ export default function PlanChoices({
                 {plan.slug === "free" ? (
                   <button
                     type="button"
-                    onClick={activateFree}
-                    disabled={freeLoading}
+                    onClick={() => activateFree()}
+                    disabled={freeLoading || !fits}
                     className="mt-6 rounded-xl border-2 border-violet-700 hover:bg-violet-50 px-4 py-3 text-sm font-bold text-violet-800 disabled:opacity-50 transition-colors cursor-pointer"
                   >
                     {freeLoading ? "Activating…" : "Continue with Free"}
@@ -186,6 +198,7 @@ export default function PlanChoices({
                   <div className="mt-6">
                     <PaidPlanButton
                       plan={plan}
+                      disabled={!fits}
                       draftId={draftId}
                       userEmail={userEmail}
                       userName={userName}
@@ -209,17 +222,17 @@ export default function PlanChoices({
                   Hosting a one-time event?
                 </h3>
                 <p className="text-xs sm:text-sm text-neutral-600 mt-1 max-w-2xl leading-relaxed">
-                  You do not need an ongoing subscription for one-off seminars, fests or weddings. Start with <strong>Free</strong> now, and purchase a <strong>One-Time Event Pass (₹299 for up to 500 attendees)</strong> or <strong>24h Concierge Setup (₹4,999)</strong> anytime directly inside your Billing settings.
+                  You do not need an ongoing subscription for one-off seminars, fests or weddings. A <strong>One-Time Event Pass (₹{(EVENT_PASSES.event.pricePaise / 100).toLocaleString("en-IN")} for up to {EVENT_PASSES.event.registrations} registrations)</strong> is available in Billing. Activate the Free account tier, buy a pass for this event, then return to your draft to publish.
                 </p>
               </div>
             </div>
             <button
               type="button"
-              onClick={activateFree}
+              onClick={() => activateFree(true)}
               disabled={freeLoading}
               className="px-5 py-2.5 rounded-xl bg-neutral-100 hover:bg-neutral-200 border border-neutral-300 text-xs sm:text-sm font-semibold text-neutral-800 transition-colors shrink-0"
             >
-              Start Free &amp; Decide Later
+              Continue to Event Pass
             </button>
           </div>
         </div>

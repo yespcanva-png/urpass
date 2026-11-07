@@ -57,7 +57,7 @@ export default function UrpassVsTownscriptPage() {
             "Ticketing Commission: URPASS charges 0% per-ticket commission vs Townscript taking ~3.99% + ₹10 per ticket",
             "Door Check-In: URPASS scans QR passes in under 0.3s directly inside phone browsers vs Townscript app requirements",
             "Fund Settlements: URPASS routes ticket money directly via Razorpay T+2 vs Townscript delayed organizer disbursements",
-            "Free Tier: URPASS includes a permanent ₹0 free tier (up to 100 registrations/month) with no credit card required",
+            "Free Tier: URPASS includes a permanent ₹0 free tier (1 active event, 50 registrations/month) with no credit card required",
           ],
         },
         competitorComparison: {
@@ -101,7 +101,7 @@ export default function UrpassVsTownscriptPage() {
             },
             {
               criteria: "Free Tier Allowance",
-              urpass: "₹0 forever for up to 100 registrations per month",
+              urpass: "₹0 forever for up to 50 registrations per month",
               competitor: "Free events supported with limited feature set",
               urpassAdvantage: true,
             },
@@ -205,7 +205,7 @@ export default function UrpassVsTownscriptPage() {
           },
           {
             q: "Can I use URPASS for free events like college fests and community meetups?",
-            a: "Yes. URPASS provides a permanent ₹0 Free Tier that includes up to 2 events per month and 100 registrations per month with full QR code pass generation and browser gate scanning included. No credit card is required to start.",
+            a: "Yes. URPASS provides a permanent ₹0 Free Tier that includes 1 active event and up to 50 registrations per month with full QR code pass generation and browser gate scanning included. No credit card is required to start.",
           },
           {
             q: "Does URPASS prevent attendees from sharing ticket screenshots?",

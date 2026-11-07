@@ -51,9 +51,9 @@ export default function UrpassVsMeetupPage() {
         directAnswer: {
           title: "URPASS vs Meetup in 30 Seconds",
           summary:
-            "Meetup.com forces organizers to pay an unavoidable monthly organizer subscription ($230–$420 per year) just to host community gatherings, while providing limited attendance validation tools. URPASS gives community leaders, tech meetups, and developer circles a permanent ₹0 Free Tier with up to 100 registrations per month, automated cryptographic QR pass delivery, and fast sub-0.3s mobile browser check-in.",
+            "Meetup.com forces organizers to pay an unavoidable monthly organizer subscription ($230–$420 per year) just to host community gatherings, while providing limited attendance validation tools. URPASS gives community leaders, tech meetups, and developer circles a permanent ₹0 Free Tier with up to 50 registrations per month, automated cryptographic QR pass delivery, and fast sub-0.3s mobile browser check-in.",
           keyPoints: [
-            "Organizer Cost: URPASS offers ₹499/mo introductory pricing vs Meetup charging $19–$35/month to keep a group active",
+            "Organizer Cost: URPASS offers flat subscriptions from ₹499/mo or a Free Forever plan vs Meetup charging $19–$35/month to keep a group active",
             "Ticketing Commission: URPASS charges 0% per-ticket commission on paid workshops vs Meetup ticketing cuts",
             "Door Admission: URPASS scans QR passes in under 0.3s in-browser vs Meetup requiring manual attendee roster tapping",
             "Audience Ownership: URPASS exports complete attendee emails and custom data vs Meetup gating member communications",
@@ -70,7 +70,7 @@ export default function UrpassVsMeetupPage() {
           rows: [
             {
               criteria: "Cost to Host Free Community Events",
-              urpass: "₹0 forever (Up to 100 registrations/month, 2 events)",
+              urpass: "₹0 forever (Up to 50 registrations/month, 1 active event)",
               competitor: "$19 to $35/month mandatory organizer subscription",
               urpassAdvantage: true,
             },
@@ -186,7 +186,7 @@ export default function UrpassVsMeetupPage() {
         faqs: [
           {
             q: "Why are meetup organizers migrating from Meetup.com to URPASS?",
-            a: "Meetup.com charges organizers $19 to $35 every month simply to keep an event group open. URPASS offers a permanent ₹0 Free Tier that includes up to 2 events per month and 100 registrations per month, alongside modern digital QR passes and fast mobile scanning.",
+            a: "Meetup.com charges organizers $19 to $35 every month simply to keep an event group open. URPASS offers a permanent ₹0 Free Tier that includes 1 active event and up to 50 registrations per month, alongside modern digital QR passes and fast mobile scanning.",
           },
           {
             q: "Can I collect payments for workshops or paid sessions on URPASS?",

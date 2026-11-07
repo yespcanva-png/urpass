@@ -62,6 +62,8 @@ export const eventSchema = z
     allow_multiple_scans: z.boolean().optional(),
     multi_scan_enabled: z.boolean().optional(),
     auto_promote_waitlist: z.boolean().optional(),
+    is_private: z.boolean().optional(),
+    visibility: z.enum(["public", "private", "unlisted", "invite_only"]).optional(),
   })
   .superRefine((data, ctx) => {
     const opens = data.registration_opens_at ? new Date(data.registration_opens_at).getTime() : null;

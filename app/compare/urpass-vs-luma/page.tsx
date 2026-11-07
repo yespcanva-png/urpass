@@ -107,7 +107,7 @@ export default function UrpassVsLumaPage() {
             },
             {
               criteria: "Free Plan Attendee Limit",
-              urpass: "Permanent ₹0 Free tier (up to 100 registrations/month)",
+              urpass: "Permanent ₹0 Free tier (1 active event, up to 50 registrations/month)",
               competitor: "Free events supported with branding",
               urpassAdvantage: false,
             },
@@ -209,7 +209,7 @@ export default function UrpassVsLumaPage() {
           },
           {
             q: "Is there a free tier on URPASS?",
-            a: "Yes. URPASS offers a permanent ₹0 Free Tier that includes up to 2 events per month and 100 registrations per month with full QR code generation and mobile browser scanning included. No credit card is required to sign up.",
+            a: "Yes. URPASS offers a permanent ₹0 Free Tier that includes 1 active event and up to 50 registrations per month with full QR code generation and mobile browser scanning included. No credit card is required to sign up.",
           },
         ],
         relatedLinks: [

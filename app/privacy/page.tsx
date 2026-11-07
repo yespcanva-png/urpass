@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "https://urpass.space/privacy" },
 };
 
-const EFFECTIVE_DATE = "28 September 2026";
+const EFFECTIVE_DATE = "7 November 2026";
 const DPO_EMAIL = "privacy@urpass.space";
 
 function Section({ title, id, children }: { title: string; id?: string; children: React.ReactNode }) {
@@ -45,7 +45,7 @@ export default function PrivacyPolicyPage() {
           Privacy Policy &amp; Data Protection Notice
         </h1>
         <p className="text-sm text-neutral-400 mb-10">
-          Effective date: {EFFECTIVE_DATE} &middot; Last updated: September 2026
+          Effective date: {EFFECTIVE_DATE} &middot; Last updated: November 2026
         </p>
 
         <div className="bg-neutral-50 border border-neutral-200 rounded-xl p-5 mb-10 text-xs text-neutral-600 leading-relaxed space-y-2">
@@ -92,6 +92,9 @@ export default function PrivacyPolicyPage() {
             </li>
             <li>
               <strong>Technical &amp; Log Data:</strong> Browser type, operating system, device camera access for QR scanning (camera video stream is processed entirely client-side and never recorded or transmitted to servers), IP address, and approximate geolocation.
+            </li>
+            <li>
+              <strong>Optional traffic analytics:</strong> If you accept analytics, we record a random visitor ID, the referring site hostname or campaign tags, the landing page path, and dates of visits. We link first and last source to your organiser account after signup or login to measure signups, events and paid plans. Traffic analytics do not store full referring URLs or IP addresses.
             </li>
           </ul>
         </Section>
@@ -149,7 +152,10 @@ export default function PrivacyPolicyPage() {
             Under the Privacy and Electronic Communications Regulations (PECR), we use strictly necessary cookies to keep you signed in and preserve session security. Non-essential analytical cookies require your explicit prior consent via our cookie banner.
           </p>
           <p>
-            You can modify your cookie preferences at any time by clearing your browser cache or clicking &quot;Cookie Preferences&quot; in our footer.
+            Traffic attribution uses an optional first-party visitor cookie for up to 180 days. We do not set it when you reject analytics or your browser sends a Do Not Track or Global Privacy Control signal. You can change your choice using the Cookie choices button; rejecting analytics deletes the traffic visitor record and linked source fields on your organiser profile. We do not infer a source when the browser withholds its referrer; those visits appear as Direct / Unknown.
+          </p>
+          <p>
+            You can modify your cookie preferences at any time by clearing your browser cache or using the Cookie choices button on the landing page.
           </p>
         </Section>
 

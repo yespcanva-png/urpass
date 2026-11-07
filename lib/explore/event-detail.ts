@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { adminClient } from "@/lib/supabase/admin";
 import { getCategoryLabel } from "./service";
 import { getExploreEligibility } from "./eligibility";
+import { isEventPrivate } from "@/lib/events/privacy";
 
 export type ExploreEventDetail = {
   id: string;
@@ -33,13 +34,16 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function getExploreEventDetail(slug: string): Promise<ExploreEventDetail | null> {
   const supabase = await createClient();
-  const eventSelect = `id, name, description, event_date, start_time, end_time, venue, banner_url, logo_url, apply_slug, status, application_enabled, auto_approve, organizer_id, ticket_price, is_paid_event, currency, country_code, timezone, starts_at_utc, ends_at_utc`;
+  const eventSelect = `id, name, description, event_date, start_time, end_time, venue, banner_url, logo_url, apply_slug, status, application_enabled, auto_approve, organizer_id, ticket_price, is_paid_event, currency, country_code, timezone, starts_at_utc, ends_at_utc, custom_pass_design`;
   const { data: event, error: eventError } = await supabase.from("events")
     .select(eventSelect)
     .eq(UUID.test(slug) ? "id" : "apply_slug", slug)
     .eq("status", "active")
     .maybeSingle();
   if (eventError || !event) return null;
+
+  // Never expose private, unlisted, or invite-only events on Explore
+  if (isEventPrivate(event)) return null;
 
   // Explore only displays listings approved by marketplace moderation.
   const { data: listing } = await supabase.from("explore_marketplace_listings")

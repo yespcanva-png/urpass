@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { activatePaidSubscription } from "@/app/actions/billing";
+import { trackLifecycleEvent } from "@/lib/analytics/client";
 
 declare global {
   interface Window {
@@ -23,8 +24,8 @@ function loadCheckout(): Promise<void> {
   });
 }
 
-export default function PaidPlanButton({ plan, draftId, userEmail, userName }: {
-  plan: Plan; draftId: string; userEmail: string; userName: string;
+export default function PaidPlanButton({ plan, draftId, userEmail, userName, disabled = false }: {
+  plan: Plan; draftId: string; userEmail: string; userName: string; disabled?: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -38,6 +39,18 @@ export default function PaidPlanButton({ plan, draftId, userEmail, userName }: {
     if (!address.trim() || !stateName.trim() || stateCode.length !== 2) return;
     setLoading(true);
     setError("");
+    trackLifecycleEvent("subscription_selected", {
+      plan: plan.slug,
+      billingCycle: "monthly",
+      amount: plan.amountPaise / 100,
+      currency: "INR",
+    });
+    trackLifecycleEvent("checkout_started", {
+      plan: plan.slug,
+      billingCycle: "monthly",
+      amount: plan.amountPaise / 100,
+      currency: "INR",
+    });
     try {
       const response = await fetch("/api/razorpay/order", {
         method: "POST",
@@ -67,7 +80,16 @@ export default function PaidPlanButton({ plan, draftId, userEmail, userName }: {
         name: "UrPass",
         description: `${plan.name} — one month, one-time payment`,
         prefill: { name: userName, email: userEmail },
-        modal: { ondismiss: () => setLoading(false) },
+        modal: {
+          ondismiss: () => {
+            setLoading(false);
+            trackLifecycleEvent("payment_failed", {
+              plan: plan.slug,
+              billingCycle: "monthly",
+              reason: "checkout_dismissed",
+            });
+          },
+        },
         handler: async (result: Record<string, string>) => {
           try {
             if (!result.razorpay_order_id || !result.razorpay_payment_id || !result.razorpay_signature) {
@@ -84,10 +106,22 @@ export default function PaidPlanButton({ plan, draftId, userEmail, userName }: {
               stateCode,
             });
             if (activated && "error" in activated && activated.error) throw new Error(activated.error);
+            trackLifecycleEvent("payment_succeeded", {
+              plan: plan.slug,
+              billingCycle: "monthly",
+              amount: plan.amountPaise / 100,
+              currency: "INR",
+            });
             router.push(`/event/${draftId}/settings`);
             router.refresh();
           } catch (cause) {
-            setError(cause instanceof Error ? cause.message : "Payment could not be verified.");
+            const msg = cause instanceof Error ? cause.message : "Payment could not be verified.";
+            setError(msg);
+            trackLifecycleEvent("payment_failed", {
+              plan: plan.slug,
+              billingCycle: "monthly",
+              reason: msg,
+            });
           } finally {
             setLoading(false);
           }
@@ -101,7 +135,7 @@ export default function PaidPlanButton({ plan, draftId, userEmail, userName }: {
   }
 
   return <>
-    <button type="button" onClick={() => setOpen(true)} className="mt-5 rounded-xl bg-violet-700 px-4 py-3 text-sm font-semibold text-white">Choose {plan.name}</button>
+    <button type="button" onClick={() => setOpen(true)} disabled={disabled} className="mt-5 rounded-xl bg-violet-700 px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50">Choose {plan.name}</button>
     {open && <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 px-4 py-8" role="dialog" aria-modal="true" aria-label={`${plan.name} one-time payment`}>
       <div className="mx-auto max-w-lg rounded-2xl bg-white p-6 shadow-xl">
         <div className="flex justify-between gap-4">

@@ -206,7 +206,7 @@ export default function ManagedEventsSection({ initialCountry = "IN" }: Props) {
             </div>
             <div className="shrink-0 flex items-center gap-3">
               <Link
-                href="/contact?subject=Book%20a%20Demo"
+                href="/demo"
                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 transition-colors"
               >
                 <span>Book a Demo</span>

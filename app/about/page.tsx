@@ -3,6 +3,7 @@ import Link from "next/link";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import AnimateIn from "@/components/ui/AnimateIn";
+import ProductHuntBadge from "@/components/landing/ProductHuntBadge";
 import { CheckCircle2, Building, ShieldCheck, Zap, Heart, ArrowRight } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -51,6 +52,11 @@ export default function AboutPage() {
       url: "https://yespstudio.com",
       description: "Building simple digital products for businesses and organizations.",
     },
+    sameAs: [
+      "https://www.producthunt.com/products/urpass",
+      "https://www.instagram.com/urpass.space",
+      "https://www.youtube.com/channel/UCzUliQs5vwGlLAM7X6aB9zg/"
+    ],
     knowsAbout: [
       "Event Registration Software",
       "QR Code Check-In",
@@ -256,6 +262,21 @@ export default function AboutPage() {
                     >
                       Terms of Service
                     </Link>
+                    <a
+                      href="https://www.producthunt.com/products/urpass"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-1.5 rounded-lg bg-neutral-100 text-neutral-800 font-semibold hover:bg-neutral-200 transition-colors inline-flex items-center gap-1"
+                    >
+                      Product Hunt Profile ↗
+                    </a>
+                  </div>
+                  <div className="mt-4 pt-4 border-t border-neutral-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div>
+                      <p className="text-xs font-bold text-neutral-900">Featured &amp; Reviewed on Product Hunt</p>
+                      <p className="text-[11px] text-neutral-500">Read community reviews from event organizers worldwide.</p>
+                    </div>
+                    <ProductHuntBadge />
                   </div>
                 </div>
 

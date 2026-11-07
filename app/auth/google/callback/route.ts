@@ -6,6 +6,7 @@ import { notifyOwnerNewUser, notifyOwnerUserLogin, sendUserWelcomeEmail } from "
 import { resolvePostAuthRedirect } from "@/lib/auth-redirect";
 import { logAuth, logAuthWarn, logAuthError } from "@/lib/auth/logger";
 import { ANON_SESSION_COOKIE } from "@/lib/conversion/attribution";
+import { linkTrafficVisitorToUser, TRAFFIC_CONSENT_COOKIE, TRAFFIC_VISITOR_COOKIE } from "@/lib/traffic/server";
 import { linkSessionToUserId } from "@/lib/conversion/server";
 import { recordFirstEventConversion } from "@/lib/conversion/first-event";
 import { recentExchangedCodes } from "@/lib/auth/recent-exchanged-codes";
@@ -449,6 +450,9 @@ export async function GET(req: NextRequest) {
 
     const conversionSessionId = stateSessionId || req.cookies.get(ANON_SESSION_COOKIE)?.value;
     if (userId && conversionSessionId) await linkSessionToUserId(conversionSessionId, userId);
+    if (userId && req.cookies.get(TRAFFIC_CONSENT_COOKIE)?.value === "1") {
+      await linkTrafficVisitorToUser(req.cookies.get(TRAFFIC_VISITOR_COOKIE)?.value, userId);
+    }
     if (userId && isNewUser) {
       await recordFirstEventConversion({
         userId,

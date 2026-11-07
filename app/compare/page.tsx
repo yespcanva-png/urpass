@@ -27,7 +27,7 @@ const COMPARISONS = [
     points: [
       "0% per-ticket fees vs Eventbrite 3.7% + fees",
       "In-browser mobile scanning (<0.28s) — Zero app downloads",
-      "Permanent ₹0 Free tier for up to 100 registrations/month",
+      "Permanent ₹0 Free tier for up to 50 registrations/month",
       "Direct UPI, cards, and net banking settlement",
     ],
   },

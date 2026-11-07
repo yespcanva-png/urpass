@@ -28,6 +28,8 @@ import { resolvePostAuthRedirect } from "@/lib/auth-redirect";
 import { trackConversionEvent } from "@/lib/conversion/tracker";
 import { recordSignupCompletion } from "@/app/actions/first-event";
 import { attachSignupReferralAction } from "@/app/actions/referrals";
+import { linkCurrentTrafficAttribution } from "@/app/actions/traffic-attribution";
+import { trackLifecycleEvent, identifyUser } from "@/lib/analytics/client";
 import SignupAssistanceModal from "@/components/conversion/SignupAssistanceModal";
 import { VisitorSegment } from "@/lib/conversion/types";
 
@@ -35,6 +37,7 @@ const schema = z.object({
   full_name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Enter a valid email"),
   password: z.string().min(8, "Password must be at least 8 characters"),
+  lifecycle_reminders_opt_in: z.boolean().optional(),
 });
 
 const ssoSchema = z.object({
@@ -119,6 +122,9 @@ function SignupContent() {
   const markFormStarted = () => {
     if (!hasStartedForm) {
       setHasStartedForm(true);
+      trackLifecycleEvent("signup_started", {
+        source: searchParams.get("utm_source") || "direct",
+      });
       trackConversionEvent("signup_started", {
         pageSlug: "/signup",
         visitorSegment: segment,
@@ -174,7 +180,7 @@ function SignupContent() {
       email: data.email,
       password: data.password,
       options: {
-        data: { full_name: data.full_name },
+        data: { full_name: data.full_name, lifecycle_reminders_opt_in: Boolean(data.lifecycle_reminders_opt_in) },
         emailRedirectTo,
       },
     });
@@ -200,6 +206,19 @@ function SignupContent() {
       setSubmittedEmail(data.email);
       setNeedsEmailConfirmation(true);
       return;
+    }
+
+    await linkCurrentTrafficAttribution().catch(() => {});
+
+    if (signUpData.user?.id) {
+      identifyUser(signUpData.user.id, {
+        email: data.email,
+        name: data.full_name,
+      });
+      trackLifecycleEvent("signup_completed", {
+        userId: signUpData.user.id,
+        method: "email",
+      });
     }
 
     trackConversionEvent("signup_completed", {
@@ -281,6 +300,10 @@ function SignupContent() {
 
   async function handleGoogleSignup() {
     setGoogleLoading(true);
+    trackLifecycleEvent("signup_started", {
+      method: "google",
+      source: searchParams.get("utm_source") || "direct",
+    });
     trackConversionEvent("signup_started", {
       pageSlug: "/signup",
       visitorSegment: segment,
@@ -295,7 +318,7 @@ function SignupContent() {
     if (refParam) {
       redirectUrl += `&ref=${encodeURIComponent(refParam)}`;
     }
-    window.location.href = redirectUrl;
+    window.location.assign(new URL(redirectUrl, window.location.origin).toString());
   }
 
   const BG = {
@@ -526,6 +549,11 @@ function SignupContent() {
                   <p className="text-xs text-red-500">{errors.password.message}</p>
                 )}
               </div>
+
+              <label className="flex items-start gap-2 text-xs text-neutral-600">
+                <input type="checkbox" {...register("lifecycle_reminders_opt_in")} className="mt-0.5" />
+                Email me helpful setup reminders if I have not published my first event. I can turn these off in account settings.
+              </label>
 
               {serverError && (
                 <div className="flex items-start gap-2 text-xs text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3">

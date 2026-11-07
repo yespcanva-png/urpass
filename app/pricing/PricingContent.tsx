@@ -41,6 +41,7 @@ import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import ConciergeSetupModal from "@/components/concierge/ConciergeSetupModal";
 import EventPassCheckoutModal from "@/components/billing/EventPassCheckoutModal";
+import { trackLifecycleEvent } from "@/lib/analytics/client";
 
 interface Props {
   isAuthenticated?: boolean;
@@ -90,7 +91,8 @@ export default function PricingContent({
     if (detected) {
       setCountry(detected);
     }
-  }, []);
+    trackLifecycleEvent("pricing_page_viewed", { country: detected || initialCountry });
+  }, [initialCountry]);
 
   const handleCountryToggle = (newCountry: "IN" | "GB") => {
     setCountry(newCountry);
@@ -605,6 +607,14 @@ export default function PricingContent({
                             ? "/signup?next=/dashboard"
                             : `/billing?plan=${plan.slug}`
                         }
+                        onClick={() => {
+                          trackLifecycleEvent("subscription_selected", {
+                            plan: plan.slug,
+                            billingCycle: cycle,
+                            amount: displayPrice,
+                            currency: country === "GB" ? "GBP" : "INR",
+                          });
+                        }}
                         className={cn(
                           "w-full py-3.5 px-4 rounded-xl text-xs font-bold text-center transition-all duration-200 flex items-center justify-center gap-2 group/btn",
                           plan.popular

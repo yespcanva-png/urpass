@@ -66,7 +66,7 @@ export default function ReferralDashboardClient({ initialData }: Props) {
     },
     {
       q: "Which purchases qualify for rewards?",
-      a: "First-time purchases of any UrPass paid plan (Starter, Pro, Business, or Enterprise passes with a value of ₹499 or higher) qualify. Free plans, ₹29 trial promos, and refunded payments are excluded.",
+      a: "First-time purchases of any UrPass paid plan (Starter, Pro, Business, or Enterprise passes with a value of ₹499 or higher) qualify. Free plans, promotional credits, and refunded payments are excluded.",
     },
     {
       q: "Why is there a 14-day hold on earned credits?",

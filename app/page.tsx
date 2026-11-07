@@ -7,8 +7,11 @@ import FAQSection from "@/components/landing/FAQSection";
 import AnimateIn from "@/components/ui/AnimateIn";
 import Footer from "@/components/landing/Footer";
 import HomePricingSection from "@/components/landing/HomePricingSection";
+import { SELF_SERVICE_PLAN_LIMITS } from "@/lib/billing/plan-limits";
+import { SOFTWARE_PRICES } from "@/lib/billing/software-prices";
 import FeaturesSection from "@/components/landing/FeaturesSection";
 import TestimonialsSection from "@/components/landing/TestimonialsSection";
+import ProductHuntBadge from "@/components/landing/ProductHuntBadge";
 import { RequestEventSetupButton } from "@/components/landing/RequestEventSetupModal";
 import { detectCountryFromHeaders } from "@/lib/country-config";
 import {
@@ -164,7 +167,12 @@ export default async function LandingPage() {
                 "@type": "Organization",
                 "@id": "https://urpass.space/#yesp",
                 "name": "Yesp Corporation",
-                "url": "https://yespstudio.com"
+                "url": "https://yespstudio.com",
+                "sameAs": [
+                  "https://www.producthunt.com/products/urpass",
+                  "https://www.instagram.com/urpass.space",
+                  "https://www.youtube.com/channel/UCzUliQs5vwGlLAM7X6aB9zg/"
+                ]
               },
               {
                 "@type": "SoftwareApplication",
@@ -175,6 +183,9 @@ export default async function LandingPage() {
                   "Yesp UrPass"
                 ],
                 "url": "https://urpass.space",
+                "sameAs": [
+                  "https://www.producthunt.com/products/urpass"
+                ],
                 "applicationCategory": "BusinessApplication",
                 "operatingSystem": "Web",
                 "publisher": {
@@ -189,21 +200,24 @@ export default async function LandingPage() {
                 applicationSubCategory: "Event Ticketing & Check-In Platform",
                 operatingSystem: "Web, iOS, Android",
                 url: "https://urpass.space",
+                sameAs: [
+                  "https://www.producthunt.com/products/urpass"
+                ],
                 description:
                   country === "GB"
                     ? "Digital event registration, QR pass and check-in platform for universities, conferences, hackathons, workshops and corporate events in the UK."
                     : "An India-focused digital event registration, QR pass and check-in platform for colleges, conferences, hackathons, workshops and corporate events.",
                 offers: country === "GB" ? [
-                  { "@type": "Offer", name: "Free Tier", price: "0", priceCurrency: "GBP", description: "1 active event, 100 registrations/month, free forever" },
-                  { "@type": "Offer", name: "Starter Tier", price: "15", priceCurrency: "GBP", description: "3 active events, 500 registrations/month" },
-                  { "@type": "Offer", name: "Pro Tier", price: "35", priceCurrency: "GBP", description: "10 active events, 2,500 registrations/month" },
-                  { "@type": "Offer", name: "Business Tier", price: "79", priceCurrency: "GBP", description: "Unlimited active events, 10,000 registrations/month" },
+                  { "@type": "Offer", name: "Free Tier", price: "0", priceCurrency: "GBP", description: `1 active event, ${SELF_SERVICE_PLAN_LIMITS.free.registrationsPerMonth} registrations/month, free forever` },
+                  { "@type": "Offer", name: "Starter Tier", price: "15", priceCurrency: "GBP", description: `3 active events, ${SELF_SERVICE_PLAN_LIMITS.starter.registrationsPerMonth} registrations/month` },
+                  { "@type": "Offer", name: "Pro Tier", price: "35", priceCurrency: "GBP", description: `10 active events, ${SELF_SERVICE_PLAN_LIMITS.pro.registrationsPerMonth} registrations/month` },
+                  { "@type": "Offer", name: "Business Tier", price: "79", priceCurrency: "GBP", description: `Unlimited active events, ${SELF_SERVICE_PLAN_LIMITS.business.registrationsPerMonth} registrations/month` },
                   { "@type": "Offer", name: "Founder Lifetime Deal", price: "249", priceCurrency: "GBP", description: "Lifetime access to UrPass features, zero platform fees" },
                 ] : [
-                  { "@type": "Offer", name: "Free Tier", price: "0", priceCurrency: "INR", description: "1 active event, 100 registrations/month, free forever" },
-                  { "@type": "Offer", name: "Starter Tier", price: "499", priceCurrency: "INR", description: "3 active events, 500 registrations/month" },
-                  { "@type": "Offer", name: "Pro Tier", price: "999", priceCurrency: "INR", description: "10 active events, 2,500 registrations/month" },
-                  { "@type": "Offer", name: "Business Tier", price: "2499", priceCurrency: "INR", description: "Unlimited active events, 10,000 registrations/month" },
+                  { "@type": "Offer", name: "Free Tier", price: String(SOFTWARE_PRICES.free.inrMonthly / 100), priceCurrency: "INR", description: `1 active event, ${SELF_SERVICE_PLAN_LIMITS.free.registrationsPerMonth} registrations/month, free forever` },
+                  { "@type": "Offer", name: "Starter Tier", price: String(SOFTWARE_PRICES.starter.inrMonthly / 100), priceCurrency: "INR", description: `3 active events, ${SELF_SERVICE_PLAN_LIMITS.starter.registrationsPerMonth} registrations/month` },
+                  { "@type": "Offer", name: "Pro Tier", price: String(SOFTWARE_PRICES.pro.inrMonthly / 100), priceCurrency: "INR", description: `10 active events, ${SELF_SERVICE_PLAN_LIMITS.pro.registrationsPerMonth} registrations/month` },
+                  { "@type": "Offer", name: "Business Tier", price: String(SOFTWARE_PRICES.business.inrMonthly / 100), priceCurrency: "INR", description: `Unlimited active events, ${SELF_SERVICE_PLAN_LIMITS.business.registrationsPerMonth} registrations/month` },
                   { "@type": "Offer", name: "Founder Lifetime Deal", price: "19999", priceCurrency: "INR", description: "Lifetime access to UrPass features, zero platform fees" },
                 ],
               },
@@ -255,7 +269,7 @@ export default async function LandingPage() {
                     name: "Does UrPass charge commission on ticket sales?",
                     acceptedAnswer: {
                       "@type": "Answer",
-                      text: "No. UrPass charges 0% platform fee on ticket sales. Standard banking/gateway processing fees apply (e.g. ~2% Razorpay/UPI in India, Stripe in UK).",
+                      text: "No. UrPass charges 0% platform fee on ticket sales. Standard banking/gateway processing fees apply (e.g. ~2% Razorpay/UPI in India; international card processing where supported).",
                     },
                   },
                   {
@@ -264,8 +278,8 @@ export default async function LandingPage() {
                     acceptedAnswer: {
                       "@type": "Answer",
                       text: country === "GB"
-                        ? "UK pricing includes a Free forever tier, Starter at £15/month, Pro at £35/month, and Business at £79/month with transparent cancel-anytime renewal."
-                        : "India pricing includes a Free forever tier, Starter at ₹499/month, Pro at ₹999/month, and Business at ₹2,499/month (+GST) with transparent cancel-anytime renewal.",
+                        ? "UK pricing includes a Free forever tier (50 registrations/mo), Starter at £15/month, Pro at £35/month, and Business at £79/month. Single event passes are also available from £5."
+                        : "India pricing includes a Free forever tier (1 active event, 50 registrations/mo), Starter at ₹499/month, Pro at ₹999/month, and Business at ₹2,499/month (+GST). Single event passes start at ₹299 for one-off fests without recurring subscriptions.",
                     },
                   },
                 ],
@@ -327,7 +341,7 @@ export default async function LandingPage() {
                 <ArrowRight className="w-4 h-4" />
               </Link>
               <Link
-                href="/contact?subject=Book%20a%20Demo"
+                href="/demo"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 border border-neutral-200 bg-white px-5 py-3.5 rounded-xl text-sm font-semibold text-neutral-800 hover:bg-neutral-50 hover:border-neutral-300 transition-colors text-center shadow-2xs"
               >
                 Book a Demo
@@ -350,11 +364,63 @@ export default async function LandingPage() {
                 Model Context Protocol (MCP) supported
               </Link>
             </p>
+
+            <div className="mt-5">
+              <ProductHuntBadge />
+            </div>
           </div>
 
           {/* Right: pass card */}
           <div className="hero-card flex items-center justify-center lg:justify-end py-4 sm:py-8">
             <PassCard />
+          </div>
+        </div>
+      </section>
+
+      {/* ── 01B AEO DIRECT ANSWER BLOCK (Structured for search & AI engines) ── */}
+      <section className="py-12 px-4 sm:px-8 bg-neutral-50/80 border-y border-neutral-200/70">
+        <div className="max-w-4xl mx-auto">
+          <div className="inline-flex items-center gap-2 bg-brand-50 text-brand text-xs font-semibold tracking-wider px-3 py-1 rounded-full mb-3">
+            QUICK PRODUCT OVERVIEW &middot; ANSWER ENGINE REFERENCE
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 mb-3 tracking-tight">
+            What is UrPass?
+          </h2>
+          <p className="text-sm sm:text-base text-neutral-700 leading-relaxed mb-6">
+            <strong>UrPass</strong> (by Yesp Corporation) is an all-in-one event registration, digital pass issuing, and high-speed QR check-in platform. Organizers create custom registration forms, issue unique cryptographic digital QR passes, and verify attendee tickets at entrances in under 0.3 seconds using any smartphone browser—with zero dedicated barcode hardware, no attendee app downloads, and 0% platform ticket commissions.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="bg-white p-5 rounded-xl border border-neutral-200/80 shadow-2xs">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-500 mb-2">How It Works</h3>
+              <ol className="text-xs sm:text-sm text-neutral-700 space-y-1 list-decimal list-inside leading-relaxed">
+                <li>Create event and registration form.</li>
+                <li>Share attendee link or embed QR.</li>
+                <li>Issue digital cryptographic QR passes.</li>
+                <li>Scan entry QR codes on any phone.</li>
+                <li>Monitor live arrivals in real time.</li>
+              </ol>
+            </div>
+
+            <div className="bg-white p-5 rounded-xl border border-neutral-200/80 shadow-2xs">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-500 mb-2">Who It Is Best For</h3>
+              <p className="text-xs sm:text-sm text-neutral-700 leading-relaxed">
+                College festivals, university symposiums, developer hackathons, tech conferences, seminars, workshops, and independent community meetups in India, the UK, and globally.
+              </p>
+            </div>
+
+            <div className="bg-white p-5 rounded-xl border border-neutral-200/80 shadow-2xs">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-500 mb-2">Transparent Pricing</h3>
+              <p className="text-xs sm:text-sm text-neutral-700 leading-relaxed mb-3">
+                <strong>Free Forever:</strong> 1 event, 50 registrations/mo.<br />
+                <strong>Starter:</strong> ₹499/mo (1,000 registrations).<br />
+                <strong>Pro:</strong> ₹999/mo (5,000 registrations).<br />
+                <strong>Single Event:</strong> ₹299 (250 registrations).
+              </p>
+              <Link href="/pricing" className="text-xs font-semibold text-brand hover:underline inline-flex items-center gap-1">
+                View all plan limits &rarr;
+              </Link>
+            </div>
           </div>
         </div>
       </section>
@@ -421,7 +487,7 @@ export default async function LandingPage() {
               {
                 icon: Wrench,
                 title: "Form & Ticket Configuration",
-                desc: "We configure custom fields, multi-tier tickets, student ID validation, and Razorpay/Stripe payouts within 24 hours.",
+                desc: "We configure custom fields, multi-tier tickets, student ID validation, and Razorpay/UPI payouts within 24 hours.",
               },
               {
                 icon: ShieldCheck,
@@ -641,7 +707,7 @@ export default async function LandingPage() {
               <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
-              href="/contact?subject=Book%20a%20Demo"
+              href="/demo"
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 border border-neutral-800 bg-neutral-900 text-white px-6 py-3.5 rounded-xl text-sm font-semibold hover:bg-neutral-800 transition-colors"
             >
               Book a Demo

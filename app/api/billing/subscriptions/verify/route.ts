@@ -9,6 +9,7 @@ import { getSupabaseUrl } from "@/lib/supabase/config";
 import { createInvoiceForPayment } from "@/lib/invoices";
 import { getIntroOfferDisclosure, getIntroOfferId, getMonthlyRazorpayPlanId, isIntroOfferPlan } from "@/lib/billing/razorpay-subscription-offers";
 import { recordFirstEventConversion } from "@/lib/conversion/first-event";
+import { getProductHuntOfferId, PRODUCT_HUNT_CODE, PRODUCT_HUNT_DISCOUNTED_PAISE } from "@/lib/billing/product-hunt-offer";
 
 export const dynamic = "force-dynamic";
 
@@ -49,7 +50,7 @@ export async function POST(req: NextRequest) {
   const admin = adminClient();
   const { data: checkoutIntent, error: intentError } = await admin
     .from("subscription_checkout_intents")
-    .select("id, status, amount_paise")
+    .select("id, status, amount_paise, promo_code")
     .eq("user_id", user.id).eq("plan_slug", planSlug)
     .eq("provider_subscription_id", subscriptionId).maybeSingle();
   if (intentError || !checkoutIntent || !["pending", "authorized"].includes(checkoutIntent.status)) {
@@ -103,15 +104,24 @@ export async function POST(req: NextRequest) {
     if (subscription.plan_id !== getMonthlyRazorpayPlanId(planSlug)) {
       return NextResponse.json({ error: "Subscription provider plan does not match checkout plan." }, { status: 403 });
     }
-    if (subscription.offer_id && subscription.offer_id !== getIntroOfferId(planSlug)) {
+    const expectedOfferId = checkoutIntent.promo_code === PRODUCT_HUNT_CODE
+      ? getProductHuntOfferId() : getIntroOfferId(planSlug);
+    if (checkoutIntent.promo_code === PRODUCT_HUNT_CODE && !expectedOfferId) {
+      return NextResponse.json({ error: "PRODUCTHUNT50 offer verification is unavailable." }, { status: 503 });
+    }
+    if ((subscription.offer_id || null) !== (expectedOfferId || null)) {
       return NextResponse.json({ error: "Subscription offer does not match the authorized checkout." }, { status: 400 });
     }
-    const minimumCharge = subscription.offer_id
+    const minimumCharge = checkoutIntent.promo_code === PRODUCT_HUNT_CODE
+      ? PRODUCT_HUNT_DISCOUNTED_PAISE : subscription.offer_id
       ? getIntroOfferDisclosure(planSlug).introAmountPaise
       : Number(checkoutIntent.amount_paise);
     if (String(payment.currency || "INR").toUpperCase() !== "INR" ||
         !Number.isFinite(payment.amount) || Number(payment.amount) < minimumCharge) {
       return NextResponse.json({ error: "First charge differs from the verified subscription offer." }, { status: 400 });
+    }
+    if (checkoutIntent.promo_code === PRODUCT_HUNT_CODE && Number(payment.amount) !== 58941) {
+      return NextResponse.json({ error: "PRODUCTHUNT50 first charge must be ₹499.50 plus 18% GST." }, { status: 400 });
     }
 
     if (paymentStatus === "authorized") {

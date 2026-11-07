@@ -533,6 +533,7 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
             description:
               "URPASS is an event registration, ticketing, digital pass, QR check-in and attendance management platform developed by Yesp Corporation.",
             sameAs: [
+              "https://www.producthunt.com/products/urpass",
               "https://twitter.com/urpass_space",
               "https://github.com/yespcanva-png/urpass",
               "https://yespstudio.com",

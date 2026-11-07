@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Sparkles, ArrowRight, X, CheckCircle2, ShieldAlert } from "lucide-react";
+import { SELF_SERVICE_PLAN_LIMITS } from "@/lib/billing/plan-limits";
 
 interface FreeTrialTopBannerProps {
   isUk?: boolean;
@@ -45,48 +46,93 @@ export default function FreeTrialTopBanner({ isUk = false }: FreeTrialTopBannerP
         aria-label="Free Forever Offer"
         className="w-full bg-neutral-950 text-white border-b border-neutral-800/80 px-3 sm:px-6 py-2 text-xs relative z-50 selection:bg-violet-500 selection:text-white"
       >
-        <div className="max-w-6xl mx-auto flex items-center justify-between gap-3">
-          {/* Left / Center content */}
-          <div
-            onClick={() => setModalOpen(true)}
-            className="flex-1 flex items-center justify-center sm:justify-start flex-wrap gap-x-2.5 gap-y-1 cursor-pointer group"
-          >
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-violet-500/20 text-violet-300 border border-violet-500/30 shrink-0">
-              <Sparkles className="w-3 h-3 text-violet-400" />
-              <span>FREE PLAN</span>
-            </span>
-
-            <span className="font-medium text-neutral-200 text-center sm:text-left leading-tight">
-              <strong className="text-white font-semibold">Free Forever:</strong> Host your first event up to 100 registrations.
-              <span className="hidden md:inline text-neutral-400">
-                {" "}— Zero platform fee, QR passes & sub-second check-in. No credit card required.
-              </span>
-            </span>
-
-            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-violet-300 group-hover:text-violet-200 transition-colors underline-offset-4 group-hover:underline">
-              <span>View Details</span>
-              <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-            </span>
-          </div>
-
-          {/* Right: Quick Action & Dismiss */}
-          <div className="flex items-center gap-2 shrink-0">
-            <Link
-              href="/signup?from=banner&plan=free"
-              className="hidden sm:inline-flex items-center gap-1 px-3 py-1 rounded-lg text-[11px] font-bold bg-white text-neutral-950 hover:bg-neutral-100 transition-all shadow-2xs"
-            >
-              <span>Start Free</span>
-              <ArrowRight className="w-3 h-3" />
-            </Link>
-
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          {/* ── 1. Mobile Layout (< 640px) ── */}
+          <div className="flex sm:hidden items-center justify-between gap-2 w-full">
+            {/* Left: Value prop with modal trigger */}
             <button
               type="button"
-              onClick={handleDismiss}
-              aria-label="Dismiss banner"
-              className="p-1 rounded-md text-neutral-400 hover:text-white hover:bg-neutral-800/80 transition-colors"
+              onClick={() => setModalOpen(true)}
+              className="min-w-0 flex-1 flex items-center gap-1.5 text-left text-[11px] leading-tight active:opacity-80 transition-opacity cursor-pointer"
             >
-              <X className="w-3.5 h-3.5" />
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider bg-violet-500/20 text-violet-300 border border-violet-500/30 shrink-0">
+                <Sparkles className="w-2.5 h-2.5 text-violet-400" />
+                <span>FREE</span>
+              </span>
+              <span className="truncate text-neutral-200">
+                <strong className="text-white font-semibold">100 passes/mo</strong>
+                <span className="text-neutral-400 font-normal"> · 0% fee</span>
+              </span>
+              <span className="text-[10px] text-violet-300 underline underline-offset-2 shrink-0 font-semibold">
+                Details
+              </span>
             </button>
+
+            {/* Right: Direct CTA + Dismiss */}
+            <div className="flex items-center gap-1.5 shrink-0">
+              <Link
+                href="/signup?from=banner&plan=free"
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-white text-neutral-950 hover:bg-neutral-100 active:scale-95 transition-all shadow-2xs whitespace-nowrap"
+              >
+                <span>Start Free</span>
+                <ArrowRight className="w-2.5 h-2.5" />
+              </Link>
+
+              <button
+                type="button"
+                onClick={handleDismiss}
+                aria-label="Dismiss banner"
+                className="p-1 rounded-md text-neutral-400 hover:text-white hover:bg-neutral-800/80 transition-colors shrink-0"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+
+          {/* ── 2. Desktop Layout (>= 640px) ── */}
+          <div className="hidden sm:flex items-center justify-between gap-3 w-full">
+            {/* Left / Center content */}
+            <div
+              onClick={() => setModalOpen(true)}
+              className="flex-1 flex items-center justify-start flex-wrap gap-x-2.5 gap-y-1 cursor-pointer group"
+            >
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-violet-500/20 text-violet-300 border border-violet-500/30 shrink-0">
+                <Sparkles className="w-3 h-3 text-violet-400" />
+                <span>FREE PLAN</span>
+              </span>
+
+              <span className="font-medium text-neutral-200 text-left leading-tight">
+                <strong className="text-white font-semibold">Free Forever:</strong> Host your first event with up to {SELF_SERVICE_PLAN_LIMITS.free.registrationsPerMonth} registrations per month.
+                <span className="hidden md:inline text-neutral-400">
+                  {" "}— Zero platform fee, QR passes & sub-second check-in. No credit card required.
+                </span>
+              </span>
+
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-violet-300 group-hover:text-violet-200 transition-colors underline-offset-4 group-hover:underline shrink-0">
+                <span>View Details</span>
+                <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+              </span>
+            </div>
+
+            {/* Right: Quick Action & Dismiss */}
+            <div className="flex items-center gap-2 shrink-0">
+              <Link
+                href="/signup?from=banner&plan=free"
+                className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-[11px] font-bold bg-white text-neutral-950 hover:bg-neutral-100 transition-all shadow-2xs whitespace-nowrap"
+              >
+                <span>Start Free</span>
+                <ArrowRight className="w-3 h-3" />
+              </Link>
+
+              <button
+                type="button"
+                onClick={handleDismiss}
+                aria-label="Dismiss banner"
+                className="p-1 rounded-md text-neutral-400 hover:text-white hover:bg-neutral-800/80 transition-colors"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
         </div>
       </aside>
@@ -131,7 +177,7 @@ export default function FreeTrialTopBanner({ isUk = false }: FreeTrialTopBannerP
             {/* Content */}
             <div className="p-6 sm:p-8 space-y-5">
               <p className="text-sm text-neutral-700 leading-relaxed">
-                Launch your event with zero software costs. UrPass offers a permanent Free tier with up to 100 registrations per month and sub-second QR code door verification. No credit card required.
+                Launch your event with zero software costs. UrPass offers a permanent Free tier with up to {SELF_SERVICE_PLAN_LIMITS.free.registrationsPerMonth} registrations per month and smartphone QR code door verification. No credit card required.
               </p>
 
               {/* Inclusions */}
@@ -142,7 +188,7 @@ export default function FreeTrialTopBanner({ isUk = false }: FreeTrialTopBannerP
                 <ul className="space-y-2.5">
                   <li className="flex items-start gap-2.5 text-xs sm:text-sm text-neutral-800 font-medium">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span>1 active event with up to 100 registrations per month</span>
+                    <span>1 active event with up to {SELF_SERVICE_PLAN_LIMITS.free.registrationsPerMonth} registrations per month</span>
                   </li>
                   <li className="flex items-start gap-2.5 text-xs sm:text-sm text-neutral-800 font-medium">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />

@@ -22,6 +22,7 @@ import { createClient } from "@/lib/supabase/client";
 import { lookupSSOByEmail } from "@/app/actions/sso";
 import { resolvePostAuthRedirect } from "@/lib/auth-redirect";
 import { sendLoginNotifications } from "@/app/actions/notifications";
+import { linkCurrentTrafficAttribution } from "@/app/actions/traffic-attribution";
 
 const passwordSchema = z.object({
   email: z.string().email("Enter a valid email"),
@@ -137,6 +138,7 @@ function LoginContent() {
     }
 
     const user = signInData.user;
+    await linkCurrentTrafficAttribution().catch(() => {});
     try {
       await sendLoginNotifications({
         email: data.email.trim(),
@@ -152,7 +154,7 @@ function LoginContent() {
       searchParams,
       typeof document !== "undefined" ? document.referrer : null
     );
-    window.location.href = target;
+    window.location.assign(target);
   }
 
   async function onSsoSubmit(data: SsoFormData) {

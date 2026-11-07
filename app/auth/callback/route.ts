@@ -7,6 +7,7 @@ import { notifyOwnerNewUser, notifyOwnerUserLogin, sendUserWelcomeEmail } from "
 import { ANON_SESSION_COOKIE } from "@/lib/conversion/attribution";
 import { linkSessionToUserId } from "@/lib/conversion/server";
 import { recordFirstEventConversion } from "@/lib/conversion/first-event";
+import { linkTrafficVisitorToUser, TRAFFIC_CONSENT_COOKIE, TRAFFIC_VISITOR_COOKIE } from "@/lib/traffic/server";
 
 export const dynamic = "force-dynamic";
 
@@ -67,6 +68,10 @@ export async function GET(request: Request) {
   }
 
   if (user) {
+    const trafficCookies = cookieStore.getAll();
+    if (trafficCookies.find((cookie) => cookie.name === TRAFFIC_CONSENT_COOKIE)?.value === "1") {
+      await linkTrafficVisitorToUser(trafficCookies.find((cookie) => cookie.name === TRAFFIC_VISITOR_COOKIE)?.value, user.id);
+    }
     const conversionSessionId = cookieStore.getAll().find((cookie) => cookie.name === ANON_SESSION_COOKIE)?.value;
     if (conversionSessionId) await linkSessionToUserId(conversionSessionId, user.id);
     if (isRecovery) {
@@ -77,7 +82,7 @@ export async function GET(request: Request) {
     const createdAt = new Date(user.created_at).getTime();
     const isNew = Date.now() - createdAt < 15 * 60 * 1000;
     if (isNew) {
-      const refCode = searchParams.get("ref") || cookieStore.get("urpass_ref")?.value;
+      const refCode = searchParams.get("ref") || trafficCookies.find((cookie) => cookie.name === "urpass_ref")?.value;
       if (refCode) {
         try {
           const { attachReferralOnSignup } = await import("@/lib/referrals/service");

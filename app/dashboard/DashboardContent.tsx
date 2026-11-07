@@ -463,6 +463,13 @@ export default function DashboardContent() {
         />
       )}
 
+      {loaded && events.filter((event) => event.status === "completed").length >= 2 && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+          <div><p className="text-sm font-bold text-emerald-950">Your events are building momentum</p><p className="mt-1 text-xs text-emerald-800">Invite another organiser with your Refer &amp; Earn link.</p></div>
+          <Link href="/dashboard/referrals" className="rounded-lg bg-emerald-700 px-4 py-2 text-xs font-semibold text-white">View referral link</Link>
+        </div>
+      )}
+
       {/* ── 4 Clean Corporate Metrics ─────────────────────────────────── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         {/* Metric 1 */}

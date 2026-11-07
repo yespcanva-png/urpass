@@ -1,5 +1,6 @@
 import { adminClient } from "@/lib/supabase/admin";
 import { EXPLORE_CATEGORIES, EXPLORE_CITIES } from "./types";
+import { isEventPrivate } from "@/lib/events/privacy";
 
 export type ExploreListingMetadata = {
   city?: string | null;
@@ -105,9 +106,8 @@ export function assessExploreEligibility(input: {
   }
 
   // 4. Public visibility eligibility
-  const design = event.custom_pass_design || {};
-  if (design.is_private === true || design.visibility === "private" || design.visibility === "invite_only") {
-    issues.push("Private or invitation-only events cannot be listed publicly.");
+  if (isEventPrivate(event)) {
+    issues.push("Private, unlisted, or invitation-only events cannot be listed publicly.");
   }
 
   // 5. Valid direct registration route
@@ -125,8 +125,9 @@ export function assessExploreEligibility(input: {
   }
 
   // 8. Image / Cover
+  const design = (event.custom_pass_design as Record<string, unknown> | null) || {};
   const hasDesignImage =
-    Array.isArray(design.event_images) && design.event_images.some((url) => typeof url === "string" && url.length > 0);
+    Array.isArray(design.event_images) && design.event_images.some((url: unknown) => typeof url === "string" && url.length > 0);
   if (!event.banner_url && !event.logo_url && !hasDesignImage) {
     issues.push("Add an event cover image or logo.");
   }

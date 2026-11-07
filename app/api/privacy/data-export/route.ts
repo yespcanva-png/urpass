@@ -84,6 +84,14 @@ async function handleExport(req: Request) {
         : Promise.resolve({ data: [] }),
     ]);
 
+    const trafficIds = [...new Set([
+      profileRes.data?.first_traffic_visitor_id,
+      profileRes.data?.last_traffic_visitor_id,
+    ].filter((value): value is string => typeof value === "string"))];
+    const trafficRes = trafficIds.length
+      ? await admin.from("traffic_visitors").select("*").in("id", trafficIds)
+      : { data: [] };
+
     const exportPayload = {
       compliance: {
         regulation: "UK General Data Protection Regulation (UK GDPR)",
@@ -93,6 +101,7 @@ async function handleExport(req: Request) {
         subjectEmail: targetEmail,
       },
       userProfile: profileRes.data || { email: targetEmail },
+      trafficAttribution: trafficRes.data || [],
       organizedEvents: eventsRes.data || [],
       attendeeRegistrations: (attendeesRes.data || []).map((att: any) => ({
         id: att.id,

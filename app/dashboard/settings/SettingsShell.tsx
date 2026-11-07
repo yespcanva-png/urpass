@@ -97,10 +97,10 @@ const PLAN_ACCENT: Record<string, string> = {
   managed_enterprise: "#c084fc", managed_service: "#c084fc", managed: "#c084fc",
 };
 const PLAN_FEATURES: Record<string, string[]> = {
-  free:               ["2 events/month", "100 registrations/month", "Digital passes", "QR check-in"],
-  starter:            ["10 events/month", "500 registrations/month", "CSV upload", "Standard analytics"],
-  pro:                ["Unlimited events", "2,500 registrations/month", "API access", "Webhooks"],
-  business:           ["Unlimited events", "10,000 registrations/month", "Advanced teams", "API & webhooks"],
+  free:               ["1 active event", "100 registrations/month", "Digital passes", "QR check-in"],
+  starter:            ["3 active events", "1,000 registrations/month", "CSV upload", "Standard analytics"],
+  pro:                ["10 active events", "5,000 registrations/month", "Ticket Studio", "Multi-gate scanning"],
+  business:           ["Unlimited active events", "15,000 registrations/month", "Advanced teams", "API & webhooks"],
   campus:             ["Unlimited events", "Unlimited registrations", "Campus teams", "API & webhooks"],
   enterprise:         ["Everything in Business", "Dedicated support", "Custom SLAs", "Volume discounts"],
   managed_enterprise: ["Dedicated Managed Support", "Custom Pass & Domain Branding", "Single Event Pass", "Priority VIP Check-In"],
@@ -528,6 +528,7 @@ export default function SettingsShell({
       <div className="mb-6">
         <p className="text-[10px] font-bold tracking-widest uppercase text-neutral-400 mb-1">Account</p>
         <h1 className="text-2xl font-bold tracking-tight text-neutral-900">Settings</h1>
+        <Link href="/dashboard/settings/email" className="mt-2 inline-block text-sm font-semibold text-violet-700 hover:underline">Email preferences</Link>
       </div>
 
       {/* ════════════════════════════════════════════════════════

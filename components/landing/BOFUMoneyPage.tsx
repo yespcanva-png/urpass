@@ -205,7 +205,7 @@ export default function BOFUMoneyPage({ config }: { config: BOFUPageConfig }) {
   const primaryCta = config.primaryCtaLabel;
   const primaryHref = config.primaryCtaHref ?? "/signup";
   const secondaryCta = config.secondaryCtaLabel ?? "Book a Demo";
-  const secondaryHref = config.secondaryCtaHref ?? "/contact";
+  const secondaryHref = config.secondaryCtaHref ?? "/demo";
 
   // Combine GEO entity FAQs with any custom page FAQs
   const combinedFaqs = [
@@ -327,6 +327,7 @@ export default function BOFUMoneyPage({ config }: { config: BOFUPageConfig }) {
     },
     description: GEO_ENTITY_DEFINITION,
     sameAs: [
+      "https://www.producthunt.com/products/urpass",
       "https://twitter.com/urpass_space",
       "https://github.com/yespcanva-png/urpass",
       "https://yespstudio.com",

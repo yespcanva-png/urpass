@@ -50,6 +50,7 @@ export default function YespUrpassPage() {
         "url": "https://yespstudio.com",
         "description": "Technology company developing digital products and business software.",
         "sameAs": [
+          "https://www.producthunt.com/products/urpass",
           "https://yespstudio.com"
         ]
       },

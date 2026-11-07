@@ -11,6 +11,7 @@ import type {
 import { EXPLORE_CATEGORIES, EXPLORE_CITIES } from "./types";
 import { getExploreEligibility } from "./eligibility";
 import { eventLocalNow } from "./eligibility";
+import { isEventPrivate } from "@/lib/events/privacy";
 
 export function getCategoryLabel(catKey: string): string {
   const found = EXPLORE_CATEGORIES.find((c) => c.key === catKey.toLowerCase());
@@ -138,13 +139,12 @@ export async function fetchExploreMarketplaceEvents(
     items = rawListings
       .filter((_, index) => assessments[index]?.ready)
       .filter((l) => {
-        if (!l.event || l.event.status !== "active" || l.event.application_enabled === false) {
+        if (!l.event || l.event.status !== "active") {
           return false;
         }
 
-        // Exclude private or invite-only events
-        const design = l.event.custom_pass_design || {};
-        if (design.is_private === true || design.visibility === "private" || design.visibility === "invite_only") {
+        // Exclude private, unlisted, or invite-only events
+        if (isEventPrivate(l.event)) {
           return false;
         }
 

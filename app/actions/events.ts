@@ -14,6 +14,7 @@ import { validateEventPreflightReadiness } from "@/lib/events/preflight";
 import { eventUtcRange } from "@/lib/markets/timezone";
 import { marketForCountry } from "@/lib/markets/config";
 import { resolveUserSubscriptionAccess } from "@/lib/billing/entitlement-resolver";
+import { isEventPrivate } from "@/lib/events/privacy";
 import type { CustomFieldDefinition } from "@/types";
 
 function adminClient() {
@@ -211,6 +212,8 @@ export async function createEvent(data: EventInput, organizationId?: string): Pr
   const passDesign: Record<string, unknown> = {};
   if (cleanImages.length > 0) passDesign.event_images = cleanImages;
   if (baseFields.end_date) passDesign.end_date = baseFields.end_date;
+  if (baseFields.is_private !== undefined) passDesign.is_private = Boolean(baseFields.is_private);
+  if (baseFields.visibility) passDesign.visibility = baseFields.visibility;
   if (Object.keys(passDesign).length > 0) {
     eventData.custom_pass_design = passDesign;
   }

@@ -28,6 +28,7 @@ import { slugify } from "@/lib/utils";
 import EventImageUploader from "@/components/events/EventImageUploader";
 import EventImageCarousel from "@/components/events/EventImageCarousel";
 import ConciergeSetupModal from "@/components/concierge/ConciergeSetupModal";
+import { trackLifecycleEvent } from "@/lib/analytics/client";
 
 type OrgOption = { id: string; slug: string; name: string; brand_color: string; role: string };
 
@@ -158,6 +159,10 @@ export default function CreateEventForm({
       end_time: "12:00",
     },
   });
+
+  useEffect(() => {
+    trackLifecycleEvent("event_creation_started");
+  }, []);
 
   useEffect(() => {
     const detected = organizationCountry || detectCountryClient();
@@ -325,6 +330,12 @@ export default function CreateEventForm({
         return;
       }
       if (result?.eventId) {
+        trackLifecycleEvent("event_created", {
+          eventId: result.eventId,
+          eventType: data.event_type,
+          status: submitMode,
+          isPrivate: data.is_private || false,
+        });
         const actionLabel = submitMode === "active" ? "Event published and live!" : "Event saved as draft!";
         setSuccessMessage(actionLabel);
         setCreatedEventModal({

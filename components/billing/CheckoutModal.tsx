@@ -9,6 +9,8 @@ import { useRouter } from "next/navigation";
 import { validateCoupon, type ValidatedCoupon } from "@/app/actions/coupons";
 import { activatePaidSubscription } from "@/app/actions/billing";
 import { validateGstin } from "@/lib/validations/gstin";
+import { PRODUCT_HUNT_CODE } from "@/lib/billing/product-hunt-offer";
+import { trackLifecycleEvent } from "@/lib/analytics/client";
 
 interface Props {
   isOpen: boolean;
@@ -104,6 +106,7 @@ export default function CheckoutModal({
   const [couponLoading, setCouponLoading]   = useState(false);
   const [couponError, setCouponError]       = useState("");
   const [coupon, setCoupon]                 = useState<ValidatedCoupon | null>(null);
+  const [productHuntApplied, setProductHuntApplied] = useState(false);
   const [payLoading, setPayLoading]         = useState(false);
   const [payError, setPayError]             = useState("");
   const [companyName, setCompanyName]       = useState(userName || "");
@@ -122,6 +125,7 @@ export default function CheckoutModal({
       setCouponInput("");
       setCouponError("");
       setCoupon(null);
+      setProductHuntApplied(false);
       setPayError("");
       setPayLoading(false);
       setCompanyName(userName || "");
@@ -137,6 +141,16 @@ export default function CheckoutModal({
     document.body.style.overflow = isOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
   }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen) {
+      trackLifecycleEvent("checkout_started", {
+        plan: planSlug,
+        billingCycle,
+        currency: (currency || "").toUpperCase() === "GBP" ? "GBP" : "INR",
+      });
+    }
+  }, [isOpen, planSlug, billingCycle, currency]);
 
   if (!isOpen) return null;
 
@@ -157,13 +171,10 @@ export default function CheckoutModal({
     ? annualTotal
     : priceMonthly;
   const referralDeduction =
-    !coupon && (referralDiscountRupees ?? 0) > 0 && !isUk && baseAmount >= 499
+    !coupon && !productHuntApplied && (referralDiscountRupees ?? 0) > 0 && !isUk && baseAmount >= 499
       ? (referralDiscountRupees ?? 100)
       : 0;
-  const baseTax    = Math.round(baseAmount * (isUk ? 20 : 18)) / 100;
-  const baseTotal  = Math.round((baseAmount + baseTax) * 100) / 100;
-
-  const subtotal    = coupon ? coupon.discountedAmountRupees : Math.max(0, baseAmount - referralDeduction);
+  const subtotal    = productHuntApplied ? 499.5 : coupon ? coupon.discountedAmountRupees : Math.max(0, baseAmount - referralDeduction);
   const taxDisplay  = coupon ? coupon.gstRupees              : Math.round(subtotal * (isUk ? 20 : 18)) / 100;
   const totalToday  = coupon ? coupon.totalRupees            : Math.round((subtotal + taxDisplay) * 100) / 100;
 
@@ -173,6 +184,24 @@ export default function CheckoutModal({
     setCouponLoading(true);
     setCouponError("");
     setCoupon(null);
+    setProductHuntApplied(false);
+
+    if (code.toUpperCase() === PRODUCT_HUNT_CODE) {
+      try {
+        const response = await fetch("/api/billing/subscriptions", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ planSlug, billingCycle, currency, promoCode: PRODUCT_HUNT_CODE, validateOnly: true }),
+        });
+        const result = await response.json();
+        if (!response.ok || !result.valid) throw new Error(result.error || "Promotion could not be applied.");
+        setProductHuntApplied(true);
+      } catch (cause) {
+        setCouponError(cause instanceof Error ? cause.message : "Promotion could not be applied.");
+      } finally {
+        setCouponLoading(false);
+      }
+      return;
+    }
 
     const result = await validateCoupon(code, planSlug, billingCycle);
     setCouponLoading(false);
@@ -186,6 +215,7 @@ export default function CheckoutModal({
 
   function removeCoupon() {
     setCoupon(null);
+    setProductHuntApplied(false);
     setCouponInput("");
     setCouponError("");
   }
@@ -232,6 +262,68 @@ export default function CheckoutModal({
         return;
       }
 
+      if (productHuntApplied) {
+        const response = await fetch("/api/billing/subscriptions", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ planSlug, billingCycle, currency: "INR", promoCode: PRODUCT_HUNT_CODE,
+            billingDetails: { companyName: trimmedCompany || userName, billingAddress: trimmedAddress,
+              gstin: trimmedGstin || null, state: selectedState?.name || "", stateCode: billingStateCode } }),
+        });
+        const data = await response.json();
+        if (!response.ok || !data.subscriptionId || data.promoCode !== PRODUCT_HUNT_CODE ||
+            data.firstChargePaise !== 49950 || data.discountedCycles !== 3) {
+          throw new Error(data.error || "Promotion checkout could not be verified.");
+        }
+        const rzp = new window.Razorpay({
+          key: data.keyId, subscription_id: data.subscriptionId, name: "UrPass",
+          description: "Pro: ₹499.50 + GST for 3 months, then ₹999 + GST monthly",
+          prefill: { name: userName, email: userEmail },
+          modal: {
+            ondismiss: () => {
+              setPayLoading(false);
+              trackLifecycleEvent("payment_failed", {
+                plan: planSlug,
+                billingCycle,
+                reason: "checkout_dismissed",
+              });
+            },
+          },
+          handler: async (result: Record<string, string>) => {
+            try {
+              const verification = await fetch("/api/billing/subscriptions/verify", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ planSlug, subscriptionId: result.razorpay_subscription_id,
+                  paymentId: result.razorpay_payment_id, signature: result.razorpay_signature }),
+              });
+              const verified = await verification.json();
+              if (!verification.ok) throw new Error(verified.error || "Subscription payment is pending verification.");
+              trackLifecycleEvent("payment_succeeded", {
+                plan: planSlug,
+                billingCycle,
+                amount: 499.5,
+                currency: "INR",
+                promoCode: PRODUCT_HUNT_CODE,
+              });
+              onClose();
+              router.push(successRedirect || "/billing?upgraded=true&plan=Pro");
+              router.refresh();
+            } catch (cause) {
+              const msg = cause instanceof Error ? cause.message : "Subscription verification failed.";
+              setPayError(msg);
+              trackLifecycleEvent("payment_failed", {
+                plan: planSlug,
+                billingCycle,
+                reason: msg,
+              });
+            } finally {
+              setPayLoading(false);
+            }
+          },
+        });
+        rzp.open();
+        return;
+      }
+
       const res = await fetch("/api/razorpay/order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -273,7 +365,16 @@ export default function CheckoutModal({
         order_id: data.orderId,
         prefill: { name: userName, email: userEmail },
         theme: { color: "#0a0a0a" },
-        modal: { ondismiss: () => setPayLoading(false) },
+        modal: {
+          ondismiss: () => {
+            setPayLoading(false);
+            trackLifecycleEvent("payment_failed", {
+              plan: planSlug,
+              billingCycle,
+              reason: "checkout_dismissed",
+            });
+          },
+        },
         handler: async (response: {
           razorpay_payment_id?: string;
           razorpay_order_id?: string;
@@ -285,6 +386,11 @@ export default function CheckoutModal({
             !response?.razorpay_signature
           ) {
             setPayError("Payment verification details are missing.");
+            trackLifecycleEvent("payment_failed", {
+              plan: planSlug,
+              billingCycle,
+              reason: "missing_signature",
+            });
             setPayLoading(false);
             return;
           }
@@ -320,8 +426,20 @@ export default function CheckoutModal({
             setPayLoading(false);
             if (result?.error) {
               setPayError(result.error);
+              trackLifecycleEvent("payment_failed", {
+                plan: planSlug,
+                billingCycle,
+                reason: result.error,
+              });
               return;
             }
+            trackLifecycleEvent("payment_succeeded", {
+              plan: planSlug,
+              billingCycle,
+              amount: totalToday,
+              currency: isUk ? "GBP" : "INR",
+              couponCode: coupon?.code,
+            });
             onClose();
             router.push(
               successRedirect ||
@@ -332,14 +450,26 @@ export default function CheckoutModal({
             router.refresh();
           } catch (err) {
             setPayLoading(false);
-            setPayError(err instanceof Error ? err.message : "Failed to activate subscription.");
+            const msg = err instanceof Error ? err.message : "Failed to activate subscription.";
+            setPayError(msg);
+            trackLifecycleEvent("payment_failed", {
+              plan: planSlug,
+              billingCycle,
+              reason: msg,
+            });
           }
         },
       });
 
       rzp.open();
-    } catch {
-      setPayError("Payment failed. Please try again.");
+    } catch (cause) {
+      const msg = cause instanceof Error ? cause.message : "Payment failed. Please try again.";
+      setPayError(msg);
+      trackLifecycleEvent("payment_failed", {
+        plan: planSlug,
+        billingCycle,
+        reason: msg,
+      });
       setPayLoading(false);
     }
   }
@@ -377,15 +507,15 @@ export default function CheckoutModal({
           </div>
 
           {/* Coupon input */}
-          {coupon ? (
+          {coupon || productHuntApplied ? (
             <div className="flex items-center justify-between gap-2 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2.5">
               <div className="flex items-center gap-2.5">
                 <div className="w-7 h-7 rounded-md bg-emerald-100 flex items-center justify-center shrink-0">
                   <Check className="w-3.5 h-3.5 text-green-700" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-green-800 font-mono tracking-wider">{coupon.code}</p>
-                  <p className="text-[11px] text-green-600">{coupon.label}</p>
+                  <p className="text-xs font-bold text-green-800 font-mono tracking-wider">{productHuntApplied ? PRODUCT_HUNT_CODE : coupon?.code}</p>
+                  <p className="text-[11px] text-green-600">{productHuntApplied ? "50% off the first 3 Pro billing cycles" : coupon?.label}</p>
                 </div>
               </div>
               <button
@@ -541,6 +671,12 @@ export default function CheckoutModal({
                 <span className="font-semibold text-emerald-700">− {sym}{fmt(coupon.discountAmountRupees)}</span>
               </div>
             )}
+            {productHuntApplied && (
+              <div className="flex items-center justify-between text-emerald-700">
+                <span>PRODUCTHUNT50 · first 3 months</span>
+                <span>− ₹499.50</span>
+              </div>
+            )}
 
             {referralDeduction > 0 && !coupon && (
               <div className="flex items-center justify-between text-emerald-700">
@@ -572,7 +708,11 @@ export default function CheckoutModal({
           </div>
 
           {/* Renewal disclosure */}
-          {isSingleEvent ? (
+          {productHuntApplied ? (
+            <p className="text-[11px] text-neutral-700 text-center -mt-2">
+              ₹499.50 + 18% GST monthly for the first 3 billing cycles. From month 4, renews automatically at ₹999 + 18% GST monthly until cancelled.
+            </p>
+          ) : isSingleEvent ? (
             <p className="text-[11px] text-emerald-600 font-medium text-center -mt-2">
               One-time payment · Single event license with dedicated managed support · No recurring charges
             </p>
@@ -604,7 +744,7 @@ export default function CheckoutModal({
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
               <>
-                {`Pay ${sym}${fmt(totalToday)}`}
+                {productHuntApplied ? `Authorize Pro AutoPay · ${sym}${fmt(totalToday)}` : `Pay ${sym}${fmt(totalToday)}`}
                 <ChevronRight className="w-4 h-4" />
               </>
             )}

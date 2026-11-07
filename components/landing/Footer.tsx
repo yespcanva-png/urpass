@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { InstagramIcon, YoutubeIcon, SOCIAL_LINKS } from "./SocialIcons";
 import NewsletterForm from "./NewsletterForm";
+import ProductHuntBadge from "./ProductHuntBadge";
 
 export default function Footer() {
   return (
@@ -35,7 +36,7 @@ export default function Footer() {
               </div>
 
               {/* Social Channels */}
-              <div className="flex flex-wrap items-center gap-3 mb-6">
+              <div className="flex flex-wrap items-center gap-3 mb-5">
                 <a
                   href={SOCIAL_LINKS.instagram}
                   target="_blank"
@@ -57,6 +58,11 @@ export default function Footer() {
                   <YoutubeIcon className="w-4 h-4 text-red-500 group-hover:scale-110 transition-transform" />
                   <span>YouTube</span>
                 </a>
+              </div>
+
+              {/* Product Hunt Featured & Review Badge */}
+              <div className="mb-6">
+                <ProductHuntBadge showLabel label="Review us on Product Hunt" />
               </div>
 
               {/* Newsletter Subscription */}

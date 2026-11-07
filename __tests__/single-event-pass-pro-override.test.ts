@@ -187,8 +187,8 @@ describe("Single Event Pass — Pro Plan Feature Override & Strict Restrictions"
       // 0% platform ticket fee
       expect(eventPlan.platformFeePercent).toBe(0);
 
-      // Sub-second QR gate scanners & checkin
-      expect(eventPlan.canUse("standard_checkin")).toBe(true);
+      // Sub-second QR gate scanners & analytics
+      expect(eventPlan.canUse("standard_analytics")).toBe(true);
 
       // Custom pass designer & Pass Studio
       expect(eventPlan.canUse("custom_pass_design")).toBe(true);
@@ -299,7 +299,7 @@ describe("Single Event Pass — Pro Plan Feature Override & Strict Restrictions"
       };
 
       const mockSupabase = {
-        from: vi.fn(() => ({
+        from: vi.fn((_table?: string) => ({
           select: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
               in: vi.fn().mockReturnValue({
@@ -324,7 +324,7 @@ describe("Single Event Pass — Pro Plan Feature Override & Strict Restrictions"
       expect(regularPlan.canCSV).toBe(false);
       expect(regularPlan.canExport).toBe(false);
       expect(regularPlan.getLimit("custom_fields")).toBe(3);
-      expect(regularPlan.getLimit("registrations_per_month")).toBe(50);
+      expect(regularPlan.getLimit("registrations_per_month")).toBe(100);
       expect(regularPlan.platformFeePercent).toBe(2.0); // Standard free platform fee applies
     });
   });

@@ -53,6 +53,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   const seoPages = [
+    "/best-qr-code-event-check-in-software-india",
+    "/how-to-create-qr-code-event-tickets",
+    "/college-event-registration-platform",
+    "/scan-event-tickets-with-phone",
+    "/google-forms-vs-event-registration",
     "/event-rsvp-tracking-software",
     "/corporate-visitor-qr-check-in",
     "/vip-event-invitation-management",

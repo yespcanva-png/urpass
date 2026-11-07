@@ -7,6 +7,7 @@ import AuthRecoveryHandler from "@/components/common/AuthRecoveryHandler";
 import { CookieConsentBanner } from "@/components/ui/CookieConsentBanner";
 import ConsentAnalytics from "@/components/ui/ConsentAnalytics";
 import PwaRuntime from "@/components/pwa/PwaRuntime";
+import TrafficSourceTracker from "@/components/analytics/TrafficSourceTracker";
 
 const geist = Geist({
   subsets: ["latin"],
@@ -167,8 +168,9 @@ const organizationSchema = {
   "@context": "https://schema.org",
   "@type": "Organization",
   "@id": `${BASE_URL}/#organization`,
-  name: "UrPass",
-  alternateName: ["urpass", "urpass.space", "UrPass Space"],
+  name: "Yesp Corporation",
+  legalName: "Yesp Corporation",
+  alternateName: ["UrPass", "urpass", "urpass.space", "UrPass Space", "Yesp Studio"],
   url: BASE_URL,
   logo: {
     "@type": "ImageObject",
@@ -191,6 +193,7 @@ const organizationSchema = {
     caption: "UrPass — Digital Event Passes & Lightning QR Check-In Platform",
   },
   sameAs: [
+    "https://www.producthunt.com/products/urpass",
     "https://www.instagram.com/urpass.space",
     "https://www.youtube.com/channel/UCzUliQs5vwGlLAM7X6aB9zg/",
   ],
@@ -239,22 +242,34 @@ const organizationSchema = {
 
 const softwareSchema = {
   "@context": "https://schema.org",
-  "@type": "WebApplication",
+  "@type": "SoftwareApplication",
+  "@id": `${BASE_URL}/#software`,
   name: "UrPass",
   applicationCategory: "BusinessApplication",
-  applicationSubCategory: "Event Ticketing & Check-In Platform",
-  operatingSystem: "All, Web, iOS, Android",
+  applicationSubCategory: "Event Registration and Ticketing Software",
+  operatingSystem: "Web, iOS, Android",
   browserRequirements: "Requires HTML5, JavaScript, modern browser",
   url: BASE_URL,
+  provider: {
+    "@type": "Organization",
+    "@id": `${BASE_URL}/#organization`,
+    name: "Yesp Corporation",
+  },
+  sameAs: [
+    "https://www.producthunt.com/products/urpass"
+  ],
   description:
-    "Fast digital event pass generator with sub-second QR check-in, real-time attendance analytics, offline gate scanning sync, Model Context Protocol (MCP) server, and zero-commission ticketing. Free forever plan available, with paid plans starting at ₹499/month (or £15/month in UK).",
+    "UrPass is an event registration, digital ticketing, QR check-in, and attendance management platform. Free forever plan available, with paid plans starting at ₹499/month (or £15/month in UK).",
   offers: [
-    { "@type": "Offer", name: "Starter Tier", price: "499", priceCurrency: "INR", billingIncrement: "P1M", priceValidUntil: "2027-12-31", description: "Starter Plan at ₹499/mo +GST. 10 events/month, 500 registrations/month, CSV import & export." },
-    { "@type": "Offer", name: "Pro Tier", price: "999", priceCurrency: "INR", billingIncrement: "P1M", priceValidUntil: "2027-12-31", description: "Pro Plan at ₹999/mo +GST. Unlimited events, 2,500 registrations/month, Ticket Studio custom pass branding." },
-    { "@type": "Offer", name: "Business Tier", price: "2499", priceCurrency: "INR", billingIncrement: "P1M", priceValidUntil: "2027-12-31", description: "Business Plan at ₹2,499/mo +GST. Unlimited events, 10,000 registrations/month, corporate workspaces, API & MCP server." },
-    { "@type": "Offer", name: "UK Starter Tier", price: "15", priceCurrency: "GBP", billingIncrement: "P1M", priceValidUntil: "2027-12-31", description: "UK Starter Plan at £15/month." },
-    { "@type": "Offer", name: "UK Pro Tier", price: "35", priceCurrency: "GBP", billingIncrement: "P1M", priceValidUntil: "2027-12-31", description: "UK Pro Plan at £35/month." },
-    { "@type": "Offer", name: "UK Business Tier", price: "79", priceCurrency: "GBP", billingIncrement: "P1M", priceValidUntil: "2027-12-31", description: "UK Business Plan at £79/month." },
+    { "@type": "Offer", name: "Free Tier", price: "0", priceCurrency: "INR", billingIncrement: "P1M", priceValidUntil: "2027-12-31", url: `${BASE_URL}/pricing`, description: "Free Forever plan: 1 active event, 50 registrations/month, standard QR pass & smartphone scanner." },
+    { "@type": "Offer", name: "Single Event License", price: "299", priceCurrency: "INR", url: `${BASE_URL}/pricing`, description: "₹299 one-time. 250 registrations for one event, 0% UrPass platform commission." },
+    { "@type": "Offer", name: "Starter Tier", price: "499", priceCurrency: "INR", billingIncrement: "P1M", priceValidUntil: "2027-12-31", url: `${BASE_URL}/pricing`, description: "Starter Plan at ₹499/mo +GST. 3 active events, 1,000 registrations/month, CSV import & export." },
+    { "@type": "Offer", name: "Pro Tier", price: "999", priceCurrency: "INR", billingIncrement: "P1M", priceValidUntil: "2027-12-31", url: `${BASE_URL}/pricing`, description: "Pro Plan at ₹999/mo +GST. 10 active events, 5,000 registrations/month, Ticket Studio custom pass branding." },
+    { "@type": "Offer", name: "Business Tier", price: "2499", priceCurrency: "INR", billingIncrement: "P1M", priceValidUntil: "2027-12-31", url: `${BASE_URL}/pricing`, description: "Business Plan at ₹2,499/mo +GST. Unlimited active events, 15,000 registrations/month, corporate workspaces, API & MCP server." },
+    { "@type": "Offer", name: "UK Free Tier", price: "0", priceCurrency: "GBP", billingIncrement: "P1M", priceValidUntil: "2027-12-31", url: `${BASE_URL}/pricing`, description: "UK Free Forever Plan: 1 active event, 50 registrations/month." },
+    { "@type": "Offer", name: "UK Starter Tier", price: "15", priceCurrency: "GBP", billingIncrement: "P1M", priceValidUntil: "2027-12-31", url: `${BASE_URL}/pricing`, description: "UK Starter Plan at £15/month." },
+    { "@type": "Offer", name: "UK Pro Tier", price: "35", priceCurrency: "GBP", billingIncrement: "P1M", priceValidUntil: "2027-12-31", url: `${BASE_URL}/pricing`, description: "UK Pro Plan at £35/month." },
+    { "@type": "Offer", name: "UK Business Tier", price: "79", priceCurrency: "GBP", billingIncrement: "P1M", priceValidUntil: "2027-12-31", url: `${BASE_URL}/pricing`, description: "UK Business Plan at £79/month." },
   ],
   knowsAbout: [
     "Digital Event Passes",
@@ -328,6 +343,7 @@ export default function RootLayout({
       </head>
       <body className="h-full font-[family-name:var(--font-geist)] antialiased bg-white text-neutral-900">
         <ConsentAnalytics measurementId={GA_ID} />
+        <TrafficSourceTracker />
         <VersionSkewHandler />
         <AuthRecoveryHandler />
         <PwaRuntime />

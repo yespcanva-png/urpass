@@ -12,11 +12,14 @@ import {
   ArrowRight,
 } from "lucide-react";
 import SEOPage from "@/components/landing/SEOPage";
+import { SELF_SERVICE_PLAN_LIMITS, formatPlanLimit } from "@/lib/billing/plan-limits";
+
+const limits = SELF_SERVICE_PLAN_LIMITS;
 
 export const metadata: Metadata = {
   title: "Free Event Registration Software with Digital QR Passes | UrPass",
   description:
-    "Genuinely free event registration software for organizers, colleges, meetups, and conferences. 100 registrations/month, custom forms, instant QR tickets, and browser scanning. No credit card required.",
+    `Free event registration software for organisers, colleges and meetups. ${limits.free.registrationsPerMonth} registrations/month, custom forms, QR passes and browser scanning. No credit card required.`,
   keywords: [
     "free event registration software",
     "free event ticketing platform",
@@ -61,12 +64,12 @@ export default function FreeEventRegistrationSoftwarePage() {
         directAnswer: {
           title: "Is There Genuinely Free Event Registration Software?",
           summary:
-            "Yes. UrPass provides a Free Forever plan specifically designed for student fests, tech meetups, corporate workshops, and local community events. Organizers can create 1 active event at a time, collect up to 100 registrations per month, customize application form fields, issue digital QR entry passes, and scan attendees using standard smartphone cameras without paying platform fees or entering credit card details.",
+            `Yes. UrPass provides a Free Forever plan for student groups, meetups and community events. Organisers can run 1 active free event at a time, collect up to ${limits.free.registrationsPerMonth} registrations per month, issue QR passes, and scan attendees with a smartphone without entering card details.`,
           keyPoints: [
-            "Free Forever: ₹0/month with 1 active event and 100 registrations per month",
+            `Free Forever: ₹0/month with 1 active event and ${limits.free.registrationsPerMonth} registrations per month`,
             "Instant QR Pass: Automated digital entry passes generated immediately upon registration",
             "Smartphone Scanner: Verify entry in under 0.3 seconds on any mobile browser without app downloads",
-            "0% Commission: Keep 100% of your ticket revenue if you connect your own payment gateway",
+            "Paid tickets: Available on paid plans with 0% UrPass platform commission; gateway fees apply",
           ],
         },
         whatIs: {
@@ -88,22 +91,22 @@ export default function FreeEventRegistrationSoftwarePage() {
             {
               col1: "Free Forever",
               col2: "₹0 / Free",
-              col3: "1 active event · 100 registrations/mo · 1 organizer seat · Full QR check-in scanner",
+              col3: `1 active event · ${formatPlanLimit(limits.free.registrationsPerMonth)} registrations/mo · 1 organiser seat · QR scanning`,
             },
             {
               col1: "Starter",
               col2: "₹499/mo + GST",
-              col3: "3 active events · 500 registrations/mo · 2 organizer seats · Standard analytics",
+              col3: `3 active events · ${formatPlanLimit(limits.starter.registrationsPerMonth)} registrations/mo · 2 organiser seats · Standard analytics`,
             },
             {
               col1: "Pro",
               col2: "₹999/mo + GST",
-              col3: "10 active events · 2,500 registrations/mo · 5 seats · Ticket Studio & session tracking",
+              col3: `10 active events · ${formatPlanLimit(limits.pro.registrationsPerMonth)} registrations/mo · 5 seats · Ticket Studio & session tracking`,
             },
             {
               col1: "Business",
               col2: "₹2,499/mo + GST",
-              col3: "Unlimited events · 10,000 registrations/mo · 15 seats · API, webhooks & SLA support",
+              col3: `Unlimited events · ${formatPlanLimit(limits.business.registrationsPerMonth)} registrations/mo · 15 seats · API and webhooks`,
             },
           ],
         },
@@ -122,7 +125,7 @@ export default function FreeEventRegistrationSoftwarePage() {
           },
           {
             icon: Users,
-            title: "100 Attendees / Month",
+            title: `${limits.free.registrationsPerMonth} Registrations / Month`,
             desc: "Generous free attendee quota renewed every month — perfect for university clubs, seminars, and meetups.",
           },
           {
@@ -144,15 +147,15 @@ export default function FreeEventRegistrationSoftwarePage() {
         faqs: [
           {
             q: "Is the Free plan really free forever or a 30-day trial?",
-            a: "It is genuinely Free Forever. You do not need to enter a credit card, and the plan does not expire after 30 days. You can run 1 active event at a time and accept up to 100 registrations each month indefinitely.",
+            a: `The Free plan does not require a credit card or expire after 30 days. You can run 1 active event at a time and accept up to ${limits.free.registrationsPerMonth} registrations each month.`,
           },
           {
-            q: "What happens if my event receives more than 100 registrations?",
-            a: "When you approach 100 registrations, you will receive an alert on your attendee dashboard. You can upgrade to Starter (500 registrations/mo for ₹499) or Pro (2,500 registrations/mo for ₹999) with 1 click to accept more attendees without disrupting registration.",
+            q: `What happens if my event receives more than ${limits.free.registrationsPerMonth} registrations?`,
+            a: `The Free allowance is ${limits.free.registrationsPerMonth} registrations per month. For more capacity, choose Starter (${formatPlanLimit(limits.starter.registrationsPerMonth)} registrations/mo for ₹499), Pro (${formatPlanLimit(limits.pro.registrationsPerMonth)} registrations/mo for ₹999), or a single-event pass.`,
           },
           {
             q: "Can I run paid events on the Free plan?",
-            a: "Yes. You can connect your verified Razorpay merchant gateway to sell paid tickets. UrPass charges 0% platform commission on ticket revenue; you only pay standard Razorpay processing fees.",
+            a: "Free is for free RSVP events. Paid ticket sales require Starter, Pro, Business or an eligible single-event pass. UrPass charges 0% platform commission; payment gateway fees still apply.",
           },
           {
             q: "Do attendees or gate staff need to download a mobile app?",
@@ -171,7 +174,7 @@ export default function FreeEventRegistrationSoftwarePage() {
           { title: "Ticket Fee Calculator", href: "/ticket-fee-calculator", category: "Product" },
         ],
         ctaTitle: "Create Your First Event for Free",
-        ctaDescription: "No credit card required · Free Forever · 100 registrations/mo · Instant QR tickets",
+        ctaDescription: `No credit card required · Free Forever · ${limits.free.registrationsPerMonth} registrations/mo · Instant QR tickets`,
       }}
     />
   );

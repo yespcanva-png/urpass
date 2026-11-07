@@ -5,13 +5,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Cookie, ShieldCheck } from "lucide-react";
 import { detectCountryClient } from "@/lib/country-config";
+import { isTrackableTrafficPath } from "@/lib/traffic/path";
 
 type RegionMode = "uk" | "in" | "common";
 
 /**
- * Returns true only if the given pathname is the landing page.
- * Cookie consent is removed from all internal pages, dashboards, event pages, auth, docs, etc.
- * and is strictly presented only on the landing page ("/", "/in", "/uk").
+ * Legacy landing-page predicate. Consent visibility is decided separately below.
  */
 export function isLandingPageRoute(pathname?: string | null): boolean {
   if (!pathname) return true;
@@ -21,8 +20,7 @@ export function isLandingPageRoute(pathname?: string | null): boolean {
 }
 
 /**
- * Retained for backwards compatibility: returns true for all non-landing routes
- * where cookie consent is suppressed.
+ * Retained for backwards compatibility with callers that classify landing routes.
  */
 export function isPublicEventRoute(pathname?: string | null): boolean {
   return !isLandingPageRoute(pathname);
@@ -30,12 +28,13 @@ export function isPublicEventRoute(pathname?: string | null): boolean {
 
 /**
  * Determines whether the cookie consent banner should be presented.
- * In accordance with UK PECR regulations, UK visitors must be presented with consent
- * choices on public entry points (landing, /uk, /apply, /e/) before setting cookies.
+ * Show choices on public organiser acquisition pages. Existing UK attendee-page
+ * consent behavior is preserved; the traffic module itself excludes attendee pages.
  */
 export function shouldShowCookieConsent(pathname?: string | null, isUkVisitor: boolean = false): boolean {
   if (isLandingPageRoute(pathname)) return true;
   const p = (pathname || "").toLowerCase();
+  if (isTrackableTrafficPath(p)) return true;
   const isDashboardRoute = p.startsWith("/dashboard") || p.startsWith("/admin") || p.startsWith("/settings");
   if (isDashboardRoute) return false;
 
@@ -137,19 +136,19 @@ export function CookieConsentBanner() {
     uk: {
       title: "Your Privacy & Cookie Choices",
       description:
-        "We use strictly necessary cookies to run secure event check-in and optional performance cookies to monitor scanning speed. In accordance with the UK GDPR & PECR, you can choose your preferences.",
+        "Optional analytics help us understand which sites bring visitors to UrPass and whether they sign up, create events or buy a plan. With your permission, we use an anonymous visitor cookie and link the source to your account if you sign up. You can change your choice here at any time.",
       badge: "Privacy choices",
     },
     in: {
       title: "Your Privacy & Cookie Choices",
       description:
-        "We use strictly necessary cookies to run secure event check-in and digital ticket issuance. In accordance with the Digital Personal Data Protection (DPDP) Act, you can choose your preferences.",
+        "Optional analytics help us understand which sites bring visitors to UrPass and whether they sign up, create events or buy a plan. With your permission, we use an anonymous visitor cookie and link the source to your account if you sign up. You can change your choice here at any time.",
       badge: "Privacy choices",
     },
     common: {
       title: "Your Privacy & Cookie Choices",
       description:
-        "We use strictly necessary cookies to run secure event check-in and optional performance cookies to monitor scanning speed. In accordance with global data protection standards, you can choose your preferences.",
+        "Optional analytics help us understand which sites bring visitors to UrPass and whether they sign up, create events or buy a plan. With your permission, we use an anonymous visitor cookie and link the source to your account if you sign up. You can change your choice here at any time.",
       badge: "Privacy & Security Protected",
     },
   }[region];

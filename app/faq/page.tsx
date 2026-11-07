@@ -119,7 +119,7 @@ const FAQ_DATA: FAQItem[] = [
   {
     category: "Payments & Pricing",
     q: "How does URPASS pricing work?",
-    a: "URPASS offers an transparent plans starting from ₹499/month across Starter, Pro, and Business plans with 0% platform ticket commissions. After the introductory period, standard transparent monthly pricing applies (Starter ₹499/mo, Pro ₹999/mo, Business ₹2,499/mo + GST). In the UK, plans start at £15/month.",
+    a: "URPASS offers a permanent ₹0 Free Tier (1 active event, 50 registrations/month), transparent monthly plans (Starter ₹499/mo for 1,000 registrations, Pro ₹999/mo for 5,000 registrations, Business ₹2,499/mo for 15,000 registrations + GST), and pay-as-you-go Single Event Passes starting at ₹299 (250 registrations). We charge 0% platform ticket commissions on all tiers. In the UK, plans start at £15/month.",
   },
   {
     category: "Payments & Pricing",
@@ -365,11 +365,13 @@ export default function FAQPage() {
                         </div>
                       </button>
 
-                      {isOpen && (
-                        <div className="px-5 pb-5 sm:px-6 sm:pb-6 pt-1 text-xs sm:text-sm text-neutral-600 leading-relaxed border-t border-neutral-100 bg-neutral-50/30">
-                          {faq.a}
-                        </div>
-                      )}
+                      <div
+                        className={`px-5 pb-5 sm:px-6 sm:pb-6 pt-1 text-xs sm:text-sm text-neutral-600 leading-relaxed border-t border-neutral-100 bg-neutral-50/30 ${
+                          isOpen ? "block" : "hidden"
+                        }`}
+                      >
+                        <p>{faq.a}</p>
+                      </div>
                     </div>
                   );
                 })}

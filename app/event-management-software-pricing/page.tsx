@@ -83,17 +83,17 @@ export default function EventManagementSoftwarePricingPage() {
             {
               col1: "Starter Plan",
               col2: "₹499/mo + GST",
-              col3: "3 active events · 500 registrations/mo · 2 organizer seats",
+              col3: "3 active events · 1,000 registrations/mo · 2 organizer seats",
             },
             {
               col1: "Pro Plan (Recommended)",
               col2: "₹999/mo + GST",
-              col3: "10 active events · 2,500 registrations/mo · 5 seats · Ticket Studio & session tracking",
+              col3: "10 active events · 5,000 registrations/mo · 5 seats · Ticket Studio & session tracking",
             },
             {
               col1: "Business Plan",
               col2: "₹2,499/mo + GST",
-              col3: "Unlimited active events · 10,000 registrations/mo · 15 seats · API & webhooks",
+              col3: "Unlimited active events · 15,000 registrations/mo · 15 seats · API & webhooks",
             },
             {
               col1: "Event Pass (Single Event)",
