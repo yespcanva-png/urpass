@@ -488,12 +488,12 @@ export default function BOFUMoneyPage({ config }: { config: BOFUPageConfig }) {
               </div>
 
               <div className="overflow-x-auto rounded-2xl border border-neutral-200 shadow-2xs">
-                <table className="w-full text-left border-collapse text-xs sm:text-sm">
+                <table className="w-full text-left border-collapse text-xs sm:text-sm min-w-[500px]">
                   <thead>
                     <tr className="bg-neutral-50 border-b border-neutral-200">
-                      <th className="p-3.5 sm:p-4 font-bold text-neutral-900">Feature / Capability</th>
-                      <th className="p-3.5 sm:p-4 font-bold text-brand">URPASS</th>
-                      <th className="p-3.5 sm:p-4 font-bold text-neutral-600">
+                      <th className="p-3 sm:p-4 font-bold text-neutral-900 sticky left-0 bg-neutral-50 z-10 border-r border-neutral-200/80 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.05)]">Feature / Capability</th>
+                      <th className="p-3 sm:p-4 font-bold text-brand">URPASS</th>
+                      <th className="p-3 sm:p-4 font-bold text-neutral-600">
                         {config.competitorName ?? "Legacy Portals"}
                       </th>
                     </tr>
@@ -501,14 +501,14 @@ export default function BOFUMoneyPage({ config }: { config: BOFUPageConfig }) {
                   <tbody className="divide-y divide-neutral-100 bg-white">
                     {config.comparisonRows.map((row, i) => (
                       <tr key={i} className="hover:bg-neutral-50/50 transition-colors">
-                        <td className="p-3.5 sm:p-4 font-semibold text-neutral-800">{row.criteria}</td>
-                        <td className="p-3.5 sm:p-4 font-medium text-neutral-900">
+                        <td className="p-3 sm:p-4 font-semibold text-neutral-800 sticky left-0 bg-white z-10 border-r border-neutral-100 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.05)]">{row.criteria}</td>
+                        <td className="p-3 sm:p-4 font-medium text-neutral-900">
                           <span className="text-brand font-bold mr-1.5">
                             {row.urpassAdvantage !== false ? "✓" : "●"}
                           </span>
                           {row.urpass}
                         </td>
-                        <td className="p-3.5 sm:p-4 text-neutral-600">{row.competitor}</td>
+                        <td className="p-3 sm:p-4 text-neutral-600">{row.competitor}</td>
                       </tr>
                     ))}
                   </tbody>

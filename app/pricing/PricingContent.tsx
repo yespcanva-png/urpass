@@ -243,48 +243,50 @@ export default function PricingContent({
             </div>
 
             {/* Contextual Sub-bar for active selection */}
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-3 bg-white/95 border border-neutral-200/80 rounded-2xl p-2.5 sm:px-4 shadow-xs">
+            <div className="mt-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3 bg-white/95 border border-neutral-200/80 rounded-2xl p-2.5 sm:px-4 shadow-xs">
               {/* Currency Selector */}
-              <div className="inline-flex items-center gap-1 text-xs">
-                <span className="text-neutral-500 font-medium flex items-center gap-1 mr-1">
-                  <Globe className="w-3.5 h-3.5 text-neutral-400" /> Currency:
+              <div className="flex items-center justify-between sm:justify-start gap-1.5 text-xs w-full sm:w-auto">
+                <span className="text-neutral-500 font-medium flex items-center gap-1 text-[11px] sm:text-xs">
+                  <Globe className="w-3.5 h-3.5 text-neutral-400 shrink-0" /> Currency:
                 </span>
-                <button
-                  type="button"
-                  onClick={() => handleCountryToggle("IN")}
-                  className={cn(
-                    "px-2.5 py-1 rounded-lg transition-all cursor-pointer font-semibold",
-                    country === "IN"
-                      ? "bg-neutral-950 text-white shadow-2xs"
-                      : "text-neutral-600 hover:text-neutral-950"
-                  )}
-                >
-                  India (₹ INR)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleCountryToggle("GB")}
-                  className={cn(
-                    "px-2.5 py-1 rounded-lg transition-all cursor-pointer font-semibold",
-                    country === "GB"
-                      ? "bg-neutral-950 text-white shadow-2xs"
-                      : "text-neutral-600 hover:text-neutral-950"
-                  )}
-                >
-                  UK (£ GBP)
-                </button>
+                <div className="flex items-center gap-1 bg-neutral-100/80 p-0.5 rounded-xl border border-neutral-200/60">
+                  <button
+                    type="button"
+                    onClick={() => handleCountryToggle("IN")}
+                    className={cn(
+                      "px-2.5 py-1 rounded-lg transition-all cursor-pointer text-xs font-semibold",
+                      country === "IN"
+                        ? "bg-neutral-950 text-white shadow-2xs"
+                        : "text-neutral-600 hover:text-neutral-950"
+                    )}
+                  >
+                    India (₹ INR)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleCountryToggle("GB")}
+                    className={cn(
+                      "px-2.5 py-1 rounded-lg transition-all cursor-pointer text-xs font-semibold",
+                      country === "GB"
+                        ? "bg-neutral-950 text-white shadow-2xs"
+                        : "text-neutral-600 hover:text-neutral-950"
+                    )}
+                  >
+                    UK (£ GBP)
+                  </button>
+                </div>
               </div>
 
               {/* Mode-specific context */}
               {serviceModel === "self_service" ? (
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-neutral-500 font-medium hidden sm:inline">Billing:</span>
+                <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-neutral-100">
+                  <span className="text-xs text-neutral-500 font-medium sm:inline">Billing:</span>
                   <div className="inline-flex items-center bg-neutral-100 rounded-xl p-1 border border-neutral-200/80">
                     <button
                       type="button"
                       onClick={() => setCycle("monthly")}
                       className={cn(
-                        "px-2.5 py-0.5 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+                        "px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer",
                         cycle === "monthly"
                           ? "bg-white text-neutral-950 shadow-xs font-bold"
                           : "text-neutral-600 hover:text-neutral-950"
@@ -296,23 +298,23 @@ export default function PricingContent({
                       type="button"
                       onClick={() => setCycle("annual")}
                       className={cn(
-                        "flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+                        "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer",
                         cycle === "annual"
                           ? "bg-white text-neutral-950 shadow-xs font-bold"
                           : "text-neutral-600 hover:text-neutral-950"
                       )}
                     >
                       <span>Annual</span>
-                      <span className="text-[10px] font-black text-emerald-700 bg-emerald-100 border border-emerald-200 px-1.5 py-0.2 rounded-md">
+                      <span className="text-[9px] sm:text-[10px] font-black text-emerald-700 bg-emerald-100 border border-emerald-200 px-1.5 py-0.2 rounded-md">
                         SAVE 2 MOS
                       </span>
                     </button>
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center gap-1.5 text-xs text-violet-700 font-semibold bg-violet-50 px-2.5 py-1 rounded-xl border border-violet-200/80">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Flat fee per event · 50% deposit · No subscription</span>
+                <div className="flex items-center justify-center gap-1.5 text-xs text-violet-700 font-semibold bg-violet-50 px-3 py-1.5 rounded-xl border border-violet-200/80 w-full sm:w-auto">
+                  <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                  <span className="text-center text-[11px] sm:text-xs">Flat fee per event · 50% deposit · No subscription</span>
                 </div>
               )}
             </div>
@@ -325,9 +327,9 @@ export default function PricingContent({
             {/* Quick Purchase & Service Highlights: Single-Event Pass (₹299) & 24h Concierge Setup */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
               {/* Card 1: Single Event License */}
-              <div className="relative rounded-3xl p-6 bg-gradient-to-br from-white via-amber-50/30 to-amber-100/20 border border-amber-200/90 shadow-sm flex flex-col justify-between">
+              <div className="relative rounded-2xl sm:rounded-3xl p-5 sm:p-6 bg-gradient-to-br from-white via-amber-50/30 to-amber-100/20 border border-amber-200/90 shadow-sm flex flex-col justify-between">
                 <div>
-                  <div className="flex items-center justify-between mb-2.5">
+                  <div className="flex flex-wrap items-center justify-between gap-1.5 mb-2.5">
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 uppercase tracking-wide">
                       <Ticket className="w-3 h-3 text-amber-700" /> Single Event License
                     </span>
@@ -345,7 +347,7 @@ export default function PricingContent({
                       : `Need more capacity? Event Plus: ₹${EVENT_PASSES.event_plus.pricePaise / 100} for ${EVENT_PASSES.event_plus.registrations.toLocaleString("en-IN")} registrations. Event Pro: ₹${EVENT_PASSES.event_pro.pricePaise / 100} for ${EVENT_PASSES.event_pro.registrations.toLocaleString("en-IN")}. Prices exclude GST.`}
                   </p>
                   <Link href="/billing?pass=1" className="mt-2 inline-block text-xs font-semibold text-amber-800 underline underline-offset-2">Compare all event passes</Link>
-                  <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 mt-3.5 text-[11px] text-neutral-700 font-medium">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-2 gap-y-2 mt-3.5 text-[11px] text-neutral-700 font-medium">
                     <span className="flex items-center gap-1.5">
                       <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> Up to {EVENT_PASSES.event.registrations} registrations
                     </span>
@@ -360,7 +362,7 @@ export default function PricingContent({
                     </span>
                   </div>
                 </div>
-                <div className="pt-4 mt-4 border-t border-amber-200/60 flex items-center justify-between">
+                <div className="pt-4 mt-4 border-t border-amber-200/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
                     <span className="text-base font-extrabold text-neutral-900">
                       {country === "GB" ? "£5 flat" : "₹299 flat"}
@@ -378,7 +380,7 @@ export default function PricingContent({
                         setPassCheckoutOpen(true);
                       }
                     }}
-                    className="px-4 py-2.5 rounded-xl text-xs font-bold text-neutral-950 bg-amber-400 hover:bg-amber-300 transition-colors cursor-pointer shadow-xs"
+                    className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold text-neutral-950 bg-amber-400 hover:bg-amber-300 transition-colors cursor-pointer shadow-xs text-center"
                   >
                     Buy Single Event Pass →
                   </button>
@@ -386,9 +388,9 @@ export default function PricingContent({
               </div>
 
               {/* Card 2: 24-Hour VIP Concierge Setup */}
-              <div className="relative rounded-3xl p-6 bg-gradient-to-br from-purple-50/70 via-indigo-50/40 to-white border border-purple-200 shadow-sm flex flex-col justify-between">
+              <div className="relative rounded-2xl sm:rounded-3xl p-5 sm:p-6 bg-gradient-to-br from-purple-50/70 via-indigo-50/40 to-white border border-purple-200 shadow-sm flex flex-col justify-between">
                 <div>
-                  <div className="flex items-center justify-between mb-2.5">
+                  <div className="flex flex-wrap items-center justify-between gap-1.5 mb-2.5">
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-900 uppercase tracking-wide">
                       <Sparkles className="w-3 h-3 text-purple-700" /> Done-For-You Service
                     </span>
@@ -405,7 +407,7 @@ export default function PricingContent({
                   <p className="text-[11px] text-neutral-600 mt-2 leading-relaxed">
                     Free setup applies when your account has no existing events; no paid software plan is required. Remote configuration and scanner guidance are included. Your team runs the event on site.
                   </p>
-                  <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 mt-3.5 text-[11px] text-neutral-700 font-medium">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-2 gap-y-2 mt-3.5 text-[11px] text-neutral-700 font-medium">
                     <span className="flex items-center gap-1.5">
                       <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> Complete 24h turnaround
                     </span>
@@ -420,7 +422,7 @@ export default function PricingContent({
                     </span>
                   </div>
                 </div>
-                <div className="pt-4 mt-4 border-t border-purple-200/60 flex items-center justify-between">
+                <div className="pt-4 mt-4 border-t border-purple-200/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
                     <span className="text-base font-extrabold text-neutral-900">
                       {country === "GB" ? "£25" : "₹999"}
@@ -432,7 +434,7 @@ export default function PricingContent({
                   <button
                     type="button"
                     onClick={() => setConciergeModalOpen(true)}
-                    className="px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-purple-700 hover:bg-purple-800 transition-colors cursor-pointer shadow-xs"
+                    className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-purple-700 hover:bg-purple-800 transition-colors cursor-pointer shadow-xs text-center"
                   >
                     Claim 24h Setup →
                   </button>
@@ -440,7 +442,7 @@ export default function PricingContent({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 items-stretch">
               {SELF_SERVICE_PLANS.map((plan) => {
                 const isUk = country === "GB";
                 const isMonthly = cycle === "monthly";
@@ -480,7 +482,7 @@ export default function PricingContent({
                   <div
                     key={plan.slug}
                     className={cn(
-                      "relative flex flex-col rounded-3xl p-7 transition-all duration-300 justify-between",
+                      "relative flex flex-col rounded-2xl sm:rounded-3xl p-5 sm:p-7 transition-all duration-300 justify-between",
                       plan.popular
                         ? "bg-neutral-950 text-white border-2 border-violet-500 shadow-2xl shadow-violet-950/20 lg:-translate-y-2 z-10"
                         : "bg-white text-neutral-900 border border-neutral-200/90 hover:border-neutral-300 hover:shadow-xl shadow-xs"
@@ -656,7 +658,7 @@ export default function PricingContent({
         {/* ── SECTION B: REMOTE MANAGED SERVICE CARDS ── */}
         {serviceModel === "remote_managed" && (
           <section className="mb-24">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 items-stretch">
               {REMOTE_MANAGED_PACKAGES.map((pkg) => {
                 const isUk = country === "GB";
                 const gbpPrice = GBP_MANAGED_PRICES[pkg.code] ?? 0;
@@ -671,7 +673,7 @@ export default function PricingContent({
                   <div
                     key={pkg.code}
                     className={cn(
-                      "relative flex flex-col rounded-3xl p-7 transition-all duration-300 justify-between",
+                      "relative flex flex-col rounded-2xl sm:rounded-3xl p-5 sm:p-7 transition-all duration-300 justify-between",
                       pkg.popular
                         ? "bg-neutral-950 text-white border-2 border-violet-500 shadow-2xl shadow-violet-950/20 lg:-translate-y-2 z-10"
                         : "bg-white text-neutral-900 border border-neutral-200/90 hover:border-neutral-300 hover:shadow-xl shadow-xs"
@@ -814,7 +816,7 @@ export default function PricingContent({
 
         {/* ── SECTION D: DETAILED FEATURE COMPARISON TABLE ── */}
         <section className="mb-24">
-          <div className="text-center max-w-3xl mx-auto mb-10">
+          <div className="text-center max-w-3xl mx-auto mb-8 sm:mb-10 px-2 sm:px-0">
             <h2 className="text-2xl sm:text-3xl font-black text-neutral-950 mb-3">
               Full Feature &amp; Capability Breakdown
             </h2>
@@ -823,21 +825,28 @@ export default function PricingContent({
             </p>
           </div>
 
-          <div className="overflow-x-auto rounded-3xl border border-neutral-200/90 bg-white shadow-md">
-            <table className="w-full text-left text-xs text-neutral-700 border-collapse min-w-[700px]">
+          {/* Mobile horizontal swipe helper */}
+          <div className="md:hidden flex items-center justify-center gap-1.5 text-[11px] text-neutral-500 mb-3 bg-neutral-100/90 py-1.5 px-3 rounded-full mx-auto w-fit border border-neutral-200/80">
+            <span aria-hidden="true">&larr;</span>
+            <span>Swipe table horizontally to compare all 4 plans</span>
+            <span aria-hidden="true">&rarr;</span>
+          </div>
+
+          <div className="overflow-x-auto rounded-2xl sm:rounded-3xl border border-neutral-200/90 bg-white shadow-md">
+            <table className="w-full text-left text-xs text-neutral-700 border-collapse min-w-[640px] sm:min-w-[700px]">
               <thead>
-                <tr className="border-b border-neutral-200 bg-neutral-50/90 sticky top-0 z-10">
-                  <th className="py-4 px-6 font-bold text-neutral-950 w-1/3">
+                <tr className="border-b border-neutral-200 bg-neutral-50/95 sticky top-0 z-20 backdrop-blur-xs">
+                  <th className="py-3.5 sm:py-4 px-4 sm:px-6 font-bold text-neutral-950 w-2/5 min-w-[170px] sm:min-w-[220px] sticky left-0 bg-neutral-50 z-30 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] border-r border-neutral-200/80">
                     Features &amp; Specifications
                   </th>
-                  <th className="py-4 px-4 font-bold text-neutral-900 text-center">
+                  <th className="py-3.5 sm:py-4 px-3 sm:px-4 font-bold text-neutral-900 text-center min-w-[105px] sm:min-w-[120px]">
                     {country === "GB" ? "Free (£0)" : "Free (₹0)"}
                   </th>
-                  <th className="py-4 px-4 font-bold text-neutral-900 text-center">Starter</th>
-                  <th className="py-4 px-4 font-bold text-violet-700 text-center bg-violet-50/70">
+                  <th className="py-3.5 sm:py-4 px-3 sm:px-4 font-bold text-neutral-900 text-center min-w-[105px] sm:min-w-[120px]">Starter</th>
+                  <th className="py-3.5 sm:py-4 px-3 sm:px-4 font-bold text-violet-700 text-center bg-violet-50/70 min-w-[105px] sm:min-w-[120px]">
                     Pro (Popular)
                   </th>
-                  <th className="py-4 px-4 font-bold text-neutral-900 text-center">Business</th>
+                  <th className="py-3.5 sm:py-4 px-3 sm:px-4 font-bold text-neutral-900 text-center min-w-[105px] sm:min-w-[120px]">Business</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-100">
@@ -845,13 +854,13 @@ export default function PricingContent({
                 <tr className="bg-neutral-50/60">
                   <td
                     colSpan={5}
-                    className="py-3 px-6 font-black text-[11px] text-violet-700 uppercase tracking-wider"
+                    className="py-3 px-4 sm:px-6 font-black text-[11px] text-violet-700 uppercase tracking-wider sticky left-0 bg-neutral-50/95 z-10"
                   >
                     1. Event &amp; Attendee Capacity
                   </td>
                 </tr>
                 <tr className="hover:bg-neutral-50/50 transition-colors">
-                  <td className="py-3 px-6 text-neutral-900 font-medium">
+                  <td className="py-3 px-4 sm:px-6 text-neutral-900 font-medium sticky left-0 bg-white z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] border-r border-neutral-100">
                     Concurrent Active Events
                   </td>
                   <td className="py-3 px-4 text-center">1 event</td>
@@ -862,7 +871,7 @@ export default function PricingContent({
                   <td className="py-3 px-4 text-center">Unlimited (fair use)</td>
                 </tr>
                 <tr className="hover:bg-neutral-50/50 transition-colors">
-                  <td className="py-3 px-6 text-neutral-900 font-medium">
+                  <td className="py-3 px-4 sm:px-6 text-neutral-900 font-medium sticky left-0 bg-white z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] border-r border-neutral-100">
                     Registrations / Month
                   </td>
                   <td className="py-3 px-4 text-center">{formatPlanLimit(SELF_SERVICE_PLAN_LIMITS.free.registrationsPerMonth)}</td>
@@ -873,7 +882,7 @@ export default function PricingContent({
                   <td className="py-3 px-4 text-center">{formatPlanLimit(SELF_SERVICE_PLAN_LIMITS.business.registrationsPerMonth)}</td>
                 </tr>
                 <tr className="hover:bg-neutral-50/50 transition-colors">
-                  <td className="py-3 px-6 text-neutral-900 font-medium">Team Member Seats</td>
+                  <td className="py-3 px-4 sm:px-6 text-neutral-900 font-medium sticky left-0 bg-white z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] border-r border-neutral-100">Team Member Seats</td>
                   <td className="py-3 px-4 text-center">1 seat</td>
                   <td className="py-3 px-4 text-center">2 seats</td>
                   <td className="py-3 px-4 text-center bg-violet-50/30 font-bold text-neutral-950">
@@ -886,13 +895,13 @@ export default function PricingContent({
                 <tr className="bg-neutral-50/60">
                   <td
                     colSpan={5}
-                    className="py-3 px-6 font-black text-[11px] text-violet-700 uppercase tracking-wider"
+                    className="py-3 px-4 sm:px-6 font-black text-[11px] text-violet-700 uppercase tracking-wider sticky left-0 bg-neutral-50/95 z-10"
                   >
                     2. Ticketing &amp; Payments
                   </td>
                 </tr>
                 <tr className="hover:bg-neutral-50/50 transition-colors">
-                  <td className="py-3 px-6 text-neutral-900 font-medium">
+                  <td className="py-3 px-4 sm:px-6 text-neutral-900 font-medium sticky left-0 bg-white z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] border-r border-neutral-100">
                     Platform Ticket Commission
                   </td>
                   <td className="py-3 px-4 text-center text-neutral-400">Free events only</td>
@@ -903,7 +912,7 @@ export default function PricingContent({
                   <td className="py-3 px-4 text-center text-emerald-600 font-bold">0% Commission</td>
                 </tr>
                 <tr className="hover:bg-neutral-50/50 transition-colors">
-                  <td className="py-3 px-6 text-neutral-900 font-medium">
+                  <td className="py-3 px-4 sm:px-6 text-neutral-900 font-medium sticky left-0 bg-white z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] border-r border-neutral-100">
                     Direct Payment Gateway (UPI, Cards, Netbanking)
                   </td>
                   <td className="py-3 px-4 text-center">
@@ -920,7 +929,7 @@ export default function PricingContent({
                   </td>
                 </tr>
                 <tr className="hover:bg-neutral-50/50 transition-colors">
-                  <td className="py-3 px-6 text-neutral-900 font-medium">
+                  <td className="py-3 px-4 sm:px-6 text-neutral-900 font-medium sticky left-0 bg-white z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] border-r border-neutral-100">
                     Tiered Pricing &amp; Early Bird Drops
                   </td>
                   <td className="py-3 px-4 text-center">
@@ -937,13 +946,13 @@ export default function PricingContent({
                 <tr className="bg-neutral-50/60">
                   <td
                     colSpan={5}
-                    className="py-3 px-6 font-black text-[11px] text-violet-700 uppercase tracking-wider"
+                    className="py-3 px-4 sm:px-6 font-black text-[11px] text-violet-700 uppercase tracking-wider sticky left-0 bg-neutral-50/95 z-10"
                   >
                     3. QR Verification &amp; Gate Operations
                   </td>
                 </tr>
                 <tr className="hover:bg-neutral-50/50 transition-colors">
-                  <td className="py-3 px-6 text-neutral-900 font-medium">
+                  <td className="py-3 px-4 sm:px-6 text-neutral-900 font-medium sticky left-0 bg-white z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] border-r border-neutral-100">
                     Browser Smartphone QR Scanning
                   </td>
                   <td className="py-3 px-4 text-center">
@@ -960,7 +969,7 @@ export default function PricingContent({
                   </td>
                 </tr>
                 <tr className="hover:bg-neutral-50/50 transition-colors">
-                  <td className="py-3 px-6 text-neutral-900 font-medium">
+                  <td className="py-3 px-4 sm:px-6 text-neutral-900 font-medium sticky left-0 bg-white z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] border-r border-neutral-100">
                     Anti-Fraud Duplicate Scan Block
                   </td>
                   <td className="py-3 px-4 text-center">
@@ -977,7 +986,7 @@ export default function PricingContent({
                   </td>
                 </tr>
                 <tr className="hover:bg-neutral-50/50 transition-colors">
-                  <td className="py-3 px-6 text-neutral-900 font-medium">
+                  <td className="py-3 px-4 sm:px-6 text-neutral-900 font-medium sticky left-0 bg-white z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] border-r border-neutral-100">
                     Group QR Tickets &amp; Partial Entry
                   </td>
                   <td className="py-3 px-4 text-center">
@@ -994,7 +1003,7 @@ export default function PricingContent({
                   </td>
                 </tr>
                 <tr className="hover:bg-neutral-50/50 transition-colors">
-                  <td className="py-3 px-6 text-neutral-900 font-medium">
+                  <td className="py-3 px-4 sm:px-6 text-neutral-900 font-medium sticky left-0 bg-white z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] border-r border-neutral-100">
                     Multi-Gate Scanner Sync &amp; Routing
                   </td>
                   <td className="py-3 px-4 text-center">
@@ -1015,13 +1024,13 @@ export default function PricingContent({
                 <tr className="bg-neutral-50/60">
                   <td
                     colSpan={5}
-                    className="py-3 px-6 font-black text-[11px] text-violet-700 uppercase tracking-wider"
+                    className="py-3 px-4 sm:px-6 font-black text-[11px] text-violet-700 uppercase tracking-wider sticky left-0 bg-neutral-50/95 z-10"
                   >
                     4. Data, Customization &amp; Integrations
                   </td>
                 </tr>
                 <tr className="hover:bg-neutral-50/50 transition-colors">
-                  <td className="py-3 px-6 text-neutral-900 font-medium">
+                  <td className="py-3 px-4 sm:px-6 text-neutral-900 font-medium sticky left-0 bg-white z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] border-r border-neutral-100">
                     CSV Attendee Import &amp; Export
                   </td>
                   <td className="py-3 px-4 text-center text-neutral-400">Basic Export</td>
@@ -1036,7 +1045,7 @@ export default function PricingContent({
                   </td>
                 </tr>
                 <tr className="hover:bg-neutral-50/50 transition-colors">
-                  <td className="py-3 px-6 text-neutral-900 font-medium">
+                  <td className="py-3 px-4 sm:px-6 text-neutral-900 font-medium sticky left-0 bg-white z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] border-r border-neutral-100">
                     Custom Pass Branding &amp; Color Themes
                   </td>
                   <td className="py-3 px-4 text-center">
@@ -1053,7 +1062,7 @@ export default function PricingContent({
                   </td>
                 </tr>
                 <tr className="hover:bg-neutral-50/50 transition-colors">
-                  <td className="py-3 px-6 text-neutral-900 font-medium">
+                  <td className="py-3 px-4 sm:px-6 text-neutral-900 font-medium sticky left-0 bg-white z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] border-r border-neutral-100">
                     REST API Access &amp; Webhooks
                   </td>
                   <td className="py-3 px-4 text-center">
@@ -1075,13 +1084,13 @@ export default function PricingContent({
         </section>
 
         {/* ── SECTION E: STRICT MANAGED SERVICE BOUNDARY DISCLOSURE ── */}
-        <section className="mb-24 rounded-3xl bg-white border border-neutral-200/90 p-6 sm:p-10 shadow-lg">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
-            <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 shrink-0">
-              <ShieldAlert className="w-6 h-6" />
+        <section className="mb-24 rounded-2xl sm:rounded-3xl bg-white border border-neutral-200/90 p-5 sm:p-10 shadow-lg">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 shrink-0">
+              <ShieldAlert className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-neutral-950">
+              <h3 className="text-lg sm:text-xl font-bold text-neutral-950">
                 {REMOTE_MANAGED_SERVICE_BOUNDARIES.headline}
               </h3>
               <p className="text-xs text-neutral-500 mt-0.5">
@@ -1090,13 +1099,13 @@ export default function PricingContent({
             </div>
           </div>
 
-          <p className="text-xs sm:text-sm text-neutral-600 mb-8 leading-relaxed">
+          <p className="text-xs sm:text-sm text-neutral-600 mb-6 sm:mb-8 leading-relaxed">
             {REMOTE_MANAGED_SERVICE_BOUNDARIES.description}
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 text-xs">
             {/* Exclusions */}
-            <div className="bg-neutral-50 p-6 rounded-2xl border border-red-200/80 space-y-3">
+            <div className="bg-neutral-50 p-4 sm:p-6 rounded-xl sm:rounded-2xl border border-red-200/80 space-y-3">
               <span className="font-bold text-red-600 block uppercase tracking-wider text-[11px] flex items-center gap-1.5">
                 <Minus className="w-4 h-4" />
                 <span>Strict Remote Exclusions</span>
@@ -1110,7 +1119,7 @@ export default function PricingContent({
             </div>
 
             {/* Organizer Responsibilities */}
-            <div className="bg-neutral-50 p-6 rounded-2xl border border-emerald-200/80 space-y-3">
+            <div className="bg-neutral-50 p-4 sm:p-6 rounded-xl sm:rounded-2xl border border-emerald-200/80 space-y-3">
               <span className="font-bold text-emerald-700 block uppercase tracking-wider text-[11px] flex items-center gap-1.5">
                 <Check className="w-4 h-4" />
                 <span>Organizer On-Site Responsibilities</span>
@@ -1125,42 +1134,42 @@ export default function PricingContent({
           </div>
         </section>
 
-        <section className="mb-16 rounded-3xl border border-neutral-200 bg-white p-7 sm:p-9 flex flex-col sm:flex-row gap-5 sm:items-center sm:justify-between">
+        <section className="mb-16 rounded-2xl sm:rounded-3xl border border-neutral-200 bg-white p-5 sm:p-9 flex flex-col sm:flex-row gap-4 sm:gap-5 sm:items-center sm:justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-wider text-violet-700">Separate lifetime offer</p>
-            <h2 className="mt-2 text-xl font-bold text-neutral-950">Founder Lifetime Access — {country === "GB" ? "£249" : "₹19,999"} one time</h2>
-            <p className="mt-2 text-sm text-neutral-600">A promotional license with no renewal charge. Review eligibility and terms before purchase.</p>
+            <h2 className="mt-1.5 text-lg sm:text-xl font-bold text-neutral-950">Founder Lifetime Access — {country === "GB" ? "£249" : "₹19,999"} one time</h2>
+            <p className="mt-1.5 text-xs sm:text-sm text-neutral-600">A promotional license with no renewal charge. Review eligibility and terms before purchase.</p>
           </div>
-          <Link href={country === "GB" ? "/founder-lifetime-deal?country=GB" : "/founder-lifetime-deal"} className="shrink-0 rounded-xl bg-neutral-950 px-5 py-3 text-center text-sm font-semibold text-white hover:bg-neutral-800">View lifetime offer</Link>
+          <Link href={country === "GB" ? "/founder-lifetime-deal?country=GB" : "/founder-lifetime-deal"} className="w-full sm:w-auto shrink-0 rounded-xl bg-neutral-950 px-5 py-3 text-center text-sm font-semibold text-white hover:bg-neutral-800">View lifetime offer</Link>
         </section>
 
         {/* ── SECTION F: GST & COMPLIANCE BENTO ── */}
-        <section className="mb-24 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white p-7 rounded-3xl border border-neutral-200/90 shadow-sm hover:shadow-md transition-all">
+        <section className="mb-24 grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+          <div className="bg-white p-5 sm:p-7 rounded-2xl sm:rounded-3xl border border-neutral-200/90 shadow-sm hover:shadow-md transition-all">
             <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold mb-4 border border-emerald-200">
               <Percent className="w-5 h-5" />
             </div>
-            <h4 className="font-bold text-neutral-950 text-lg mb-2">Zero Ticket Commission</h4>
+            <h4 className="font-bold text-neutral-950 text-base sm:text-lg mb-2">Zero Ticket Commission</h4>
             <p className="text-xs text-neutral-600 leading-relaxed">
               UrPass charges 0% platform commission on paid ticket sales. Your payment gateway may charge processing fees, so the amount settled can be less than the ticket price.
             </p>
           </div>
 
-          <div className="bg-white p-7 rounded-3xl border border-neutral-200/90 shadow-sm hover:shadow-md transition-all">
+          <div className="bg-white p-5 sm:p-7 rounded-2xl sm:rounded-3xl border border-neutral-200/90 shadow-sm hover:shadow-md transition-all">
             <div className="w-10 h-10 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center font-bold mb-4 border border-violet-200">
               <Receipt className="w-5 h-5" />
             </div>
-            <h4 className="font-bold text-neutral-950 text-lg mb-2">Tax Compliant Invoicing</h4>
+            <h4 className="font-bold text-neutral-950 text-base sm:text-lg mb-2">Tax Compliant Invoicing</h4>
             <p className="text-xs text-neutral-600 leading-relaxed">
               Transparent invoicing with official GSTIN (India 18% GST) or UK VAT registration. Download compliant tax invoices with your corporate tax ID during checkout.
             </p>
           </div>
 
-          <div className="bg-white p-7 rounded-3xl border border-neutral-200/90 shadow-sm hover:shadow-md transition-all">
+          <div className="bg-white p-5 sm:p-7 rounded-2xl sm:rounded-3xl border border-neutral-200/90 shadow-sm hover:shadow-md transition-all">
             <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold mb-4 border border-blue-200">
               <ShieldCheck className="w-5 h-5" />
             </div>
-            <h4 className="font-bold text-neutral-950 text-lg mb-2">Zero Cancellation Penalty</h4>
+            <h4 className="font-bold text-neutral-950 text-base sm:text-lg mb-2">Zero Cancellation Penalty</h4>
             <p className="text-xs text-neutral-600 leading-relaxed">
               Cancel recurring subscription renewals anytime directly from your dashboard. Retain full access until the end of your billing cycle with zero penalty fees.
             </p>
@@ -1218,7 +1227,7 @@ export default function PricingContent({
                   <button
                     type="button"
                     onClick={() => setOpenFaqIndex(isOpen ? null : i)}
-                    className="w-full p-5 sm:p-6 text-left flex items-center justify-between gap-4 cursor-pointer hover:bg-neutral-50/70 transition-colors"
+                    className="w-full p-4 sm:p-6 text-left flex items-center justify-between gap-3 cursor-pointer hover:bg-neutral-50/70 transition-colors"
                   >
                     <span className="text-sm sm:text-base font-bold text-neutral-950">
                       {faq.q}
@@ -1231,7 +1240,7 @@ export default function PricingContent({
                     />
                   </button>
                   {isOpen && (
-                    <div className="px-5 pb-5 sm:px-6 sm:pb-6 text-xs sm:text-sm text-neutral-600 leading-relaxed border-t border-neutral-100 pt-4">
+                    <div className="px-4 pb-4 sm:px-6 sm:pb-6 text-xs sm:text-sm text-neutral-600 leading-relaxed border-t border-neutral-100 pt-3 sm:pt-4">
                       {faq.a}
                     </div>
                   )}
@@ -1243,23 +1252,23 @@ export default function PricingContent({
       </main>
 
       {/* ── FINAL FULL-WIDTH CTA (Site-Wide Standard) ── */}
-      <section className="py-16 sm:py-24 px-4 sm:px-8 bg-neutral-950 text-center text-white relative">
+      <section className="py-12 sm:py-24 px-4 sm:px-8 bg-neutral-950 text-center text-white relative">
         <div className="max-w-2xl mx-auto">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold tracking-widest uppercase bg-violet-500/20 text-violet-300 border border-violet-500/30 mb-4">
             URPASS · EVENT MANAGEMENT PLATFORM
           </span>
-          <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white mb-4 leading-tight">
+          <h2 className="text-2xl sm:text-5xl font-extrabold tracking-tight text-white mb-3 sm:mb-4 leading-tight">
             Modernize your event entry today.
           </h2>
-          <p className="text-neutral-400 text-sm sm:text-base mb-8 max-w-xl mx-auto leading-relaxed">
+          <p className="text-neutral-400 text-xs sm:text-base mb-6 sm:mb-8 max-w-xl mx-auto leading-relaxed">
             Launch registration in minutes, issue digital passes, and check in attendees at your entrance doors in under 0.3 seconds.
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-xl mx-auto">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 w-full max-w-md mx-auto">
           <Link
             href="/signup?next=/dashboard"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-neutral-950 px-7 py-3.5 rounded-xl text-sm font-semibold hover:bg-neutral-100 transition-colors shadow-sm"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-neutral-950 px-7 py-3.5 rounded-xl text-sm font-semibold hover:bg-neutral-100 transition-colors shadow-sm text-center"
           >
             <span>Start Free Today</span>
             <ArrowRight className="w-4 h-4" />
@@ -1267,7 +1276,7 @@ export default function PricingContent({
           <button
             type="button"
             onClick={() => handleOpenManagedModal("pro")}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 border border-neutral-800 bg-neutral-900 text-white px-6 py-3.5 rounded-xl text-sm font-semibold hover:bg-neutral-800 transition-colors cursor-pointer"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 border border-neutral-800 bg-neutral-900 text-white px-6 py-3.5 rounded-xl text-sm font-semibold hover:bg-neutral-800 transition-colors cursor-pointer text-center"
           >
             <Headphones className="w-4 h-4" />
             <span>Request Remote Setup</span>

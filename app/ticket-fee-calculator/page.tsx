@@ -156,32 +156,36 @@ export default function TicketFeeCalculatorPage() {
           </div>
 
           {/* Comparison Matrix Table */}
-          <div className="mt-16 bg-white rounded-3xl border border-neutral-200 overflow-hidden shadow-xs">
-            <div className="p-6 border-b border-neutral-100 bg-neutral-50/50">
-              <h2 className="text-lg font-bold text-neutral-900">Platform Commission Comparison</h2>
+          <div className="mt-16 bg-white rounded-2xl sm:rounded-3xl border border-neutral-200 overflow-hidden shadow-xs">
+            <div className="p-4 sm:p-6 border-b border-neutral-100 bg-neutral-50/50">
+              <h2 className="text-base sm:text-lg font-bold text-neutral-900">Platform Commission Comparison</h2>
               <p className="text-xs text-neutral-500 mt-0.5">Based on publicly documented pricing structures.</p>
             </div>
+            {/* Mobile horizontal swipe helper */}
+            <div className="md:hidden flex items-center justify-center gap-1.5 text-[11px] text-neutral-500 py-2 px-3 bg-neutral-100/80 border-b border-neutral-200/60">
+              <span>&larr; Swipe table horizontally to compare &rarr;</span>
+            </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
+              <table className="w-full text-left text-xs min-w-[620px]">
                 <thead className="bg-neutral-50 text-neutral-500 uppercase tracking-wider font-semibold border-b border-neutral-200">
                   <tr>
-                    <th className="py-3.5 px-5">Platform</th>
-                    <th className="py-3.5 px-5">Platform Commission</th>
-                    <th className="py-3.5 px-5">Payout Timeline</th>
-                    <th className="py-3.5 px-5">Free Plan Allowance</th>
-                    <th className="py-3.5 px-5">Door Scanner</th>
+                    <th className="py-3 px-4 sm:py-3.5 sm:px-5">Platform</th>
+                    <th className="py-3 px-4 sm:py-3.5 sm:px-5">Platform Commission</th>
+                    <th className="py-3 px-4 sm:py-3.5 sm:px-5">Payout Timeline</th>
+                    <th className="py-3 px-4 sm:py-3.5 sm:px-5">Free Plan Allowance</th>
+                    <th className="py-3 px-4 sm:py-3.5 sm:px-5">Door Scanner</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-neutral-100 text-neutral-700">
                   <tr className="bg-emerald-50/30 font-semibold text-neutral-900">
-                    <td className="py-4 px-5 text-emerald-700 flex items-center gap-1.5">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <td className="py-3.5 px-4 sm:py-4 sm:px-5 text-emerald-700 flex items-center gap-1.5">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                       URPASS
                     </td>
-                    <td className="py-4 px-5 font-bold text-emerald-700">0% per ticket</td>
-                    <td className="py-4 px-5">Direct T+2 to your bank</td>
-                    <td className="py-4 px-5">100 registrations/month (₹0 forever)</td>
-                    <td className="py-4 px-5">Sub-0.3s browser camera (No apps)</td>
+                    <td className="py-3.5 px-4 sm:py-4 sm:px-5 font-bold text-emerald-700">0% per ticket</td>
+                    <td className="py-3.5 px-4 sm:py-4 sm:px-5">Direct T+2 to your bank</td>
+                    <td className="py-3.5 px-4 sm:py-4 sm:px-5">50 registrations/month (₹0 forever)</td>
+                    <td className="py-3.5 px-4 sm:py-4 sm:px-5">Sub-0.3s browser camera (No apps)</td>
                   </tr>
                   <tr>
                     <td className="py-4 px-5 font-medium">Eventbrite</td>

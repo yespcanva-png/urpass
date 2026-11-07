@@ -693,11 +693,15 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
                 <p className="text-sm text-neutral-500 mt-2">{config.keyFactsTable.subtitle}</p>
               )}
             </div>
+            {/* Mobile horizontal swipe helper */}
+            <div className="md:hidden flex items-center justify-center gap-1.5 text-[11px] text-neutral-500 mb-3 bg-neutral-100/90 py-1 px-3 rounded-full mx-auto w-fit border border-neutral-200/80">
+              <span>&larr; Swipe table horizontally &rarr;</span>
+            </div>
             <div className="overflow-x-auto rounded-2xl border border-neutral-200 shadow-2xs">
-              <table className="w-full text-left border-collapse text-xs sm:text-sm">
+              <table className="w-full text-left border-collapse text-xs sm:text-sm min-w-[520px]">
                 <thead>
                   <tr className="bg-neutral-50 border-b border-neutral-200">
-                    <th className="p-3.5 sm:p-4 font-bold text-neutral-900">{config.keyFactsTable.headers[0]}</th>
+                    <th className="p-3.5 sm:p-4 font-bold text-neutral-900 sticky left-0 bg-neutral-50 z-10 border-r border-neutral-200/80 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.05)]">{config.keyFactsTable.headers[0]}</th>
                     <th className="p-3.5 sm:p-4 font-bold text-brand">{config.keyFactsTable.headers[1]}</th>
                     {config.keyFactsTable.headers[2] && (
                       <th className="p-3.5 sm:p-4 font-bold text-neutral-600">{config.keyFactsTable.headers[2]}</th>
@@ -710,7 +714,7 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
                 <tbody className="divide-y divide-neutral-100 bg-white">
                   {config.keyFactsTable.rows.map((r, i) => (
                     <tr key={i} className="hover:bg-neutral-50/50 transition-colors">
-                      <td className="p-3.5 sm:p-4 font-semibold text-neutral-800">{r.col1}</td>
+                      <td className="p-3.5 sm:p-4 font-semibold text-neutral-800 sticky left-0 bg-white z-10 border-r border-neutral-100 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.05)]">{r.col1}</td>
                       <td className="p-3.5 sm:p-4 font-medium text-neutral-900">{r.col2}</td>
                       {r.col3 && <td className="p-3.5 sm:p-4 text-neutral-500">{r.col3}</td>}
                       {r.col4 && <td className="p-3.5 sm:p-4 text-neutral-400">{r.col4}</td>}
@@ -855,11 +859,15 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
                 <p className="text-sm text-neutral-500 mt-2">{config.competitorComparison.subtitle}</p>
               )}
             </div>
+            {/* Mobile horizontal swipe helper */}
+            <div className="md:hidden flex items-center justify-center gap-1.5 text-[11px] text-neutral-500 mb-3 bg-neutral-100/90 py-1 px-3 rounded-full mx-auto w-fit border border-neutral-200/80">
+              <span>&larr; Swipe table horizontally &rarr;</span>
+            </div>
             <div className="overflow-x-auto rounded-2xl border border-neutral-200 shadow-2xs">
-              <table className="w-full text-left border-collapse text-xs sm:text-sm">
+              <table className="w-full text-left border-collapse text-xs sm:text-sm min-w-[500px]">
                 <thead>
                   <tr className="bg-neutral-50 border-b border-neutral-200">
-                    <th className="p-3.5 sm:p-4 font-bold text-neutral-900">Evaluation Criteria</th>
+                    <th className="p-3.5 sm:p-4 font-bold text-neutral-900 sticky left-0 bg-neutral-50 z-10 border-r border-neutral-200/80 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.05)]">Evaluation Criteria</th>
                     <th className="p-3.5 sm:p-4 font-bold text-brand">URPASS</th>
                     <th className="p-3.5 sm:p-4 font-bold text-neutral-600">{config.competitorComparison.competitorName}</th>
                   </tr>
@@ -867,7 +875,7 @@ export default function SEOPage({ config }: { config: SEOPageConfig }) {
                 <tbody className="divide-y divide-neutral-100 bg-white">
                   {config.competitorComparison.rows.map((row, i) => (
                     <tr key={i} className="hover:bg-neutral-50/50 transition-colors">
-                      <td className="p-3.5 sm:p-4 font-semibold text-neutral-800">{row.criteria}</td>
+                      <td className="p-3.5 sm:p-4 font-semibold text-neutral-800 sticky left-0 bg-white z-10 border-r border-neutral-100 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.05)]">{row.criteria}</td>
                       <td className="p-3.5 sm:p-4 font-medium text-neutral-900">
                         <span className="text-brand font-bold mr-1.5">{row.urpassAdvantage !== false ? "✓" : "●"}</span>
                         {row.urpass}

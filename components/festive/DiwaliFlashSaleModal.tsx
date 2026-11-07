@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Sparkles, Clock, Check, X, ArrowRight } from "lucide-react";
+import { Sparkles, Clock, Check, X, ArrowRight, Copy } from "lucide-react";
 import {
   DIWALI_COUPON_CODE,
   isDiwaliCampaignActive,
@@ -21,6 +21,7 @@ export default function DiwaliFlashSaleModal({ onClose }: DiwaliFlashSaleModalPr
   const [remainingMs, setRemainingMs] = useState<number>(() => getDiwaliRemainingMs());
   const [isVisible, setIsVisible] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState<EligiblePlan>("pro");
+  const [copied, setCopied] = useState(false);
 
   // Initialize and check active window
   useEffect(() => {
@@ -95,6 +96,15 @@ export default function DiwaliFlashSaleModal({ onClose }: DiwaliFlashSaleModalPr
     router.push(`/pricing?coupon=${DIWALI_COUPON_CODE}&plan=${targetPlan}`);
   };
 
+  const copyCoupon = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(DIWALI_COUPON_CODE);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {}
+  };
+
   if (!isVisible || remainingMs <= 0) return null;
 
   return (
@@ -102,110 +112,123 @@ export default function DiwaliFlashSaleModal({ onClose }: DiwaliFlashSaleModalPr
       role="dialog"
       aria-modal="true"
       aria-labelledby="diwali-sale-title"
-      className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 overflow-y-auto"
     >
-      {/* ── Modal Card Container ── */}
-      <div className="relative w-full max-w-lg rounded-3xl bg-neutral-950/95 border border-amber-500/30 p-6 sm:p-8 text-white shadow-[0_25px_60px_-15px_rgba(245,158,11,0.2)] text-center overflow-hidden animate-in zoom-in-95 duration-200">
-        {/* Subtle Ambient Top Glow */}
+      {/* ── Soft Non-Intrusive Backdrop with Click-to-Dismiss ── */}
+      <div
+        className="fixed inset-0 bg-neutral-950/50 backdrop-blur-xs transition-opacity duration-200"
+        onClick={handleDismiss}
+        aria-hidden="true"
+      />
+
+      {/* ── Modern, Clean Modal Card ── */}
+      <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-[0_25px_70px_rgba(0,0,0,0.18)] border border-neutral-200/90 text-neutral-900 p-6 sm:p-8 text-center overflow-hidden z-10 my-auto animate-in fade-in zoom-in-95 duration-200">
+        {/* Subtle Top Warm Gradient Accent */}
         <div
           aria-hidden="true"
-          className="absolute -top-20 left-1/2 -translate-x-1/2 w-80 h-32 bg-amber-500/15 blur-3xl pointer-events-none rounded-full"
+          className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500"
         />
 
-        {/* Close Button */}
+        {/* Ambient Top Glow */}
+        <div
+          aria-hidden="true"
+          className="absolute -top-24 left-1/2 -translate-x-1/2 w-80 h-36 bg-amber-400/10 blur-3xl pointer-events-none rounded-full"
+        />
+
+        {/* Accessible Close Button */}
         <button
           type="button"
           onClick={handleDismiss}
           aria-label="Close Diwali sale offer"
-          className="absolute top-4 right-4 z-20 w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-neutral-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+          className="absolute top-4 right-4 z-20 w-8 h-8 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-500 hover:text-neutral-900 flex items-center justify-center transition-colors cursor-pointer border border-neutral-200/80"
         >
           <X className="w-4 h-4" />
         </button>
 
         {/* Festive Campaign Badge */}
-        <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-amber-500/10 border border-amber-400/30 text-amber-300 text-[11px] font-bold uppercase tracking-wider mb-3">
-          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+        <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-amber-50 border border-amber-300/80 text-amber-900 text-[11px] font-extrabold uppercase tracking-wider mb-2.5 shadow-2xs">
+          <Sparkles className="w-3.5 h-3.5 text-amber-600" />
           <span>Special Diwali Campaign</span>
         </div>
 
         {/* Headline */}
         <h2
           id="diwali-sale-title"
-          className="text-2xl sm:text-3xl font-black tracking-tight text-white leading-tight"
+          className="text-2xl sm:text-3xl font-black tracking-tight text-neutral-950 leading-tight"
         >
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-300 to-yellow-400">
+          <span className="text-amber-600 bg-amber-50 border border-amber-200/60 px-2 py-0.5 rounded-lg mr-1.5 inline-block">
             70% OFF
-          </span>{" "}
+          </span>
           all UrPass plans
         </h2>
-        <p className="mt-1 text-xs sm:text-sm font-medium text-neutral-400">
+        <p className="mt-1.5 text-xs sm:text-sm font-medium text-neutral-600">
           48 hours only &middot; Valid on your first payment
         </p>
 
         {/* ── Live Countdown Timer (Server Verified) ── */}
-        <div className="mt-5 p-3 rounded-2xl bg-neutral-900/90 border border-neutral-800/80 max-w-sm mx-auto shadow-inner">
-          <div className="flex items-center justify-center gap-1.5 text-[11px] text-amber-400/90 font-medium mb-2">
-            <Clock className="w-3.5 h-3.5 text-amber-400" />
+        <div className="mt-4 p-3 rounded-2xl bg-gradient-to-b from-amber-50/70 to-orange-50/30 border border-amber-200/80 max-w-sm mx-auto shadow-2xs">
+          <div className="flex items-center justify-center gap-1.5 text-[11px] text-amber-900 font-bold mb-2">
+            <Clock className="w-3.5 h-3.5 text-amber-700" />
             <span>Offer Ends in (Server Verified)</span>
           </div>
 
           <div className="grid grid-cols-4 gap-2 text-center">
             {/* Days */}
-            <div className="bg-neutral-950/80 border border-neutral-800 rounded-xl py-2 px-1">
-              <span className="block text-lg sm:text-xl font-mono font-extrabold text-white tabular-nums">
+            <div className="bg-white border border-amber-200/70 rounded-xl py-2 px-1 shadow-2xs">
+              <span className="block text-lg sm:text-xl font-mono font-black text-neutral-950 tabular-nums leading-none">
                 {String(countdown.days).padStart(2, "0")}
               </span>
-              <span className="block text-[10px] text-neutral-400 uppercase font-semibold">Days</span>
+              <span className="block text-[10px] text-neutral-500 uppercase font-bold tracking-wider mt-1">Days</span>
             </div>
 
             {/* Hours */}
-            <div className="bg-neutral-950/80 border border-neutral-800 rounded-xl py-2 px-1">
-              <span className="block text-lg sm:text-xl font-mono font-extrabold text-amber-300 tabular-nums">
+            <div className="bg-white border border-amber-200/70 rounded-xl py-2 px-1 shadow-2xs">
+              <span className="block text-lg sm:text-xl font-mono font-black text-neutral-950 tabular-nums leading-none">
                 {String(countdown.hours).padStart(2, "0")}
               </span>
-              <span className="block text-[10px] text-neutral-400 uppercase font-semibold">Hours</span>
+              <span className="block text-[10px] text-neutral-500 uppercase font-bold tracking-wider mt-1">Hours</span>
             </div>
 
             {/* Minutes */}
-            <div className="bg-neutral-950/80 border border-neutral-800 rounded-xl py-2 px-1">
-              <span className="block text-lg sm:text-xl font-mono font-extrabold text-amber-300 tabular-nums">
+            <div className="bg-white border border-amber-200/70 rounded-xl py-2 px-1 shadow-2xs">
+              <span className="block text-lg sm:text-xl font-mono font-black text-neutral-950 tabular-nums leading-none">
                 {String(countdown.minutes).padStart(2, "0")}
               </span>
-              <span className="block text-[10px] text-neutral-400 uppercase font-semibold">Mins</span>
+              <span className="block text-[10px] text-neutral-500 uppercase font-bold tracking-wider mt-1">Mins</span>
             </div>
 
             {/* Seconds */}
-            <div className="bg-neutral-950/80 border border-neutral-800 rounded-xl py-2 px-1">
-              <span className="block text-lg sm:text-xl font-mono font-extrabold text-yellow-400 tabular-nums">
+            <div className="bg-white border border-amber-200/70 rounded-xl py-2 px-1 shadow-2xs">
+              <span className="block text-lg sm:text-xl font-mono font-black text-amber-600 tabular-nums leading-none">
                 {String(countdown.seconds).padStart(2, "0")}
               </span>
-              <span className="block text-[10px] text-neutral-400 uppercase font-semibold">Secs</span>
+              <span className="block text-[10px] text-neutral-500 uppercase font-bold tracking-wider mt-1">Secs</span>
             </div>
           </div>
         </div>
 
         {/* ── 3-Tier Discount Matrix (Clean & Interactive) ── */}
-        <div className="mt-5 grid grid-cols-3 gap-2 sm:gap-3 text-left">
+        <div className="mt-4 grid grid-cols-3 gap-2 sm:gap-2.5 text-left">
           {/* Starter */}
           <button
             type="button"
             onClick={() => setSelectedPlan("starter")}
-            className={`rounded-2xl p-3 flex flex-col justify-between transition-all cursor-pointer text-left ${
+            className={`rounded-2xl p-2.5 sm:p-3 flex flex-col justify-between transition-all cursor-pointer text-left ${
               selectedPlan === "starter"
-                ? "bg-amber-500/[0.08] border-2 border-amber-400/80 shadow-md ring-1 ring-amber-400/30"
-                : "bg-neutral-900/60 border border-neutral-800/80 hover:border-neutral-700"
+                ? "bg-amber-50/70 border-2 border-amber-500 shadow-sm ring-2 ring-amber-500/20"
+                : "bg-neutral-50/80 border border-neutral-200 hover:border-neutral-300 hover:bg-neutral-100/60"
             }`}
           >
             <div>
-              <p className="text-[11px] font-bold text-neutral-400">Starter</p>
+              <p className="text-[11px] font-bold text-neutral-700">Starter</p>
               <div className="mt-1 flex items-baseline gap-1">
-                <span className="text-base sm:text-lg font-extrabold text-white">₹149</span>
-                <span className="text-[10px] text-neutral-500 line-through">₹499</span>
+                <span className="text-base sm:text-lg font-black text-neutral-950">₹149</span>
+                <span className="text-[10px] text-neutral-400 line-through">₹499</span>
               </div>
             </div>
             <div className="mt-2">
-              <span className="text-[10px] text-emerald-400 font-semibold bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded inline-flex items-center gap-0.5">
-                <Check className="w-2.5 h-2.5" />
+              <span className="text-[10px] text-emerald-800 font-bold bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded inline-flex items-center gap-0.5">
+                <Check className="w-2.5 h-2.5 text-emerald-600" />
                 <span>Save ₹350</span>
               </span>
             </div>
@@ -215,25 +238,25 @@ export default function DiwaliFlashSaleModal({ onClose }: DiwaliFlashSaleModalPr
           <button
             type="button"
             onClick={() => setSelectedPlan("pro")}
-            className={`rounded-2xl p-3 flex flex-col justify-between transition-all cursor-pointer text-left relative ${
+            className={`rounded-2xl p-2.5 sm:p-3 flex flex-col justify-between transition-all cursor-pointer text-left relative ${
               selectedPlan === "pro"
-                ? "bg-amber-500/[0.12] border-2 border-amber-400 shadow-md ring-1 ring-amber-400/50"
-                : "bg-neutral-900/80 border border-amber-500/40 hover:border-amber-400/60"
+                ? "bg-amber-50/80 border-2 border-amber-500 shadow-sm ring-2 ring-amber-500/20"
+                : "bg-neutral-50/80 border border-neutral-200 hover:border-amber-300 hover:bg-neutral-100/60"
             }`}
           >
-            <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 text-neutral-950 shadow-xs">
+            <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-neutral-950 text-white shadow-xs">
               POPULAR
             </span>
             <div>
-              <p className="text-[11px] font-bold text-amber-300">Pro</p>
+              <p className="text-[11px] font-bold text-amber-900">Pro</p>
               <div className="mt-1 flex items-baseline gap-1">
-                <span className="text-base sm:text-lg font-extrabold text-amber-300">₹299</span>
-                <span className="text-[10px] text-neutral-500 line-through">₹999</span>
+                <span className="text-base sm:text-lg font-black text-neutral-950">₹299</span>
+                <span className="text-[10px] text-neutral-400 line-through">₹999</span>
               </div>
             </div>
             <div className="mt-2">
-              <span className="text-[10px] text-emerald-400 font-semibold bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded inline-flex items-center gap-0.5">
-                <Check className="w-2.5 h-2.5" />
+              <span className="text-[10px] text-emerald-800 font-bold bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded inline-flex items-center gap-0.5">
+                <Check className="w-2.5 h-2.5 text-emerald-600" />
                 <span>Save ₹700</span>
               </span>
             </div>
@@ -243,52 +266,75 @@ export default function DiwaliFlashSaleModal({ onClose }: DiwaliFlashSaleModalPr
           <button
             type="button"
             onClick={() => setSelectedPlan("business")}
-            className={`rounded-2xl p-3 flex flex-col justify-between transition-all cursor-pointer text-left ${
+            className={`rounded-2xl p-2.5 sm:p-3 flex flex-col justify-between transition-all cursor-pointer text-left ${
               selectedPlan === "business"
-                ? "bg-amber-500/[0.08] border-2 border-amber-400/80 shadow-md ring-1 ring-amber-400/30"
-                : "bg-neutral-900/60 border border-neutral-800/80 hover:border-neutral-700"
+                ? "bg-amber-50/70 border-2 border-amber-500 shadow-sm ring-2 ring-amber-500/20"
+                : "bg-neutral-50/80 border border-neutral-200 hover:border-neutral-300 hover:bg-neutral-100/60"
             }`}
           >
             <div>
-              <p className="text-[11px] font-bold text-neutral-400">Business</p>
+              <p className="text-[11px] font-bold text-neutral-700">Business</p>
               <div className="mt-1 flex items-baseline gap-1">
-                <span className="text-base sm:text-lg font-extrabold text-white">₹749</span>
-                <span className="text-[10px] text-neutral-500 line-through">₹2,499</span>
+                <span className="text-base sm:text-lg font-black text-neutral-950">₹749</span>
+                <span className="text-[10px] text-neutral-400 line-through">₹2,499</span>
               </div>
             </div>
             <div className="mt-2">
-              <span className="text-[10px] text-emerald-400 font-semibold bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded inline-flex items-center gap-0.5">
-                <Check className="w-2.5 h-2.5" />
+              <span className="text-[10px] text-emerald-800 font-bold bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded inline-flex items-center gap-0.5">
+                <Check className="w-2.5 h-2.5 text-emerald-600" />
                 <span>Save ₹1,750</span>
               </span>
             </div>
           </button>
         </div>
 
-        {/* Renewal & Terms Notice */}
-        <p className="mt-4 text-[11px] text-neutral-400 leading-snug">
-          Discount applies to your <strong>first payment</strong> with coupon code{" "}
-          <strong className="text-amber-300 font-mono font-bold px-1.5 py-0.5 rounded bg-amber-400/10 border border-amber-400/20">
-            DIWALI70
-          </strong>
-          . Standard renewal pricing applies on subsequent cycles.
+        {/* ── Renewal & Terms Notice with One-Click Coupon Copy ── */}
+        <div className="mt-3.5 p-2.5 rounded-xl bg-neutral-50 border border-neutral-200/90 text-left flex items-center justify-between gap-2">
+          <p className="text-[11px] text-neutral-600 leading-snug">
+            Discount applies to your <strong>first payment</strong> with coupon code{" "}
+            <strong className="text-amber-900 font-mono font-bold px-1.5 py-0.5 rounded bg-amber-100/80 border border-amber-300">
+              {DIWALI_COUPON_CODE}
+            </strong>
+          </p>
+          <button
+            type="button"
+            onClick={copyCoupon}
+            className="text-[10px] font-bold text-neutral-600 hover:text-neutral-900 bg-white border border-neutral-200 px-2 py-1 rounded shadow-2xs hover:bg-neutral-50 transition-colors flex items-center gap-1 shrink-0 cursor-pointer"
+            aria-label="Copy coupon code"
+          >
+            {copied ? (
+              <>
+                <Check className="w-3 h-3 text-emerald-600" />
+                <span className="text-emerald-700">Copied</span>
+              </>
+            ) : (
+              <>
+                <Copy className="w-3 h-3 text-neutral-500" />
+                <span>Copy</span>
+              </>
+            )}
+          </button>
+        </div>
+
+        <p className="mt-2 text-[10px] sm:text-[11px] text-neutral-500 leading-tight">
+          Standard renewal pricing applies on subsequent cycles.
         </p>
 
-        {/* ── Primary Action Button ── */}
-        <div className="mt-5 flex flex-col gap-2">
+        {/* ── Action Buttons ── */}
+        <div className="mt-4 flex flex-col gap-2">
           <button
             type="button"
             onClick={() => handleClaim(selectedPlan)}
-            className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-400 hover:brightness-105 text-neutral-950 font-extrabold text-sm shadow-md shadow-amber-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
+            className="w-full py-3.5 px-6 rounded-xl bg-neutral-950 hover:bg-neutral-800 text-white font-extrabold text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] group"
           >
             <span>Claim My 70% Discount</span>
-            <ArrowRight className="w-4 h-4 stroke-[2.5]" />
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
           </button>
 
           <button
             type="button"
             onClick={handleDismiss}
-            className="text-xs text-neutral-400 hover:text-white transition-colors py-1 cursor-pointer font-medium"
+            className="text-xs text-neutral-500 hover:text-neutral-900 transition-colors py-1 cursor-pointer font-medium"
           >
             Maybe later
           </button>

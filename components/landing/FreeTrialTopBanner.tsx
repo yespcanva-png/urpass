@@ -60,7 +60,7 @@ export default function FreeTrialTopBanner({ isUk = false }: FreeTrialTopBannerP
                 <span>FREE</span>
               </span>
               <span className="truncate text-neutral-200">
-                <strong className="text-white font-semibold">100 passes/mo</strong>
+                <strong className="text-white font-semibold">{SELF_SERVICE_PLAN_LIMITS.free.registrationsPerMonth} passes/mo</strong>
                 <span className="text-neutral-400 font-normal"> · 0% fee</span>
               </span>
               <span className="text-[10px] text-violet-300 underline underline-offset-2 shrink-0 font-semibold">

@@ -158,28 +158,32 @@ export default function FreeTicketGeneratorPage() {
           </div>
 
           {/* Features Comparison: Static QR vs URPASS Dynamic QR */}
-          <div className="mt-16 bg-white rounded-3xl border border-neutral-200 overflow-hidden shadow-xs">
-            <div className="p-6 border-b border-neutral-100 bg-neutral-50/50">
-              <h2 className="text-lg font-bold text-neutral-900">Static Generic QR vs URPASS Cryptographic Passes</h2>
+          <div className="mt-16 bg-white rounded-2xl sm:rounded-3xl border border-neutral-200 overflow-hidden shadow-xs">
+            <div className="p-4 sm:p-6 border-b border-neutral-100 bg-neutral-50/50">
+              <h2 className="text-base sm:text-lg font-bold text-neutral-900">Static Generic QR vs URPASS Cryptographic Passes</h2>
               <p className="text-xs text-neutral-500 mt-0.5">Why simple QR generator websites cause door chaos at real events.</p>
             </div>
+            {/* Mobile horizontal swipe helper */}
+            <div className="md:hidden flex items-center justify-center gap-1.5 text-[11px] text-neutral-500 py-2 px-3 bg-neutral-100/80 border-b border-neutral-200/60">
+              <span>&larr; Swipe table horizontally to compare &rarr;</span>
+            </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
+              <table className="w-full text-left text-xs min-w-[560px]">
                 <thead className="bg-neutral-50 text-neutral-500 uppercase tracking-wider font-semibold border-b border-neutral-200">
                   <tr>
-                    <th className="py-3.5 px-5">Capability</th>
-                    <th className="py-3.5 px-5">URPASS Dynamic Passes</th>
-                    <th className="py-3.5 px-5">Generic Static QR Generators</th>
+                    <th className="py-3 px-4 sm:py-3.5 sm:px-5">Capability</th>
+                    <th className="py-3 px-4 sm:py-3.5 sm:px-5">URPASS Dynamic Passes</th>
+                    <th className="py-3 px-4 sm:py-3.5 sm:px-5">Generic Static QR Generators</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-neutral-100 text-neutral-700">
                   <tr className="bg-emerald-50/30 font-semibold text-neutral-900">
-                    <td className="py-4 px-5 text-emerald-700 flex items-center gap-1.5">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <td className="py-3.5 px-4 sm:py-4 sm:px-5 text-emerald-700 flex items-center gap-1.5">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                       Duplicate Entry Prevention
                     </td>
-                    <td className="py-4 px-5 font-bold text-emerald-700">Atomic real-time lock across all gates</td>
-                    <td className="py-4 px-5 text-rose-600">None (can be shared and scanned endlessly)</td>
+                    <td className="py-3.5 px-4 sm:py-4 sm:px-5 font-bold text-emerald-700">Atomic real-time lock across all gates</td>
+                    <td className="py-3.5 px-4 sm:py-4 sm:px-5 text-rose-600">None (can be shared and scanned endlessly)</td>
                   </tr>
                   <tr>
                     <td className="py-4 px-5 font-medium">Door Check-In Velocity</td>

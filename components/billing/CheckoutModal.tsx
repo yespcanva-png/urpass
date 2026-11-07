@@ -502,8 +502,8 @@ export default function CheckoutModal({
       />
 
       {/* Dialog */}
-      <div className="relative w-full max-w-md bg-white rounded-xl shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto">
-        <div className="px-6 pb-6 pt-5 flex flex-col gap-4">
+      <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto">
+        <div className="px-4 sm:px-6 pb-5 sm:pb-6 pt-4 sm:pt-5 flex flex-col gap-4">
           {/* Header */}
           <div className="flex items-start justify-between gap-3">
             <div>
