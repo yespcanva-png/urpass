@@ -187,7 +187,7 @@ export default function GoogleFormsVsEventRegistrationPage() {
           },
           {
             q: "Is UrPass free like Google Forms?",
-            a: "Yes. UrPass offers a Free Forever plan that includes 1 active event at a time and up to 50 registrations per month at ₹0 forever with full QR pass generation and mobile phone scanning included. For larger events, paid plans start at ₹499/month, or Single Event Passes start at ₹299.",
+            a: "Yes. UrPass offers a Free Forever plan that includes 1 active event at a time and up to 100 registrations per month at ₹0 forever with full QR pass generation and mobile phone scanning included. For larger events, paid plans start at ₹499/month, or Single Event Passes start at ₹299.",
           },
           {
             q: "How does gate check-in work on UrPass?",
@@ -196,9 +196,9 @@ export default function GoogleFormsVsEventRegistrationPage() {
         ],
         relatedLinks: [
           { title: "Best QR Code Event Check-In Software in India", href: "/best-qr-code-event-check-in-software-india", category: "Guide" },
-          { title: "How to Create QR Code Tickets for an Event", href: "/how-to-create-qr-code-event-tickets", category: "How-To" },
+          { title: "How to Create QR Code Tickets for an Event", href: "/how-to-create-qr-code-event-tickets", category: "Guide" },
           { title: "Best Event Registration Platforms for Colleges", href: "/college-event-registration-platform", category: "Use Case" },
-          { title: "Pricing & Plans", href: "/pricing", category: "Pricing" },
+          { title: "Pricing & Plans", href: "/pricing", category: "Product" },
         ],
       }}
     />

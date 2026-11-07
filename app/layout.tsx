@@ -313,6 +313,7 @@ const siteNavSchema = {
 };
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID || "G-E5RNX1BZ0Z";
+const CLARITY_ID = process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID || "z9scwpec4o";
 
 export default function RootLayout({
   children,
@@ -342,7 +343,7 @@ export default function RootLayout({
         />
       </head>
       <body className="h-full font-[family-name:var(--font-geist)] antialiased bg-white text-neutral-900">
-        <ConsentAnalytics measurementId={GA_ID} />
+        <ConsentAnalytics measurementId={GA_ID} clarityProjectId={CLARITY_ID} />
         <TrafficSourceTracker />
         <VersionSkewHandler />
         <AuthRecoveryHandler />

@@ -1,22 +1,26 @@
 "use client";
 
 import { useEffect } from "react";
+import { detectCountryClient } from "@/lib/country-config";
 
 interface Props {
   measurementId: string;
+  clarityProjectId?: string;
 }
 
 /**
- * Loads analytics (GA4, Microsoft Clarity, PostHog) strictly after an affirmative user choice.
+ * Loads analytics (GA4, Microsoft Clarity, PostHog) with privacy safeguards.
  * Masks sensitive form inputs and honors Do Not Track / Global Privacy Control.
  */
-export default function ConsentAnalytics({ measurementId }: Props) {
+export default function ConsentAnalytics({
+  measurementId,
+  clarityProjectId = process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID || "z9scwpec4o",
+}: Props) {
   useEffect(() => {
     const gaScriptId = "urpass-consent-analytics-ga";
     const clarityScriptId = "urpass-consent-analytics-clarity";
     const posthogScriptId = "urpass-consent-analytics-posthog";
 
-    const clarityProjectId = process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID;
     const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
     const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com";
 
@@ -103,14 +107,24 @@ export default function ConsentAnalytics({ measurementId }: Props) {
     };
 
     try {
-      if (localStorage.getItem("urpass_cookie_consent") === "all") enable();
+      const stored = localStorage.getItem("urpass_cookie_consent");
+      if (stored === "all") {
+        enable();
+      } else if (stored === "essential_only") {
+        disable();
+      } else {
+        const isUk = detectCountryClient() === "GB";
+        if (!isUk && !blocked()) {
+          enable();
+        }
+      }
     } catch {
       // Storage denied: optional analytics remains off.
     }
 
     window.addEventListener("urpass:cookie-consent", onChoice);
     return () => window.removeEventListener("urpass:cookie-consent", onChoice);
-  }, [measurementId]);
+  }, [measurementId, clarityProjectId]);
 
   return null;
 }

@@ -258,6 +258,11 @@ The URPASS MCP Server conforms to the Model Context Protocol standard v1.0.0. It
 23. **No-App Event Check-In**: https://urpass.space/no-app-event-check-in - Zero app installation ticket scanning running in mobile Safari and Chrome.
 24. **Event Entry QR Code System**: https://urpass.space/event-entry-qr-code-system - Tamper-proof, cryptographically signed dynamic QR admission codes.
 25. **Campus Event Management Platform**: https://urpass.space/campus-event-management-platform - End-to-end college club, seminar, and student council event software.
+26. **Best QR Check-In Software India**: https://urpass.space/best-qr-code-event-check-in-software-india - Sub-0.3s smartphone camera entry validation with 0% platform ticket commission.
+27. **How to Create QR Event Tickets**: https://urpass.space/how-to-create-qr-code-event-tickets - Step-by-step guide to generating and distributing digital QR tickets in 2 minutes.
+28. **Best College Event Registration Platform**: https://urpass.space/college-event-registration-platform - Campus fests, symposiums, and student volunteer gate operations with ₹299 single-event passes.
+29. **Scan Tickets with Smartphone**: https://urpass.space/scan-event-tickets-with-phone - Hardware-free ticket scanning directly in mobile Safari or Chrome with PIN-secured volunteer access.
+30. **Google Forms vs Event Registration**: https://urpass.space/google-forms-vs-event-registration - Direct capability breakdown between Google Forms spreadsheets and dedicated QR check-in software.
 
 ---
 

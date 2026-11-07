@@ -158,10 +158,10 @@ export default function CollegeEventRegistrationPlatformPage() {
           },
         ],
         relatedLinks: [
-          { title: "Best QR Code Event Check-In Software in India", href: "/best-qr-code-event-check-in-software-india", category: "Operations" },
-          { title: "How to Create QR Code Tickets for an Event", href: "/how-to-create-qr-code-event-tickets", category: "How-To" },
-          { title: "Prevent Duplicate QR Ticket Entry", href: "/prevent-duplicate-qr-ticket-entry", category: "Security" },
-          { title: "Pricing & Plans", href: "/pricing", category: "Pricing" },
+          { title: "Best QR Code Event Check-In Software in India", href: "/best-qr-code-event-check-in-software-india", category: "Guide" },
+          { title: "How to Create QR Code Tickets for an Event", href: "/how-to-create-qr-code-event-tickets", category: "Guide" },
+          { title: "Prevent Duplicate QR Ticket Entry", href: "/prevent-duplicate-qr-ticket-entry", category: "Guide" },
+          { title: "Pricing & Plans", href: "/pricing", category: "Product" },
         ],
       }}
     />
