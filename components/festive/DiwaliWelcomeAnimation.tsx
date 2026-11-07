@@ -15,7 +15,7 @@ export default function DiwaliWelcomeAnimation({ onComplete }: DiwaliWelcomeAnim
 
   useEffect(() => {
     // 1. Accessibility: Check for prefers-reduced-motion
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && typeof window.matchMedia === "function") {
       const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       if (prefersReduced) {
         try {
